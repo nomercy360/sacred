@@ -10,7 +10,7 @@ RUN apk add --no-cache \
 
 WORKDIR /app
 
-COPY sacred /app/
+COPY . /app/
 
 RUN go mod tidy && \
     go install -ldflags='-s -w -extldflags "-static"' ./cmd/api/main.go

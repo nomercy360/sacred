@@ -1,4 +1,4 @@
-import { createEffect, createResource, createSignal, For, Match, Show, Switch } from 'solid-js'
+import { createEffect, createResource, createSignal, For, Match, onCleanup, onMount, Show, Switch } from 'solid-js'
 import { cn } from '~/lib/utils'
 import { fetchCategories, saveUserPreferences } from '~/lib/api'
 import { showToast } from '~/components/ui/toast'
@@ -117,6 +117,22 @@ export default function SetupProfilePage() {
 
 	const [categories, {}] = createResource<Category[]>(fetchCategories, { initialValue: [] })
 
+	const [bottom, setBottom] = createSignal(0)
+
+	const updateBottom = () => {
+		const safeArea = window.Telegram.WebApp.safeAreaInset.bottom
+		setBottom(safeArea - 100)
+	}
+
+	onMount(() => {
+		window.Telegram.WebApp.onEvent('safeAreaChanged', updateBottom)
+		updateBottom()
+	})
+
+	onCleanup(() => {
+		window.Telegram.WebApp.offEvent('safeAreaChanged', updateBottom)
+	})
+
 	return (
 		<div
 			class="w-full flex flex-col h-screen items-center justify-start"
@@ -146,7 +162,8 @@ export default function SetupProfilePage() {
 						</Show>
 					</div>
 					<div
-						class="flex flex-row items-center justify-center fixed h-24 bottom-0 left-0 w-full bg-gradient-to-t from-neutral-600 to-transparent z-10 backdrop-blur-[2px]"
+						class="flex flex-row items-center justify-center fixed h-[100px] left-0 w-full bg-gradient-to-t from-neutral-600 to-transparent z-10 backdrop-blur-[2px]"
+						style={{ top: `${bottom()}px` }}
 					>
 						<button
 							onClick={onContinue}
@@ -173,7 +190,8 @@ export default function SetupProfilePage() {
 						ref={setEmailInput}
 					/>
 					<div
-						class="flex flex-row items-center justify-center fixed h-24 bottom-0 left-0 w-full bg-gradient-to-t from-neutral-600 to-transparent z-10 backdrop-blur-[2px]"
+						class="flex flex-row items-center justify-center fixed h-[100px] left-0 w-full bg-gradient-to-t from-neutral-600 to-transparent z-10 backdrop-blur-[2px]"
+						style={{ top: `${bottom()}px` }}
 					>
 						<button
 							class={cn('rounded-3xl h-12 flex items-center justify-center px-5 font-semibold text-nowrap', isEmailValid(email()) ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground')}

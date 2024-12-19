@@ -5,6 +5,8 @@ import { showToast } from '~/components/ui/toast'
 import { useNavigate } from '@solidjs/router'
 import { setUser, store } from '~/store'
 import { useMainButton } from '~/lib/useMainButton'
+import { useNavigation } from '~/lib/useNavigation'
+import { useBackButton } from '~/lib/useBackButton'
 
 
 type SetupHeaderProps = {
@@ -59,6 +61,8 @@ export default function SetupProfilePage() {
 
 	const navigate = useNavigate()
 
+	const backButton = useBackButton()
+
 	function toggleCategory(id: number) {
 		const index = selectedCategories().indexOf(id)
 		if (index === -1) {
@@ -93,12 +97,8 @@ export default function SetupProfilePage() {
 					interests: selectedCategories(),
 				})
 				if (error) {
-					showToast({
-						title: error,
-						variant: 'error',
-					})
+					showToast({ title: error, variant: 'error' })
 				} else {
-					console.log('USER: ', data)
 					setUser(data)
 					navigate('/')
 				}
@@ -108,16 +108,26 @@ export default function SetupProfilePage() {
 		}
 	}
 
+	function decrementStep() {
+		setStep(step() - 1)
+	}
+
 	const [categories, {}] = createResource<Category[]>(fetchCategories, { initialValue: [] })
 
 	createEffect(() => {
 		if (step() === 1) {
+			backButton.hide()
+			backButton.offClick(decrementStep)
+
 			if (selectedCategories().length < 5) {
 				mainButton.disable('Select at least 5 categories')
 			} else {
 				mainButton.enable('Continue')
 			}
 		} else if (step() === 2) {
+			backButton.setVisible()
+			backButton.onClick(decrementStep)
+
 			if (isEmailValid(email())) {
 				mainButton.disable('Continue')
 			} else {
@@ -133,6 +143,8 @@ export default function SetupProfilePage() {
 	onCleanup(() => {
 		mainButton.offClick(onContinue)
 		mainButton.hide()
+		backButton.offClick(decrementStep)
+		backButton.hide()
 	})
 
 	return (

@@ -40,20 +40,14 @@ export function NavigationProvider(props: { children: JSX.Element }) {
 		}
 
 		if (isObject(stateData) && stateData.from) {
-			console.log('navigating back to:', stateData.from)
 			navigate(stateData.from)
 		} else if (isObject(stateData) && stateData.back) {
-			console.log('navigating back')
 			navigate(-1)
 		} else {
-			console.log('navigating back to root')
 			navigate('/')
 		}
 
-		console.log('stateData:', stateData)
-
 		if (isObject(stateData) && stateData.scroll) {
-			console.log('scrolling to:', stateData.scroll)
 			setTimeout(() => {
 				window.scrollTo(0, stateData.scroll)
 			}, 0)
@@ -61,7 +55,7 @@ export function NavigationProvider(props: { children: JSX.Element }) {
 	}
 
 	createEffect(() => {
-		if (location.pathname !== '/') {
+		if (location.pathname !== '/' && location.pathname !== '/setup') {
 			backButton.setVisible()
 			backButton.onClick(navigateBack)
 		} else {

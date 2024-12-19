@@ -4,6 +4,7 @@ import { fetchCategories, saveUserPreferences } from '~/lib/api'
 import { showToast } from '~/components/ui/toast'
 import { useNavigate } from '@solidjs/router'
 import { setUser, store } from '~/store'
+import { useMainButton } from '~/lib/useMainButton'
 
 
 type SetupHeaderProps = {
@@ -54,6 +55,8 @@ export default function SetupProfilePage() {
 	const [email, setEmail] = createSignal('')
 	const [emailInput, setEmailInput] = createSignal<HTMLInputElement | null>(null)
 
+	const mainButton = useMainButton()
+
 	const navigate = useNavigate()
 
 	function toggleCategory(id: number) {
@@ -68,16 +71,6 @@ export default function SetupProfilePage() {
 
 	function isSelected(id: number) {
 		return selectedCategories().includes(id)
-	}
-
-	function ButtonText() {
-		if (selectedCategories().length === 0) {
-			return <span class="text-muted-foreground">Choose at least 5</span>
-		} else if (selectedCategories().length < 5) {
-			return <span class="text-muted-foreground">Choose {5 - selectedCategories().length} more</span>
-		} else {
-			return <span class="text-white">Continue <span class="text-muted-foreground">{selectedCategories().length}</span></span>
-		}
 	}
 
 	createEffect(() => {
@@ -117,20 +110,29 @@ export default function SetupProfilePage() {
 
 	const [categories, {}] = createResource<Category[]>(fetchCategories, { initialValue: [] })
 
-	const [bottom, setBottom] = createSignal(0)
-
-	const updateBottom = () => {
-		const safeArea = window.Telegram.WebApp.safeAreaInset.bottom
-		setBottom(safeArea - 100)
-	}
+	createEffect(() => {
+		if (step() === 1) {
+			if (selectedCategories().length < 5) {
+				mainButton.disable('Select at least 5 categories')
+			} else {
+				mainButton.enable('Continue')
+			}
+		} else if (step() === 2) {
+			if (isEmailValid(email())) {
+				mainButton.disable('Continue')
+			} else {
+				mainButton.enable('Continue')
+			}
+		}
+	})
 
 	onMount(() => {
-		window.Telegram.WebApp.onEvent('safeAreaChanged', updateBottom)
-		updateBottom()
+		mainButton.onClick(onContinue)
 	})
 
 	onCleanup(() => {
-		window.Telegram.WebApp.offEvent('safeAreaChanged', updateBottom)
+		mainButton.offClick(onContinue)
+		mainButton.hide()
 	})
 
 	return (
@@ -161,18 +163,6 @@ export default function SetupProfilePage() {
 							</For>
 						</Show>
 					</div>
-					<div
-						class="flex flex-row items-center justify-center fixed h-[100px] left-0 w-full bg-gradient-to-t from-neutral-600 to-transparent z-10 backdrop-blur-[2px]"
-						style={{ top: `${bottom()}px` }}
-					>
-						<button
-							onClick={onContinue}
-							class={cn('rounded-3xl h-12 flex items-center justify-center px-5 font-semibold text-nowrap', selectedCategories().length < 5 ? 'bg-muted text-muted-foreground' : 'bg-primary')}
-							disabled={selectedCategories().length < 5}
-						>
-							{ButtonText()}
-						</button>
-					</div>
 				</Match>
 				<Match when={step() === 2}>
 					<SetupHeader
@@ -189,18 +179,6 @@ export default function SetupProfilePage() {
 						autofocus={true}
 						ref={setEmailInput}
 					/>
-					<div
-						class="flex flex-row items-center justify-center fixed h-[100px] left-0 w-full bg-gradient-to-t from-neutral-600 to-transparent z-10 backdrop-blur-[2px]"
-						style={{ top: `${bottom()}px` }}
-					>
-						<button
-							class={cn('rounded-3xl h-12 flex items-center justify-center px-5 font-semibold text-nowrap', isEmailValid(email()) ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground')}
-							disabled={isEmailValid(email())}
-							onClick={onContinue}
-						>
-							Continue
-						</button>
-					</div>
 				</Match>
 			</Switch>
 		</div>

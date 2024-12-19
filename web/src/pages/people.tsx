@@ -1,14 +1,11 @@
-import { store } from '~/store'
-
-
-const FeedPage = () => {
+const PeoplePage = () => {
 	return (
 		<div
-			class="relative w-full flex flex-col h-screen bg-gray-800 text-white overflow-hidden"
+			class="relative w-full flex flex-col h-screen overflow-hidden"
 		>
-			Hello! {store.user?.username}
+			People Page
 		</div>
 	)
 }
 
-export default FeedPage
+export default PeoplePage

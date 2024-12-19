@@ -22,7 +22,7 @@ export const apiFetch = async ({
 	}
 
 	try {
-		showProgress && window.Telegram.WebApp.MainButton.showProgress(false)
+		// showProgress && window.Telegram.WebApp.MainButton.showProgress(false)
 
 		const response = await fetch(`${API_BASE_URL}/v1${endpoint}`, {
 			method,
@@ -51,7 +51,7 @@ export const apiFetch = async ({
 				}
 		}
 	} finally {
-		showProgress && window.Telegram.WebApp.MainButton.hideProgress()
+		// showProgress && window.Telegram.WebApp.MainButton.hideProgress()
 	}
 }
 

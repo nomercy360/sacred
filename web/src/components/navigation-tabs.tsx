@@ -8,7 +8,7 @@ export default function NavigationTabs(props: any) {
 
 	const tabs = [
 		{
-			href: '/posts',
+			href: '/feed',
 			icon: 'interests',
 		},
 		{

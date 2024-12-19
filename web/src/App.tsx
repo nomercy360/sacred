@@ -6,7 +6,6 @@ import Toast from '~/components/toast'
 import { API_BASE_URL } from '~/lib/api'
 import { setToken, setUser, store } from '~/store'
 import { Toaster } from '~/components/ui/toast'
-import eruda from 'eruda'
 
 
 export const queryClient = new QueryClient({
@@ -51,7 +50,6 @@ export default function App(props: any) {
 
 			setIsAuthenticated(true)
 			setIsLoading(false)
-			eruda.init()
 
 			if (!store.user?.email || !store.user?.interests.length) {
 				navigate('/setup')

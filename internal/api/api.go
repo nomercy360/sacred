@@ -33,10 +33,9 @@ type API struct {
 }
 
 type Config struct {
-	JWTSecret   string
-	BotToken    string
-	ScraperUser string
-	ScraperPass string
+	JWTSecret    string
+	BotToken     string
+	MetaFetchURL string
 }
 
 func New(storage storager, cfg Config) *API {

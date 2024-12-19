@@ -28,16 +28,7 @@ type Config struct {
 	DBPath           string `yaml:"db_path"`
 	TelegramBotToken string `yaml:"telegram_bot_token"`
 	JWTSecret        string `yaml:"jwt_secret"`
-	ScraperUser      string `yaml:"scraper_user"`
-	ScraperPass      string `yaml:"scraper_pass"`
-	AWS              struct {
-		AccessKeyID     string `yaml:"access_key_id"`
-		SecretAccessKey string `yaml:"secret_access_key"`
-		Endpoint        string `yaml:"endpoint"`
-		Bucket          string `yaml:"bucket"`
-	} `yaml:"aws"`
-	OpenAIKey string `yaml:"openai_key"`
-	AssetsURL string `yaml:"assets_url"`
+	MetaFetchURL     string `yaml:"meta_fetch_url"`
 }
 
 func ReadConfig(filePath string) (*Config, error) {
@@ -221,10 +212,9 @@ func main() {
 	e.Validator = &customValidator{validator: validator.New()}
 
 	apiCfg := api.Config{
-		BotToken:    cfg.TelegramBotToken,
-		JWTSecret:   cfg.JWTSecret,
-		ScraperUser: cfg.ScraperUser,
-		ScraperPass: cfg.ScraperPass,
+		BotToken:     cfg.TelegramBotToken,
+		JWTSecret:    cfg.JWTSecret,
+		MetaFetchURL: cfg.MetaFetchURL,
 	}
 
 	a := api.New(storage, apiCfg)

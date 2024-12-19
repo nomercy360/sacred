@@ -21,8 +21,8 @@ type MetadataResponse struct {
 	ScreenShotURL string            `json:"screenshot_url"` // TODO: not yet implemented
 }
 
-func fetchMetadataFromExternalService(url string) (MetadataResponse, error) {
-	resp, err := http.Get("http://localhost:8081/meta-fetcher?url=" + url)
+func fetchMetadataFromExternalService(metaFetchURL, url string) (MetadataResponse, error) {
+	resp, err := http.Get(fmt.Sprintf("%s/meta-fetcher?url=%s", metaFetchURL, url))
 	if err != nil {
 		return MetadataResponse{}, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
@@ -44,7 +44,7 @@ func fetchMetadataFromExternalService(url string) (MetadataResponse, error) {
 func (a *API) StartMetadataWorker(ctx context.Context, job MetadataFetchJob) error {
 	log.Printf("Processing resp fetch job for URL: %s", job.URL)
 
-	resp, err := fetchMetadataFromExternalService(job.URL)
+	resp, err := fetchMetadataFromExternalService(a.cfg.MetaFetchURL, job.URL)
 	if err != nil {
 		return fmt.Errorf("failed to fetch resp: %v", err)
 	}

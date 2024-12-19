@@ -1,0 +1,8 @@
+sacred/.idea
+config.yml
+config.production.yml
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+

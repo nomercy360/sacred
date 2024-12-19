@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    service: sacred-api
+  name: sacred-api
+  namespace: default
+spec:
+  serviceName: "sacred-api"
+  replicas: 1
+  selector:
+    matchLabels:
+      service: sacred-api
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0
+  template:
+    metadata:
+      labels:
+        service: sacred-api
+    spec:
+      containers:
+        - image: maksim1111/sacred-api:latest
+          name: sacred-api
+          imagePullPolicy: IfNotPresent
+          command: [ "/app/main" ]
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "512Mi"
+          volumeMounts:
+            - mountPath: /app/storage
+              subPath: storage
+              name: sacred-api-data
+            - mountPath: /app/config.yml
+              name: sacred-api-config
+              subPath: config.yml
+          env:
+            - name: CONFIG_FILE_PATH
+              value: /app/config.yml
+          readinessProbe:
+            exec:
+              command: [ "sqlite3", "/app/storage/db.sqlite", ".tables" ]
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            timeoutSeconds: 2
+      volumes:
+        - name: sacred-api-config
+          secret:
+            secretName: sacred-api-secrets
+  volumeClaimTemplates:
+    - metadata:
+        name: sacred-api-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: "do-block-storage"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    service: sacred-api
+  name: sacred-api
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    service: sacred-api
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sacred-api
+  namespace: default
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: sacred-api.mxksim.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sacred-api
+                port:
+                  number: 8080

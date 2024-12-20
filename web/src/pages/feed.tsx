@@ -32,10 +32,15 @@ const FeedPage = () => {
 					<div class="flex flex-col gap-0.5">
 						<For each={ideas.data.slice(0, Math.ceil(ideas.data.length / 2))}>
 							{(idea) => (
-								<div class="border-[0.5px] rounded-3xl">
+								<div class="border-[0.5px] border-border/70 rounded-3xl" style="aspect-ratio: 1/1">
 									<img class="aspect-auto shrink-0 rounded-3xl"
 											 alt={idea.name}
-											 src={idea.image_url} />
+											 src={idea.image_url}
+											 onLoad={(e) => {
+												 const img = e.target as HTMLImageElement
+												 img.parentElement!.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`
+											 }}
+									/>
 								</div>
 							)}
 						</For>
@@ -43,10 +48,15 @@ const FeedPage = () => {
 					<div class="flex flex-col gap-0.5 h-full flex-grow">
 						<For each={ideas.data.slice(Math.ceil(ideas.data.length / 2))}>
 							{(idea) => (
-								<div class="border-[0.5px] rounded-3xl">
+								<div class="border-[0.5px] border-border/70 rounded-3xl" style="aspect-ratio: 1/1">
 									<img class="aspect-auto shrink-0 rounded-3xl"
 											 alt={idea.name}
-											 src={idea.image_url} />
+											 src={idea.image_url}
+											 onLoad={(e) => {
+												 const img = e.target as HTMLImageElement
+												 img.parentElement!.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`
+											 }}
+									/>
 								</div>
 							)}
 						</For>

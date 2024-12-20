@@ -99,13 +99,14 @@ type WishlistItem struct {
 	SourceID    *string    `db:"source_id" json:"source_id"`
 	SourceType  *string    `db:"source_type" json:"source_type"`
 	IsPurchased bool       `db:"is_purchased" json:"is_purchased"`
+	IsPublic    bool       `db:"is_public" json:"is_public"`
 	CreatedAt   time.Time  `db:"created_at" json:"created_at"`
 	UpdatedAt   time.Time  `db:"updated_at" json:"updated_at"`
 	DeletedAt   *time.Time `db:"deleted_at" json:"deleted_at"`
 }
 
 func (s *storage) GetWishlistItemByID(ctx context.Context, id string) (WishlistItem, error) {
-	query := `SELECT id, wishlist_id, name, url, price, notes, is_purchased, created_at, updated_at FROM wishlist_items WHERE id = ?`
+	query := `SELECT id, wishlist_id, name, url, price, currency, image_url, notes, is_purchased, is_public, created_at, updated_at FROM wishlist_items WHERE id = ?`
 
 	var item WishlistItem
 
@@ -115,8 +116,11 @@ func (s *storage) GetWishlistItemByID(ctx context.Context, id string) (WishlistI
 		&item.Name,
 		&item.URL,
 		&item.Price,
+		&item.Currency,
+		&item.ImageURL,
 		&item.Notes,
 		&item.IsPurchased,
+		&item.IsPublic,
 		&item.CreatedAt,
 		&item.UpdatedAt,
 	); err != nil && IsNoRowsError(err) {
@@ -129,7 +133,7 @@ func (s *storage) GetWishlistItemByID(ctx context.Context, id string) (WishlistI
 }
 
 func (s *storage) CreateWishlistItem(ctx context.Context, item WishlistItem) (WishlistItem, error) {
-	query := `INSERT INTO wishlist_items (id, wishlist_id, name, url, price, notes, is_purchased) VALUES (?, ?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO wishlist_items (id, wishlist_id, name, url, price, currency, image_url, notes, is_purchased, is_public) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	_, err := s.db.ExecContext(ctx, query,
 		item.ID,
@@ -137,8 +141,11 @@ func (s *storage) CreateWishlistItem(ctx context.Context, item WishlistItem) (Wi
 		item.Name,
 		item.URL,
 		item.Price,
+		item.Currency,
+		item.ImageURL,
 		item.Notes,
 		item.IsPurchased,
+		item.IsPublic,
 	)
 
 	if err != nil {

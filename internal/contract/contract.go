@@ -1,6 +1,8 @@
 package contract
 
 import (
+	"errors"
+	"net/url"
 	"sacred/internal/db"
 	"time"
 )
@@ -41,9 +43,60 @@ type AuthResponse struct {
 	User  UserResponse `json:"user"`
 }
 
-type CreateWishItemByURLRequest struct {
-	URL        string `json:"url" validate:"required,url"`
-	WishlistID string `json:"wishlist_id" validate:"required"`
+type CreateWishItemRequest struct {
+	URL        *string  `json:"url"`
+	WishlistID string   `json:"wishlist_id"`
+	Name       string   `json:"name"`
+	Price      *float64 `json:"price"`
+	ImageURL   *string  `json:"image_url"`
+	Notes      *string  `json:"notes"`
+	IsPublic   bool     `json:"is_public"`
+}
+
+func (r *CreateWishItemRequest) Validate() error {
+	if r.URL != nil {
+		parsed, err := url.Parse(*r.URL)
+		if err != nil {
+			return err
+		}
+
+		if parsed.Scheme == "" || parsed.Host == "" {
+			return errors.New("invalid URL")
+		}
+	}
+
+	if r.Price != nil && *r.Price < 0 {
+		return errors.New("price cannot be negative")
+	}
+
+	if r.ImageURL != nil {
+		parsed, err := url.Parse(*r.ImageURL)
+		if err != nil {
+			return err
+		}
+
+		if parsed.Scheme == "" || parsed.Host == "" {
+			return errors.New("invalid image URL")
+		}
+	}
+
+	if r.Notes != nil && len(*r.Notes) > 1000 {
+		return errors.New("notes cannot be longer than 1000 characters")
+	}
+
+	if len(r.Name) > 200 {
+		return errors.New("name cannot be longer than 200 characters")
+	}
+
+	if r.Name == "" {
+		return errors.New("name cannot be empty")
+	}
+
+	if r.WishlistID == "" {
+		return errors.New("wishlist_id cannot be empty")
+	}
+
+	return nil
 }
 
 type WishlistItemResponse struct {

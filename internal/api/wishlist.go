@@ -10,12 +10,12 @@ import (
 )
 
 func (a *API) AddWishlistItemHandler(c echo.Context) error {
-	var req contract.CreateWishItemByURLRequest
+	var req contract.CreateWishItemRequest
 	if err := c.Bind(&req); err != nil {
 		return terrors.BadRequest(err, "failed to bind request")
 	}
 
-	if err := c.Validate(req); err != nil {
+	if err := req.Validate(); err != nil {
 		return terrors.BadRequest(err, "failed to validate request")
 	}
 
@@ -33,20 +33,18 @@ func (a *API) AddWishlistItemHandler(c echo.Context) error {
 	item := db.WishlistItem{
 		ID:         nanoid.Must(),
 		WishlistID: wishlist.ID,
-		URL:        &req.URL,
+		URL:        req.URL,
+		Name:       req.Name,
+		Price:      req.Price,
+		ImageURL:   req.ImageURL,
+		Notes:      req.Notes,
+		IsPublic:   req.IsPublic,
 	}
 
 	res, err := a.storage.CreateWishlistItem(c.Request().Context(), item)
 	if err != nil {
 		return terrors.InternalServer(err, "cannot create wishlist item")
 	}
-
-	job := MetadataFetchJob{
-		ItemID: res.ID,
-		URL:    *res.URL,
-	}
-
-	a.EnqueueJob(job)
 
 	return c.JSON(http.StatusCreated, res)
 }

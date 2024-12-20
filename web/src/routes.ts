@@ -26,10 +26,6 @@ export const routes: RouteDefinition[] = [
 				'path': '/feed',
 				'component': FeedPage,
 			},
-			{
-				'path': '/new',
-				'component': NewItem,
-			},
 		],
 	},
 	{
@@ -39,6 +35,10 @@ export const routes: RouteDefinition[] = [
 	{
 		path: '/share',
 		component: ShareProfile,
+	},
+	{
+		'path': '/new',
+		'component': NewItem,
 	},
 	{
 		path: '**',

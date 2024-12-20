@@ -55,27 +55,24 @@ export const apiFetch = async ({
 	}
 }
 
-export const uploadToS3 = (
-	url: string,
-	file: File,
-	onProgress: (e: ProgressEvent) => void,
-	onFinished: () => void,
-): Promise<void> => {
-	return new Promise<void>((resolve, reject) => {
-		const req = new XMLHttpRequest()
-		req.onreadystatechange = () => {
-			if (req.readyState === 4) {
-				if (req.status === 200) {
-					onFinished()
-					resolve()
-				} else {
-					reject(new Error('Failed to upload file'))
-				}
-			}
-		}
-		req.upload.addEventListener('progress', onProgress)
-		req.open('PUT', url)
-		req.send(file)
+
+export async function fetchPresignedUrl(filename: string) {
+	const response = await apiFetch({
+		endpoint: '/presigned-url',
+		method: 'POST',
+		body: { file_name: filename },
+	})
+
+	return response as any
+}
+
+export async function uploadToS3(url: string, file: File) {
+	return await fetch(url, {
+		method: 'PUT',
+		body: file,
+		headers: {
+			'Content-Type': file.type,
+		},
 	})
 }
 
@@ -127,6 +124,30 @@ export const fetchProfiles = async () => {
 	const { data } = await apiFetch({
 		endpoint: `/profiles`,
 		method: 'GET',
+	})
+
+	return data
+}
+
+export type NewItemRequest = {
+	name: string
+	notes: string | null
+	url: string | null
+	image_url: string | null
+	price: number | null
+	currency: string | null
+	is_public: boolean
+}
+
+
+export const fetchAddWishlistItem = async (wishlistID: string, item: NewItemRequest) => {
+	const { data } = await apiFetch({
+		endpoint: `/wishlist/items`,
+		method: 'POST',
+		body: {
+			...item,
+			wishlist_id: wishlistID,
+		},
 	})
 
 	return data

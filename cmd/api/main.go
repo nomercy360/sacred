@@ -258,6 +258,7 @@ func main() {
 	g.GET("/user/wishlist", a.GetUserWishlistHandler)
 	g.GET("/ideas", a.ListIdeas)
 	g.GET("/profiles", a.ListProfiles)
+	g.POST("/presigned-url", a.GetPresignedURL)
 
 	done := make(chan bool, 1)
 

@@ -17,6 +17,7 @@ import (
 	"os/signal"
 	"sacred/internal/api"
 	"sacred/internal/db"
+	"sacred/internal/s3"
 	"sacred/internal/terrors"
 	"syscall"
 	"time"
@@ -29,6 +30,13 @@ type Config struct {
 	TelegramBotToken string `yaml:"telegram_bot_token"`
 	JWTSecret        string `yaml:"jwt_secret"`
 	MetaFetchURL     string `yaml:"meta_fetch_url"`
+	AWS              struct {
+		AccessKeyID     string `yaml:"access_key_id"`
+		SecretAccessKey string `yaml:"secret_access_key"`
+		Endpoint        string `yaml:"endpoint"`
+		Bucket          string `yaml:"bucket"`
+	} `yaml:"aws"`
+	AssetsURL string `yaml:"assets_url"`
 }
 
 func ReadConfig(filePath string) (*Config, error) {
@@ -195,7 +203,7 @@ func main() {
 	}
 
 	e := echo.New()
-	e.Use(middleware.Recover())
+	//e.Use(middleware.Recover())
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
@@ -215,9 +223,17 @@ func main() {
 		BotToken:     cfg.TelegramBotToken,
 		JWTSecret:    cfg.JWTSecret,
 		MetaFetchURL: cfg.MetaFetchURL,
+		AssetsURL:    cfg.AssetsURL,
 	}
 
-	a := api.New(storage, apiCfg)
+	s3Client, err := s3.NewS3Client(
+		cfg.AWS.AccessKeyID, cfg.AWS.SecretAccessKey, cfg.AWS.Endpoint, cfg.AWS.Bucket)
+
+	if err != nil {
+		log.Fatalf("Failed to initialize AWS S3 client: %v\n", err)
+	}
+
+	a := api.New(storage, apiCfg, s3Client)
 
 	a.InitializeJobQueue(context.Background())
 
@@ -240,6 +256,8 @@ func main() {
 	g.PUT("/user/settings", a.UpdateUserPreferences)
 	g.GET("/categories", a.ListCategories)
 	g.GET("/user/wishlist", a.GetUserWishlistHandler)
+	g.GET("/ideas", a.ListIdeas)
+	g.GET("/profiles", a.ListProfiles)
 
 	done := make(chan bool, 1)
 

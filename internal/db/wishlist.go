@@ -6,22 +6,23 @@ import (
 )
 
 type Wishlist struct {
-	ID          int64      `db:"id" json:"id"`
-	UserID      int64      `db:"user_id" json:"user_id"`
+	ID          string     `db:"id" json:"id"`
+	UserID      string     `db:"user_id" json:"user_id"`
 	Name        string     `db:"name" json:"name"`
 	Description string     `db:"description" json:"description"`
 	IsPublic    bool       `db:"is_public" json:"is_public"`
 	CreatedAt   time.Time  `db:"created_at" json:"created_at"`
-	UpdateAt    time.Time  `db:"updated_at" json:"updated_at"`
+	UpdatedAt   time.Time  `db:"updated_at" json:"updated_at"`
 	DeletedAt   *time.Time `db:"deleted_at" json:"deleted_at"`
 
 	Items []WishlistItem `json:"items"`
 }
 
 func (s *storage) CreateWishlist(ctx context.Context, list Wishlist) (Wishlist, error) {
-	query := `INSERT INTO wishlists (user_id, name, description, is_public) VALUES (?, ?, ?, ?)`
+	query := `INSERT INTO wishlists (id, user_id, name, description, is_public) VALUES (?, ?, ?, ?, ?)`
 
-	res, err := s.db.ExecContext(ctx, query,
+	_, err := s.db.ExecContext(ctx, query,
+		list.ID,
 		list.UserID,
 		list.Name,
 		list.Description,
@@ -32,15 +33,10 @@ func (s *storage) CreateWishlist(ctx context.Context, list Wishlist) (Wishlist, 
 		return Wishlist{}, err
 	}
 
-	betID, err := res.LastInsertId()
-	if err != nil {
-		return Wishlist{}, err
-	}
-
-	return s.GetWishlistByID(ctx, betID)
+	return s.GetWishlistByID(ctx, list.ID)
 }
 
-func (s *storage) GetWishlistByID(ctx context.Context, id int64) (Wishlist, error) {
+func (s *storage) GetWishlistByID(ctx context.Context, id string) (Wishlist, error) {
 	query := `SELECT id, user_id, name, description, is_public, created_at FROM wishlists WHERE id = ?`
 
 	var list Wishlist
@@ -92,34 +88,37 @@ func (s *storage) GetWishlists(ctx context.Context) ([]Wishlist, error) {
 }
 
 type WishlistItem struct {
-	ID          int64     `db:"id" json:"id"`
-	WishlistID  int64     `db:"wishlist_id" json:"wishlist_id"`
-	Title       *string   `db:"title" json:"title"`
-	URL         string    `db:"url" json:"url"`
-	Price       *float64  `db:"price" json:"price"`
-	Currency    *string   `db:"currency" json:"currency"`
-	ImageURL    *string   `db:"image_url" json:"image_url"`
-	Notes       *string   `db:"notes" json:"notes"`
-	IsPurchased bool      `db:"is_purchased" json:"is_purchased"`
-	CreatedAt   time.Time `db:"created_at" json:"created_at"`
-	UpdateAt    time.Time `db:"updated_at" json:"updated_at"`
+	ID          string     `db:"id" json:"id"`
+	WishlistID  string     `db:"wishlist_id" json:"wishlist_id"`
+	Name        string     `db:"name" json:"name"`
+	URL         *string    `db:"url" json:"url"`
+	Price       *float64   `db:"price" json:"price"`
+	Currency    *string    `db:"currency" json:"currency"`
+	ImageURL    *string    `db:"image_url" json:"image_url"`
+	Notes       *string    `db:"notes" json:"notes"`
+	SourceID    *string    `db:"source_id" json:"source_id"`
+	SourceType  *string    `db:"source_type" json:"source_type"`
+	IsPurchased bool       `db:"is_purchased" json:"is_purchased"`
+	CreatedAt   time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time  `db:"updated_at" json:"updated_at"`
+	DeletedAt   *time.Time `db:"deleted_at" json:"deleted_at"`
 }
 
-func (s *storage) GetWishlistItemByID(ctx context.Context, id int64) (WishlistItem, error) {
-	query := `SELECT id, wishlist_id, title, url, price, notes, is_purchased, created_at, updated_at FROM wishlist_items WHERE id = ?`
+func (s *storage) GetWishlistItemByID(ctx context.Context, id string) (WishlistItem, error) {
+	query := `SELECT id, wishlist_id, name, url, price, notes, is_purchased, created_at, updated_at FROM wishlist_items WHERE id = ?`
 
 	var item WishlistItem
 
 	if err := s.db.QueryRowContext(ctx, query, id).Scan(
 		&item.ID,
 		&item.WishlistID,
-		&item.Title,
+		&item.Name,
 		&item.URL,
 		&item.Price,
 		&item.Notes,
 		&item.IsPurchased,
 		&item.CreatedAt,
-		&item.UpdateAt,
+		&item.UpdatedAt,
 	); err != nil && IsNoRowsError(err) {
 		return WishlistItem{}, ErrNotFound
 	} else if err != nil {
@@ -129,45 +128,13 @@ func (s *storage) GetWishlistItemByID(ctx context.Context, id int64) (WishlistIt
 	return item, nil
 }
 
-func (s *storage) getWishlistItems(ctx context.Context, wishlistID int64) ([]WishlistItem, error) {
-	query := `SELECT id, wishlist_id, title, url, price, notes, is_purchased, created_at, updated_at FROM wishlist_items WHERE wishlist_id = ?`
-
-	rows, err := s.db.QueryContext(ctx, query, wishlistID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	items := make([]WishlistItem, 0)
-
-	for rows.Next() {
-		var item WishlistItem
-		if err := rows.Scan(
-			&item.ID,
-			&item.WishlistID,
-			&item.Title,
-			&item.URL,
-			&item.Price,
-			&item.Notes,
-			&item.IsPurchased,
-			&item.CreatedAt,
-			&item.UpdateAt,
-		); err != nil {
-			return nil, err
-		}
-
-		items = append(items, item)
-	}
-
-	return items, nil
-}
-
 func (s *storage) CreateWishlistItem(ctx context.Context, item WishlistItem) (WishlistItem, error) {
-	query := `INSERT INTO wishlist_items (wishlist_id, title, url, price, notes, is_purchased) VALUES (?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO wishlist_items (id, wishlist_id, name, url, price, notes, is_purchased) VALUES (?, ?, ?, ?, ?, ?, ?)`
 
-	res, err := s.db.ExecContext(ctx, query,
+	_, err := s.db.ExecContext(ctx, query,
+		item.ID,
 		item.WishlistID,
-		item.Title,
+		item.Name,
 		item.URL,
 		item.Price,
 		item.Notes,
@@ -178,19 +145,15 @@ func (s *storage) CreateWishlistItem(ctx context.Context, item WishlistItem) (Wi
 		return WishlistItem{}, err
 	}
 
-	itemID, err := res.LastInsertId()
-	if err != nil {
-		return WishlistItem{}, err
-	}
-
-	return s.GetWishlistItemByID(ctx, itemID)
+	return s.GetWishlistItemByID(ctx, item.ID)
 }
 
 func (s *storage) UpdateWishlistItem(ctx context.Context, item WishlistItem) (WishlistItem, error) {
-	query := `UPDATE wishlist_items SET title = ?, url = ?, price = ?, notes = ?, is_purchased = ?, image_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+	query := `UPDATE wishlist_items SET name = ?, url = ?, price = ?, notes = ?, is_purchased = ?, image_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
 
 	_, err := s.db.ExecContext(ctx, query,
-		item.Title,
+		item.ID,
+		item.Name,
 		item.URL,
 		item.Price,
 		item.Notes,
@@ -206,7 +169,7 @@ func (s *storage) UpdateWishlistItem(ctx context.Context, item WishlistItem) (Wi
 	return s.GetWishlistItemByID(ctx, item.ID)
 }
 
-func (s *storage) GetWishlistByUserID(ctx context.Context, userID int64) (Wishlist, error) {
+func (s *storage) GetWishlistByUserID(ctx context.Context, userID string) (Wishlist, error) {
 	query := `SELECT id, user_id, name, description, is_public, created_at FROM wishlists WHERE user_id = ? LIMIT 1`
 
 	var list Wishlist
@@ -224,7 +187,7 @@ func (s *storage) GetWishlistByUserID(ctx context.Context, userID int64) (Wishli
 		return Wishlist{}, err
 	}
 
-	items, err := s.getWishlistItems(ctx, list.ID)
+	items, err := s.GetWishlistItemsByWishListID(ctx, list.ID)
 	if err != nil {
 		return Wishlist{}, err
 	}
@@ -232,4 +195,55 @@ func (s *storage) GetWishlistByUserID(ctx context.Context, userID int64) (Wishli
 	list.Items = items
 
 	return list, nil
+}
+
+func (s *storage) fetchWishlistItems(ctx context.Context, query string, args ...interface{}) ([]WishlistItem, error) {
+	rows, err := s.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]WishlistItem, 0)
+	for rows.Next() {
+		var item WishlistItem
+		if err := rows.Scan(
+			&item.ID,
+			&item.WishlistID,
+			&item.Name,
+			&item.URL,
+			&item.Price,
+			&item.Notes,
+			&item.IsPurchased,
+			&item.ImageURL,
+			&item.SourceID,
+			&item.SourceType,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	return items, nil
+}
+
+func (s *storage) GetWishlistItems(ctx context.Context) ([]WishlistItem, error) {
+	query := `SELECT id, wishlist_id, name, url, price, notes, is_purchased, image_url, source_id, source_type, created_at, updated_at FROM wishlist_items
+		      ORDER BY created_at DESC LIMIT 100`
+	return s.fetchWishlistItems(ctx, query)
+}
+
+func (s *storage) GetWishlistItemsByWishListID(ctx context.Context, wishlistID string) ([]WishlistItem, error) {
+	query := `SELECT id, wishlist_id, name, url, price, notes, is_purchased, image_url, source_id, source_type, created_at, updated_at FROM wishlist_items WHERE wishlist_id = ?
+			  ORDER BY created_at DESC LIMIT 100`
+	return s.fetchWishlistItems(ctx, query, wishlistID)
+}
+
+func (s *storage) GetWishlistItemsByUserID(ctx context.Context, userID string) ([]WishlistItem, error) {
+	query := `SELECT id, wishlist_id, name, url, price, notes, is_purchased, image_url, source_id, source_type, created_at, updated_at FROM wishlist_items
+              WHERE wishlist_id IN (SELECT id FROM wishlists WHERE user_id = ?)
+              ORDER BY created_at DESC LIMIT 100`
+	return s.fetchWishlistItems(ctx, query, userID)
 }

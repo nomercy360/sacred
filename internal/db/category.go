@@ -3,7 +3,7 @@ package db
 import "context"
 
 type Category struct {
-	ID       int64  `db:"id" json:"id"`
+	ID       string `db:"id" json:"id"`
 	Name     string `db:"name" json:"name"`
 	ImageURL string `db:"image_url" json:"image_url"`
 }

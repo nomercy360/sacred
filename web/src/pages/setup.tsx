@@ -34,7 +34,7 @@ function SetupHeader(props: SetupHeaderProps) {
 					)}
 				</For>
 			</div>
-			<p class="mt-5 leading-tight text-2xl font-bold">
+			<p class="mt-5 leading-tight text-2xl font-extrabold">
 				{props.title}
 			</p>
 			<p class="mt-2 text-sm text-secondary-foreground">
@@ -45,13 +45,13 @@ function SetupHeader(props: SetupHeaderProps) {
 }
 
 type Category = {
-	id: number
+	id: string
 	name: string
 	image_url: string
 }
 
 export default function SetupProfilePage() {
-	const [selectedCategories, setSelectedCategories] = createSignal<number[]>([])
+	const [selectedCategories, setSelectedCategories] = createSignal<string[]>([])
 
 	const [step, setStep] = createSignal(1)
 	const [email, setEmail] = createSignal('')
@@ -63,7 +63,7 @@ export default function SetupProfilePage() {
 
 	const backButton = useBackButton()
 
-	function toggleCategory(id: number) {
+	function toggleCategory(id: string) {
 		const index = selectedCategories().indexOf(id)
 		if (index === -1) {
 			setSelectedCategories([...selectedCategories(), id])
@@ -73,7 +73,7 @@ export default function SetupProfilePage() {
 		window.Telegram.WebApp.HapticFeedback.selectionChanged()
 	}
 
-	function isSelected(id: number) {
+	function isSelected(id: string) {
 		return selectedCategories().includes(id)
 	}
 
@@ -163,7 +163,7 @@ export default function SetupProfilePage() {
 							<For each={categories()}>
 								{(category) => (
 									<button
-										style={{ 'background-image': !isSelected(category.id) ? `url(${category.image_url}), url('/placeholder.png')` : '' }}
+										style={{ 'background-image': !isSelected(category.id) ? `url(${category.image_url}), url('/placeholder.jpg')` : '' }}
 										class={cn('rounded-2xl flex items-center justify-center aspect-square bg-cover bg-center', isSelected(category.id) && 'bg-blue-600')}
 										onClick={() => toggleCategory(category.id)}
 									>

@@ -7,6 +7,7 @@ import WishlistPage from '~/pages/wishlist'
 import PeoplePage from '~/pages/people'
 import FeedPage from '~/pages/feed'
 import NewItem from '~/pages/new'
+import ShareProfile from '~/pages/share'
 
 export const routes: RouteDefinition[] = [
 	{
@@ -34,6 +35,10 @@ export const routes: RouteDefinition[] = [
 	{
 		path: '/setup',
 		component: SetupProfilePage,
+	},
+	{
+		path: '/share',
+		component: ShareProfile,
 	},
 	{
 		path: '**',

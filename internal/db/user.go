@@ -11,7 +11,7 @@ import (
 
 // User represents a user in the system
 type User struct {
-	ID           int64          `db:"id"`
+	ID           string         `db:"id"`
 	Username     string         `db:"username"`
 	LanguageCode *string        `db:"language_code"`
 	ChatID       int64          `db:"chat_id"`
@@ -21,16 +21,20 @@ type User struct {
 	Email        *string        `db:"email"`
 	ReferralCode string         `db:"referral_code"`
 	ReferredBy   *string        `db:"referred_by"`
+	AvatarURL    *string        `db:"avatar_url"`
 	Interests    InterestsArray `db:"interests"`
+	Followers    int            `db:"followers"`
 }
 
 type InterestsArray []Interest
 
 type Interest struct {
-	ID       int64  `json:"id"`
+	ID       string `json:"id"`
 	Name     string `json:"name"`
 	ImageURL string `json:"image_url"`
 }
+
+type ItemsArray []WishlistItem
 
 func (ia *InterestsArray) Scan(src interface{}) error {
 	var source []byte
@@ -50,6 +54,26 @@ func (ia *InterestsArray) Scan(src interface{}) error {
 	}
 
 	return json.Unmarshal(source, ia)
+}
+
+func (wa *ItemsArray) Scan(src interface{}) error {
+	var source []byte
+	switch src := src.(type) {
+	case []byte:
+		source = src
+	case string:
+		source = []byte(src)
+	case nil:
+		return nil
+	default:
+		return errors.New("unsupported type")
+	}
+
+	if len(source) == 0 {
+		source = []byte("[]")
+	}
+
+	return json.Unmarshal(source, wa)
 }
 
 func IsNoRowsError(err error) bool {
@@ -74,12 +98,13 @@ func IsForeignKeyViolationError(err error) bool {
 
 func (s *storage) CreateUser(ctx context.Context, user User) error {
 	query := `
-		INSERT INTO users (chat_id, username, first_name, last_name, language_code, email, referral_code, referred_by) 
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+		INSERT INTO users (id, chat_id, username, first_name, last_name, language_code, email, referral_code, referred_by, avatar_url) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	_, err := s.db.ExecContext(
 		ctx,
 		query,
+		user.ID,
 		user.ChatID,
 		user.Username,
 		user.FirstName,
@@ -88,6 +113,7 @@ func (s *storage) CreateUser(ctx context.Context, user User) error {
 		user.Email,
 		user.ReferralCode,
 		user.ReferredBy,
+		user.AvatarURL,
 	)
 
 	return err
@@ -107,6 +133,7 @@ func (s *storage) getUserBy(query string, arg interface{}) (User, error) {
 		&user.Email,
 		&user.ReferralCode,
 		&user.ReferredBy,
+		&user.AvatarURL,
 		&user.Interests,
 	); err != nil && IsNoRowsError(err) {
 		return User{}, ErrNotFound
@@ -130,6 +157,7 @@ func (s *storage) GetUserByChatID(chatID int64) (User, error) {
 		    u.email,
 		    u.referral_code, 
 		    u.referred_by,
+		    u.avatar_url,
 		    json_group_array(distinct json_object('id', c.id, 'name', c.name, 'image_url', c.image_url)) filter (where c.id is not null) as interests
 		FROM users u
 		LEFT JOIN user_interests ui ON u.id = ui.user_id
@@ -140,7 +168,7 @@ func (s *storage) GetUserByChatID(chatID int64) (User, error) {
 	return s.getUserBy(query, chatID)
 }
 
-func (s *storage) GetUserByID(id int64) (User, error) {
+func (s *storage) GetUserByID(id string) (User, error) {
 	query := `
 		SELECT 
 		    u.id,
@@ -153,6 +181,7 @@ func (s *storage) GetUserByID(id int64) (User, error) {
 		    u.email,
 		    u.referral_code, 
 		    u.referred_by,
+		    u.avatar_url,
 		    json_group_array(distinct json_object('id', c.id, 'name', c.name, 'image_url', c.image_url)) filter (where c.id is not null) as interests
 		FROM users u
 		LEFT JOIN user_interests ui ON u.id = ui.user_id
@@ -162,7 +191,7 @@ func (s *storage) GetUserByID(id int64) (User, error) {
 	return s.getUserBy(query, id)
 }
 
-func (s *storage) UpdateUser(ctx context.Context, user User, interests []int) error {
+func (s *storage) UpdateUser(ctx context.Context, user User, interests []string) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -210,4 +239,66 @@ func (s *storage) UpdateUser(ctx context.Context, user User, interests []int) er
 	}
 
 	return tx.Commit()
+}
+
+func (s *storage) ListUsers(ctx context.Context, uid string) ([]User, error) {
+	var users []User
+
+	query := `
+		SELECT 
+		    u.id,
+		    u.username,
+		    u.language_code,
+		    u.chat_id, 
+		    u.created_at, 
+		    u.first_name,
+		    u.last_name, 
+		    u.email,
+		    u.referral_code, 
+		    u.referred_by,
+		    u.avatar_url,
+		    json_group_array(distinct json_object('id', c.id, 'name', c.name, 'image_url', c.image_url)) filter (where c.id is not null) as interests,
+		    (SELECT COUNT(*) FROM followers f WHERE f.following_id = u.id) as followers
+		FROM users u
+		LEFT JOIN user_interests ui ON u.id = ui.user_id
+		LEFT JOIN categories c ON ui.category_id = c.id
+		WHERE u.id != ?
+		GROUP BY u.id
+		ORDER BY u.created_at DESC
+		LIMIT 100`
+
+	rows, err := s.db.QueryContext(ctx, query, uid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var user User
+		if err := rows.Scan(
+			&user.ID,
+			&user.Username,
+			&user.LanguageCode,
+			&user.ChatID,
+			&user.CreatedAt,
+			&user.FirstName,
+			&user.LastName,
+			&user.Email,
+			&user.ReferralCode,
+			&user.ReferredBy,
+			&user.AvatarURL,
+			&user.Interests,
+			&user.Followers,
+		); err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }

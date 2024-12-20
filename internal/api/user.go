@@ -8,8 +8,8 @@ import (
 )
 
 type UpdateUserRequest struct {
-	Interests []int  `json:"interests" validate:"required"`
-	Email     string `json:"email" validate:"required,email"`
+	Interests []string `json:"interests" validate:"required"`
+	Email     string   `json:"email" validate:"required,email"`
 }
 
 func (a *API) UpdateUserPreferences(c echo.Context) error {
@@ -56,6 +56,38 @@ func (a *API) UpdateUserPreferences(c echo.Context) error {
 		ReferralCode: updated.ReferralCode,
 		ReferredBy:   updated.ReferredBy,
 		Interests:    updated.Interests,
+		AvatarURL:    updated.AvatarURL,
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (a *API) ListProfiles(c echo.Context) error {
+	uid := getUserID(c)
+
+	users, err := a.storage.ListUsers(c.Request().Context(), uid)
+	if err != nil {
+		return terrors.InternalServer(err, "cannot list profiles")
+	}
+
+	resp := make([]contract.UserProfileResponse, 0, len(users))
+	for _, user := range users {
+		items, err := a.storage.GetWishlistItemsByUserID(c.Request().Context(), user.ID)
+		if err != nil {
+			return terrors.InternalServer(err, "cannot get wishlist items")
+		}
+
+		resp = append(resp, contract.UserProfileResponse{
+			ID:         user.ID,
+			FirstName:  user.FirstName,
+			LastName:   user.LastName,
+			Username:   user.Username,
+			CreatedAt:  user.CreatedAt,
+			Interests:  user.Interests,
+			AvatarURL:  user.AvatarURL,
+			Followers:  user.Followers,
+			SavedItems: items,
+		})
 	}
 
 	return c.JSON(http.StatusOK, resp)

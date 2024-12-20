@@ -11,7 +11,7 @@ import (
 )
 
 type MetadataFetchJob struct {
-	ItemID int64
+	ItemID string
 	URL    string
 }
 
@@ -55,9 +55,9 @@ func (a *API) StartMetadataWorker(ctx context.Context, job MetadataFetchJob) err
 	}
 
 	if title, ok := resp.Meta["og:title"]; ok {
-		item.Title = &title
+		item.Name = title
 	} else if resp.Title != "" {
-		item.Title = &resp.Title
+		item.Name = resp.Title
 	}
 
 	if price, ok := resp.Meta["og:price:amount"]; ok {

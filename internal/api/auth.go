@@ -7,24 +7,18 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	initdata "github.com/telegram-mini-apps/init-data-golang"
+	"io"
+	"log"
 	"math/rand"
 	"net/http"
 	"sacred/internal/contract"
 	"sacred/internal/db"
+	"sacred/internal/nanoid"
 	"sacred/internal/terrors"
 	"time"
 )
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-func GenerateReferralCode(length int) string {
-	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
-	code := make([]byte, length)
-	for i := range code {
-		code[i] = charset[seededRand.Intn(len(charset))]
-	}
-	return string(code)
-}
 
 func (a *API) AuthTelegram(c echo.Context) error {
 	query := c.QueryString()
@@ -65,13 +59,27 @@ func (a *API) AuthTelegram(c echo.Context) error {
 			lang = "en"
 		}
 
+		imgUrl := fmt.Sprintf("%s/avatars/%d.svg", a.cfg.AssetsURL, rand.Intn(30)+1)
+
+		if data.User.PhotoURL != "" {
+			imgFile := fmt.Sprintf("fb/users/%s.jpg", nanoid.Must())
+			imgUrl = fmt.Sprintf("%s/%s", a.cfg.AssetsURL, imgFile)
+			go func() {
+				if err = a.uploadImageToS3(data.User.PhotoURL, imgFile); err != nil {
+					log.Printf("failed to upload user avatar to S3: %v", err)
+				}
+			}()
+		}
+
 		create := db.User{
+			ID:           nanoid.Must(),
 			Username:     username,
 			ChatID:       data.User.ID,
-			ReferralCode: GenerateReferralCode(6),
+			ReferralCode: nanoid.Must(),
 			FirstName:    first,
 			LastName:     last,
 			LanguageCode: &lang,
+			AvatarURL:    &imgUrl,
 		}
 
 		if err = a.storage.CreateUser(context.Background(), create); err != nil {
@@ -85,6 +93,7 @@ func (a *API) AuthTelegram(c echo.Context) error {
 
 		// Create default wishlist
 		wishlist := db.Wishlist{
+			ID:          nanoid.Must(),
 			UserID:      user.ID,
 			Name:        fmt.Sprintf("%s's board", user.Username),
 			Description: "Default wishlist",
@@ -116,6 +125,7 @@ func (a *API) AuthTelegram(c echo.Context) error {
 		ReferralCode: user.ReferralCode,
 		ReferredBy:   user.ReferredBy,
 		Interests:    user.Interests,
+		AvatarURL:    user.AvatarURL,
 	}
 
 	resp := &contract.AuthResponse{
@@ -128,11 +138,11 @@ func (a *API) AuthTelegram(c echo.Context) error {
 
 type JWTClaims struct {
 	jwt.RegisteredClaims
-	UID    int64 `json:"uid"`
-	ChatID int64 `json:"chat_id"`
+	UID    string `json:"uid"`
+	ChatID int64  `json:"chat_id"`
 }
 
-func generateJWT(userID, chatID int64, secretKey string) (string, error) {
+func generateJWT(userID string, chatID int64, secretKey string) (string, error) {
 	claims := &JWTClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
@@ -149,4 +159,27 @@ func generateJWT(userID, chatID int64, secretKey string) (string, error) {
 	}
 
 	return t, nil
+}
+
+func (a *API) uploadImageToS3(imgURL string, fileName string) error {
+	resp, err := http.Get(imgURL)
+
+	if err != nil {
+		return fmt.Errorf("failed to download file: %v", err)
+
+	}
+
+	defer resp.Body.Close()
+
+	data, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		return fmt.Errorf("failed to read file: %v", err)
+	}
+
+	if _, err = a.s3Client.UploadFile(data, fileName); err != nil {
+		return fmt.Errorf("failed to upload user avatar to S3: %v", err)
+	}
+
+	return nil
 }

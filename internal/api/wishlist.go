@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sacred/internal/contract"
 	"sacred/internal/db"
+	"sacred/internal/nanoid"
 	"sacred/internal/terrors"
 )
 
@@ -30,8 +31,9 @@ func (a *API) AddWishlistItemHandler(c echo.Context) error {
 	}
 
 	item := db.WishlistItem{
+		ID:         nanoid.Must(),
 		WishlistID: wishlist.ID,
-		URL:        req.URL,
+		URL:        &req.URL,
 	}
 
 	res, err := a.storage.CreateWishlistItem(c.Request().Context(), item)
@@ -41,7 +43,7 @@ func (a *API) AddWishlistItemHandler(c echo.Context) error {
 
 	job := MetadataFetchJob{
 		ItemID: res.ID,
-		URL:    res.URL,
+		URL:    *res.URL,
 	}
 
 	a.EnqueueJob(job)

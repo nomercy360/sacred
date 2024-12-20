@@ -3,26 +3,21 @@ module sacred
 go 1.23.0
 
 require (
-	github.com/PuerkitoBio/goquery v1.10.0
 	github.com/aws/aws-sdk-go-v2 v1.32.6
 	github.com/aws/aws-sdk-go-v2/config v1.28.6
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.47
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.71.0
-	github.com/go-chi/chi/v5 v5.1.0
-	github.com/go-chi/cors v1.2.1
-	github.com/go-chi/render v1.0.3
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/labstack/echo-jwt/v4 v4.3.0
 	github.com/labstack/echo/v4 v4.13.2
+	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/telegram-mini-apps/init-data-golang v1.2.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	github.com/ajg/form v1.5.1 // indirect
-	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.7 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.21 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.25 // indirect

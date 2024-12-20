@@ -3,7 +3,7 @@ import { createSignal } from 'solid-js'
 
 
 type User = {
-	id: number
+	id: string
 	first_name: string
 	last_name: string
 	username: string
@@ -11,7 +11,7 @@ type User = {
 	language_code: string
 	created_at: string
 	interests: {
-		id: number
+		id: string
 		name: string
 		image_url: string
 	}[]

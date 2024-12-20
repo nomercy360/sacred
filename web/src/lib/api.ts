@@ -113,3 +113,21 @@ export const fetchUserWishlist = async () => {
 
 	return data
 }
+
+export const fetchIdeas = async () => {
+	const { data } = await apiFetch({
+		endpoint: `/ideas`,
+		method: 'GET',
+	})
+
+	return data
+}
+
+export const fetchProfiles = async () => {
+	const { data } = await apiFetch({
+		endpoint: `/profiles`,
+		method: 'GET',
+	})
+
+	return data
+}

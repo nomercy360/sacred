@@ -10,7 +10,7 @@ type Error struct {
 }
 
 type UserResponse struct {
-	ID           int64         `json:"id"`
+	ID           string        `json:"id"`
 	FirstName    *string       `json:"first_name"`
 	LastName     *string       `json:"last_name"`
 	Username     string        `json:"username"`
@@ -21,6 +21,19 @@ type UserResponse struct {
 	ReferralCode string        `json:"referral_code"`
 	ReferredBy   *string       `json:"referred_by"`
 	Interests    []db.Interest `json:"interests"`
+	AvatarURL    *string       `json:"avatar_url"`
+}
+
+type UserProfileResponse struct {
+	ID         string            `json:"id"`
+	FirstName  *string           `json:"first_name"`
+	LastName   *string           `json:"last_name"`
+	Username   string            `json:"username"`
+	CreatedAt  time.Time         `json:"created_at"`
+	AvatarURL  *string           `json:"avatar_url"`
+	Interests  []db.Interest     `json:"interests"`
+	Followers  int               `json:"followers"`
+	SavedItems []db.WishlistItem `json:"wishlist_items"`
 }
 
 type AuthResponse struct {
@@ -30,12 +43,12 @@ type AuthResponse struct {
 
 type CreateWishItemByURLRequest struct {
 	URL        string `json:"url" validate:"required,url"`
-	WishlistID int64  `json:"wishlist_id" validate:"required"`
+	WishlistID string `json:"wishlist_id" validate:"required"`
 }
 
 type WishlistItemResponse struct {
-	ID          int64     `json:"id"`
-	WishlistID  int64     `json:"wishlist_id"`
+	ID          string    `json:"id"`
+	WishlistID  string    `json:"wishlist_id"`
 	Title       *string   `json:"title"`
 	URL         string    `json:"url"`
 	Price       *float64  `json:"price"`
@@ -43,5 +56,5 @@ type WishlistItemResponse struct {
 	Notes       *string   `json:"notes"`
 	IsPurchased bool      `json:"is_purchased"`
 	CreatedAt   time.Time `json:"created_at"`
-	UpdateAt    time.Time `json:"updated_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }

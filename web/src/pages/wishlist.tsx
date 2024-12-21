@@ -1,6 +1,8 @@
 import { fetchUserWishlist } from '~/lib/api'
-import { createResource, Match, Switch, Show, For, Component } from 'solid-js'
+import { Match, Switch, Show, For } from 'solid-js'
 import { ImageButton } from '~/components/image-button'
+import { createQuery } from '@tanstack/solid-query'
+import { currencySymbol } from '~/lib/utils'
 
 type WishlistItem = {
 	id: string
@@ -9,6 +11,11 @@ type WishlistItem = {
 	description: string
 	image_url: string
 	created_at: string
+	currency: string
+	price: number
+	is_public: boolean
+	is_fulfilled: boolean
+	is_claimed: boolean
 }
 
 type Wishlist = {
@@ -22,7 +29,10 @@ type Wishlist = {
 }
 
 export default function WishlistPage() {
-	const [wishlist, { refetch, mutate }] = createResource<Wishlist>(fetchUserWishlist)
+	const wishlist = createQuery<Wishlist>(() => ({
+		queryKey: ['wishlist'],
+		queryFn: () => fetchUserWishlist(),
+	}))
 
 	// Define available categories
 	const categories = [
@@ -38,8 +48,8 @@ export default function WishlistPage() {
 					<span class="material-symbols-rounded text-[20px]">page_info</span>
 				</button>
 				<p class="text-black text-2xl font-extrabold">
-					<Show when={!wishlist.loading} fallback={<span>Loading...</span>}>
-						{wishlist()?.name}
+					<Show when={!wishlist.isLoading} fallback={<span>Loading...</span>}>
+						{wishlist.data?.name}
 					</Show>
 				</p>
 				<button class="flex items-center justify-center bg-secondary rounded-full size-10">
@@ -49,7 +59,7 @@ export default function WishlistPage() {
 
 			<div class="text-center pb-[200px] flex-1 overflow-y-auto w-full">
 				<Switch>
-					<Match when={wishlist.loading}>
+					<Match when={wishlist.isLoading}>
 						<p class="mt-4">Loading your wishlist...</p>
 					</Match>
 
@@ -57,15 +67,15 @@ export default function WishlistPage() {
 						<div class="mt-4">
 							<p class="text-red-500">Failed to load wishlist.</p>
 							<button
-								class="mt-2 px-4 py-2 bg-primary text-white rounded"
-								onClick={() => refetch()}
+								class="mt-2 px-4 py-2 bg-primary text-white rounded-2xl"
+								onClick={() => wishlist.refetch()}
 							>
 								Retry
 							</button>
 						</div>
 					</Match>
 
-					<Match when={!wishlist.loading && wishlist()?.items.length === 0}>
+					<Match when={!wishlist.isLoading && !wishlist.data?.items.length}>
 						<div class="space-y-4 mt-4">
 							<p>
 								There is nothing here yet. Start saving or explore collections.
@@ -83,15 +93,17 @@ export default function WishlistPage() {
 						</div>
 					</Match>
 
-					<Match when={!wishlist.loading && wishlist()?.items.length}>
-						<div class="space-y-4 mt-4">
-							<For each={wishlist()?.items}>
+					<Match when={!wishlist.isLoading && wishlist.data?.items.length}>
+						<div class="grid grid-cols-2 gap-2 px-2">
+							<For each={wishlist.data?.items}>
 								{(item) => (
-									<div class="flex items-center p-4 bg-white shadow rounded">
-										<img src={item.image_url} alt={item.name} class="w-16 h-16 rounded mr-4" />
-										<div>
-											<h3 class="text-lg font-semibold">{item.name}</h3>
-											<p class="text-gray-600">{item.description}</p>
+									<div class="p-4 flex flex-col items-center border-[0.5px] rounded-2xl">
+										<img src={item.image_url} alt={item.name}
+												 class="rounded-2xl mb-4 aspect-square object-cover size-full" />
+										<div class="text-sm font-semibold">
+											{item.name}
+											<span
+												class="text-xs text-secondary-foreground">{' '}{item.price}{currencySymbol(item.currency)}</span>
 										</div>
 									</div>
 								)}

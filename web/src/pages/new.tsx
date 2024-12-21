@@ -1,11 +1,11 @@
-import { TextField, TextFieldInput, TextFieldLabel, TextFieldTextArea } from '~/components/ui/text-field'
+import { TextField, TextFieldInput, TextFieldTextArea } from '~/components/ui/text-field'
 import { createStore } from 'solid-js/store'
 import { createEffect, createSignal, onCleanup, onMount, Show } from 'solid-js'
 import { useMainButton } from '~/lib/useMainButton'
 import { fetchAddWishlistItem, fetchPresignedUrl, NewItemRequest, uploadToS3 } from '~/lib/api'
 import { Link } from '~/components/link'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
-import { store } from '~/store'
+import { queryClient } from '~/App'
 
 const NewItem = () => {
 	const mainButton = useMainButton()
@@ -33,6 +33,7 @@ const NewItem = () => {
 				await uploadToS3(data.url, imgFile()!)
 				setState('image_url', `https://assets.peatch.io/${data.file_name}`)
 				await fetchAddWishlistItem('Eg190oo0R9cl', state)
+				await queryClient.invalidateQueries({ queryKey: ['wishlist'] })
 			} catch (e) {
 				console.error(e)
 			} finally {
@@ -141,7 +142,7 @@ const NewItem = () => {
 					<Select
 						value={currency()}
 						onChange={setCurrency}
-						options={['USD', 'EUR', 'GBP']}
+						options={['USD', 'EUR', 'RUB', 'THB']}
 						placeholder="Currency"
 						itemComponent={(props) => <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>}
 					>

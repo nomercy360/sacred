@@ -98,15 +98,18 @@ type WishlistItem struct {
 	Notes       *string    `db:"notes" json:"notes"`
 	SourceID    *string    `db:"source_id" json:"source_id"`
 	SourceType  *string    `db:"source_type" json:"source_type"`
-	IsPurchased bool       `db:"is_purchased" json:"is_purchased"`
+	IsFulfilled bool       `db:"is_fulfilled" json:"is_fulfilled"`
 	IsPublic    bool       `db:"is_public" json:"is_public"`
+	IsFavorite  bool       `db:"is_favorite" json:"is_favorite"`
+	ReservedBy  *string    `db:"reserved_by" json:"reserved_by"`
+	ReservedAt  *time.Time `db:"reserved_at" json:"reserved_at"`
 	CreatedAt   time.Time  `db:"created_at" json:"created_at"`
 	UpdatedAt   time.Time  `db:"updated_at" json:"updated_at"`
 	DeletedAt   *time.Time `db:"deleted_at" json:"deleted_at"`
 }
 
 func (s *storage) GetWishlistItemByID(ctx context.Context, id string) (WishlistItem, error) {
-	query := `SELECT id, wishlist_id, name, url, price, currency, image_url, notes, is_purchased, is_public, created_at, updated_at FROM wishlist_items WHERE id = ?`
+	query := `SELECT id, wishlist_id, name, url, price, currency, image_url, notes, is_fulfilled, is_public, is_favorite, reserved_by, reserved_at, created_at, updated_at FROM wishlist_items WHERE id = ?`
 
 	var item WishlistItem
 
@@ -119,8 +122,11 @@ func (s *storage) GetWishlistItemByID(ctx context.Context, id string) (WishlistI
 		&item.Currency,
 		&item.ImageURL,
 		&item.Notes,
-		&item.IsPurchased,
+		&item.IsFulfilled,
 		&item.IsPublic,
+		&item.IsFavorite,
+		&item.ReservedBy,
+		&item.ReservedAt,
 		&item.CreatedAt,
 		&item.UpdatedAt,
 	); err != nil && IsNoRowsError(err) {
@@ -133,7 +139,7 @@ func (s *storage) GetWishlistItemByID(ctx context.Context, id string) (WishlistI
 }
 
 func (s *storage) CreateWishlistItem(ctx context.Context, item WishlistItem) (WishlistItem, error) {
-	query := `INSERT INTO wishlist_items (id, wishlist_id, name, url, price, currency, image_url, notes, is_purchased, is_public) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO wishlist_items (id, wishlist_id, name, url, price, currency, image_url, notes, is_fulfilled, is_public) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	_, err := s.db.ExecContext(ctx, query,
 		item.ID,
@@ -144,7 +150,7 @@ func (s *storage) CreateWishlistItem(ctx context.Context, item WishlistItem) (Wi
 		item.Currency,
 		item.ImageURL,
 		item.Notes,
-		item.IsPurchased,
+		item.IsFulfilled,
 		item.IsPublic,
 	)
 
@@ -156,7 +162,7 @@ func (s *storage) CreateWishlistItem(ctx context.Context, item WishlistItem) (Wi
 }
 
 func (s *storage) UpdateWishlistItem(ctx context.Context, item WishlistItem) (WishlistItem, error) {
-	query := `UPDATE wishlist_items SET name = ?, url = ?, price = ?, notes = ?, is_purchased = ?, image_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+	query := `UPDATE wishlist_items SET name = ?, url = ?, price = ?, notes = ?, is_fulfilled = ?, image_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
 
 	_, err := s.db.ExecContext(ctx, query,
 		item.ID,
@@ -164,7 +170,7 @@ func (s *storage) UpdateWishlistItem(ctx context.Context, item WishlistItem) (Wi
 		item.URL,
 		item.Price,
 		item.Notes,
-		item.IsPurchased,
+		item.IsFulfilled,
 		item.ImageURL,
 		item.ID,
 	)
@@ -220,11 +226,16 @@ func (s *storage) fetchWishlistItems(ctx context.Context, query string, args ...
 			&item.Name,
 			&item.URL,
 			&item.Price,
+			&item.Currency,
 			&item.Notes,
-			&item.IsPurchased,
+			&item.IsFulfilled,
+			&item.IsFavorite,
+			&item.IsPublic,
 			&item.ImageURL,
 			&item.SourceID,
 			&item.SourceType,
+			&item.ReservedBy,
+			&item.ReservedAt,
 			&item.CreatedAt,
 			&item.UpdatedAt,
 		); err != nil {
@@ -237,19 +248,19 @@ func (s *storage) fetchWishlistItems(ctx context.Context, query string, args ...
 }
 
 func (s *storage) GetWishlistItems(ctx context.Context) ([]WishlistItem, error) {
-	query := `SELECT id, wishlist_id, name, url, price, notes, is_purchased, image_url, source_id, source_type, created_at, updated_at FROM wishlist_items
+	query := `SELECT id, wishlist_id, name, url, price, currency, notes, is_fulfilled, is_favorite, is_public, image_url, source_id, source_type, reserved_by, reserved_at, created_at, updated_at FROM wishlist_items
 		      ORDER BY created_at DESC LIMIT 100`
 	return s.fetchWishlistItems(ctx, query)
 }
 
 func (s *storage) GetWishlistItemsByWishListID(ctx context.Context, wishlistID string) ([]WishlistItem, error) {
-	query := `SELECT id, wishlist_id, name, url, price, notes, is_purchased, image_url, source_id, source_type, created_at, updated_at FROM wishlist_items WHERE wishlist_id = ?
+	query := `SELECT id, wishlist_id, name, url, price, currency, notes, is_fulfilled, is_favorite, is_public, image_url, source_id, source_type, reserved_by, reserved_at, created_at, updated_at FROM wishlist_items WHERE wishlist_id = ?
 			  ORDER BY created_at DESC LIMIT 100`
 	return s.fetchWishlistItems(ctx, query, wishlistID)
 }
 
 func (s *storage) GetWishlistItemsByUserID(ctx context.Context, userID string) ([]WishlistItem, error) {
-	query := `SELECT id, wishlist_id, name, url, price, notes, is_purchased, image_url, source_id, source_type, created_at, updated_at FROM wishlist_items
+	query := `SELECT id, wishlist_id, name, url, price, currency, notes, is_fulfilled, is_favorite, is_public, image_url, source_id, source_type, reserved_by, reserved_at, created_at, updated_at FROM wishlist_items
               WHERE wishlist_id IN (SELECT id FROM wishlists WHERE user_id = ?)
               ORDER BY created_at DESC LIMIT 100`
 	return s.fetchWishlistItems(ctx, query, userID)

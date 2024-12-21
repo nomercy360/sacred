@@ -57,7 +57,7 @@ export type UserProfile = {
 		notes: string
 		source_id?: string
 		source_type?: string
-		is_purchased: boolean
+		is_fulfilled: boolean
 		created_at: string
 		updated_at: string
 		deleted_at: any
@@ -115,7 +115,7 @@ export default function WishlistPage() {
 						<div class="mt-4">
 							<p class="text-red-500">Failed to load wishlist.</p>
 							<button
-								class="mt-2 px-4 py-2 bg-primary text-white rounded"
+								class="mt-2 px-4 py-2 bg-primary text-white rounded-2xl"
 								onClick={() => users.refetch()}
 							>
 								Retry

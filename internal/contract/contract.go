@@ -48,9 +48,17 @@ type CreateWishItemRequest struct {
 	WishlistID string   `json:"wishlist_id"`
 	Name       string   `json:"name"`
 	Price      *float64 `json:"price"`
+	Currency   *string  `json:"currency"`
 	ImageURL   *string  `json:"image_url"`
 	Notes      *string  `json:"notes"`
 	IsPublic   bool     `json:"is_public"`
+}
+
+var validCurrencies = map[string]struct{}{
+	"USD": {},
+	"EUR": {},
+	"RUB": {},
+	"THB": {},
 }
 
 func (r *CreateWishItemRequest) Validate() error {
@@ -94,6 +102,12 @@ func (r *CreateWishItemRequest) Validate() error {
 
 	if r.WishlistID == "" {
 		return errors.New("wishlist_id cannot be empty")
+	}
+
+	if r.Currency != nil {
+		if _, ok := validCurrencies[*r.Currency]; !ok {
+			return errors.New("invalid currency")
+		}
 	}
 
 	return nil

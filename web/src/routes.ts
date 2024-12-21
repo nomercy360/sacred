@@ -3,7 +3,7 @@ import type { RouteDefinition } from '@solidjs/router'
 
 import SetupProfilePage from '~/pages/setup'
 import NavigationTabs from '~/components/navigation-tabs'
-import WishlistPage from '~/pages/wishlist'
+import UserBoardPage from '~/pages/board'
 import PeoplePage from '~/pages/people'
 import FeedPage from '~/pages/feed'
 import NewItem from '~/pages/new'
@@ -16,7 +16,7 @@ export const routes: RouteDefinition[] = [
 		children: [
 			{
 				'path': '/',
-				'component': WishlistPage,
+				'component': UserBoardPage,
 			},
 			{
 				'path': '/people',
@@ -39,6 +39,10 @@ export const routes: RouteDefinition[] = [
 	{
 		'path': '/new',
 		'component': NewItem,
+	},
+	{
+		'path': '/wishes/:id',
+		'component': lazy(() => import('./pages/wish')),
 	},
 	{
 		path: '**',

@@ -4,7 +4,7 @@ import { useNavigate } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
 import Toast from '~/components/toast'
 import { API_BASE_URL } from '~/lib/api'
-import { setToken, setUser, store } from '~/store'
+import { setToken, setUser, setWishes, store } from '~/store'
 import { Toaster } from '~/components/ui/toast'
 
 
@@ -38,10 +38,11 @@ export default function App(props: any) {
 				method: 'POST',
 			})
 
-			const user = await resp.json()
+			const data = await resp.json()
 
-			setUser(user.user)
-			setToken(user.token)
+			setUser(data.user)
+			setToken(data.token)
+			setWishes(data.wishes)
 
 			window.Telegram.WebApp.ready()
 			window.Telegram.WebApp.expand()

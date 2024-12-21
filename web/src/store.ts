@@ -1,6 +1,6 @@
 import { createStore } from 'solid-js/store'
 import { createSignal } from 'solid-js'
-
+import { Wish, Wishlist } from '~/lib/api'
 
 type User = {
 	id: string
@@ -22,15 +22,19 @@ export const [store, setStore] = createStore<{
 	user: User | null
 	token: string
 	following: number[]
+	wishes: Wish[]
 }>({
 	user: null as any,
 	token: null as any,
 	following: [],
+	wishes: [],
 })
 
 export const setUser = (user: any) => setStore('user', user)
 
 export const setToken = (token: string) => setStore('token', token)
+
+export const setWishes = (wishlist: Wishlist) => setStore('wishes', wishlist)
 
 export const setFollowing = (following: number[]) =>
 	setStore('following', following)

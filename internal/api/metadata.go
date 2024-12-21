@@ -49,7 +49,7 @@ func (a *API) StartMetadataWorker(ctx context.Context, job MetadataFetchJob) err
 		return fmt.Errorf("failed to fetch resp: %v", err)
 	}
 
-	item, err := a.storage.GetWishlistItemByID(ctx, job.ItemID)
+	item, err := a.storage.GetWishByID(ctx, job.ItemID)
 	if err != nil {
 		return fmt.Errorf("failed to get item from db: %v", err)
 	}
@@ -76,7 +76,7 @@ func (a *API) StartMetadataWorker(ctx context.Context, job MetadataFetchJob) err
 		item.ImageURL = &imageURL
 	}
 
-	if _, err := a.storage.UpdateWishlistItem(ctx, item); err != nil {
+	if _, err := a.storage.UpdateWish(ctx, item); err != nil {
 		return fmt.Errorf("failed to update item resp in db: %v", err)
 	}
 

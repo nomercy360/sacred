@@ -90,19 +90,6 @@ func (a *API) AuthTelegram(c echo.Context) error {
 		if err != nil {
 			return terrors.InternalServer(err, "failed to get user")
 		}
-
-		// Create default wishlist
-		wishlist := db.Wishlist{
-			ID:          nanoid.Must(),
-			UserID:      user.ID,
-			Name:        fmt.Sprintf("%s's board", user.Username),
-			Description: "Default wishlist",
-			IsPublic:    false,
-		}
-
-		if _, err = a.storage.CreateWishlist(context.Background(), wishlist); err != nil {
-			return terrors.InternalServer(err, "failed to create default wishlist")
-		}
 	} else if err != nil {
 		return terrors.InternalServer(err, "failed to get user")
 	}
@@ -128,9 +115,15 @@ func (a *API) AuthTelegram(c echo.Context) error {
 		AvatarURL:    user.AvatarURL,
 	}
 
+	wishes, err := a.storage.GetWishesByUserID(context.Background(), user.ID)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to get user's wishlists")
+	}
+
 	resp := &contract.AuthResponse{
-		Token: token,
-		User:  uresp,
+		Token:  token,
+		User:   uresp,
+		Wishes: wishes,
 	}
 
 	return c.JSON(http.StatusOK, resp)

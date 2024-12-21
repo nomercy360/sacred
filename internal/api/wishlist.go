@@ -9,8 +9,8 @@ import (
 	"sacred/internal/terrors"
 )
 
-func (a *API) AddWishlistItemHandler(c echo.Context) error {
-	var req contract.CreateWishItemRequest
+func (a *API) AddWishHandler(c echo.Context) error {
+	var req contract.CreateWishRequest
 	if err := c.Bind(&req); err != nil {
 		return terrors.BadRequest(err, "failed to bind request")
 	}
@@ -21,27 +21,18 @@ func (a *API) AddWishlistItemHandler(c echo.Context) error {
 
 	userID := getUserID(c)
 
-	wishlist, err := a.storage.GetWishlistByID(c.Request().Context(), req.WishlistID)
-	if err != nil {
-		return terrors.InternalServer(err, "cannot get wishlist")
+	item := db.Wish{
+		ID:       nanoid.Must(),
+		UserID:   userID,
+		URL:      req.URL,
+		Name:     req.Name,
+		Price:    req.Price,
+		ImageURL: req.ImageURL,
+		Notes:    req.Notes,
+		IsPublic: req.IsPublic,
 	}
 
-	if wishlist.UserID != userID {
-		return terrors.Forbidden(nil, "forbidden")
-	}
-
-	item := db.WishlistItem{
-		ID:         nanoid.Must(),
-		WishlistID: wishlist.ID,
-		URL:        req.URL,
-		Name:       req.Name,
-		Price:      req.Price,
-		ImageURL:   req.ImageURL,
-		Notes:      req.Notes,
-		IsPublic:   req.IsPublic,
-	}
-
-	res, err := a.storage.CreateWishlistItem(c.Request().Context(), item)
+	res, err := a.storage.CreateWish(c.Request().Context(), item)
 	if err != nil {
 		return terrors.InternalServer(err, "cannot create wishlist item")
 	}
@@ -49,13 +40,24 @@ func (a *API) AddWishlistItemHandler(c echo.Context) error {
 	return c.JSON(http.StatusCreated, res)
 }
 
-func (a *API) GetUserWishlistHandler(c echo.Context) error {
-	userID := getUserID(c)
+func (a *API) GetWishHandler(c echo.Context) error {
+	itemID := c.Param("id")
 
-	wishlist, err := a.storage.GetWishlistByUserID(c.Request().Context(), userID)
+	item, err := a.storage.GetWishByID(c.Request().Context(), itemID)
 	if err != nil {
-		return terrors.InternalServer(err, "cannot get wishlist")
+		return terrors.InternalServer(err, "cannot get wishlist item")
 	}
 
-	return c.JSON(http.StatusOK, wishlist)
+	return c.JSON(http.StatusOK, item)
+}
+
+func (a *API) ListUserWishes(c echo.Context) error {
+	uid := getUserID(c)
+
+	res, err := a.storage.GetWishesByUserID(c.Request().Context(), uid)
+	if err != nil {
+		return terrors.InternalServer(err, "cannot get wishlist item")
+	}
+
+	return c.JSON(http.StatusOK, res)
 }

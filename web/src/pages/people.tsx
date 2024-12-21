@@ -1,27 +1,8 @@
-import { fetchProfiles, fetchUserWishlist } from '~/lib/api'
-import { createResource, Match, Switch, Show, For, Component } from 'solid-js'
+import { fetchProfiles } from '~/lib/api'
+import { Match, Switch } from 'solid-js'
 import { ImageButton } from '~/components/image-button'
 import { createQuery } from '@tanstack/solid-query'
 import { Link } from '~/components/link'
-
-type WishlistItem = {
-	id: string
-	wishlist_id: string
-	name: string
-	description: string
-	image_url: string
-	created_at: string
-}
-
-type Wishlist = {
-	id: string
-	user_id: string
-	name: string
-	description: string
-	is_public: boolean
-	created_at: string
-	items: WishlistItem[]
-}
 
 type UserInfoProps = {
 	avatar_url: string

@@ -72,7 +72,7 @@ func (a *API) ListProfiles(c echo.Context) error {
 
 	resp := make([]contract.UserProfileResponse, 0, len(users))
 	for _, user := range users {
-		items, err := a.storage.GetWishlistItemsByUserID(c.Request().Context(), user.ID)
+		items, err := a.storage.GetWishesByUserID(c.Request().Context(), user.ID)
 		if err != nil {
 			return terrors.InternalServer(err, "cannot get wishlist items")
 		}
@@ -91,4 +91,42 @@ func (a *API) ListProfiles(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, resp)
+}
+
+func (a *API) UnfollowUser(c echo.Context) error {
+	var req contract.FollowUserRequest
+	if err := c.Bind(&req); err != nil {
+		return terrors.BadRequest(err, "failed to bind request")
+	}
+
+	if err := req.Validate(); err != nil {
+		return terrors.BadRequest(err, "failed to validate request")
+	}
+
+	uid := getUserID(c)
+
+	if err := a.storage.UnfollowUser(c.Request().Context(), uid, req.FollowingID); err != nil {
+		return terrors.InternalServer(err, "could not unfollow user")
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+func (a *API) FollowUser(c echo.Context) error {
+	var req contract.FollowUserRequest
+	if err := c.Bind(&req); err != nil {
+		return terrors.BadRequest(err, "failed to bind request")
+	}
+
+	if err := req.Validate(); err != nil {
+		return terrors.BadRequest(err, "failed to validate request")
+	}
+
+	uid := getUserID(c)
+
+	if err := a.storage.FollowUser(c.Request().Context(), uid, req.FollowingID); err != nil {
+		return terrors.InternalServer(err, "could not follow user")
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }

@@ -2,10 +2,11 @@ import { TextField, TextFieldInput, TextFieldTextArea } from '~/components/ui/te
 import { createStore } from 'solid-js/store'
 import { createEffect, createSignal, onCleanup, onMount, Show } from 'solid-js'
 import { useMainButton } from '~/lib/useMainButton'
-import { fetchAddWishlistItem, fetchPresignedUrl, NewItemRequest, uploadToS3 } from '~/lib/api'
+import { fetchAddWish, fetchPresignedUrl, NewItemRequest, uploadToS3 } from '~/lib/api'
 import { Link } from '~/components/link'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { queryClient } from '~/App'
+import { store } from '~/store'
 
 const NewItem = () => {
 	const mainButton = useMainButton()
@@ -32,7 +33,7 @@ const NewItem = () => {
 				const { data, error } = await fetchPresignedUrl(imgFile()!.name)
 				await uploadToS3(data.url, imgFile()!)
 				setState('image_url', `https://assets.peatch.io/${data.file_name}`)
-				await fetchAddWishlistItem('Eg190oo0R9cl', state)
+				await fetchAddWish(state)
 				await queryClient.invalidateQueries({ queryKey: ['wishlist'] })
 			} catch (e) {
 				console.error(e)
@@ -104,7 +105,6 @@ const NewItem = () => {
 							type="file"
 							class="sr-only mt-2 w-full rounded-lg p-2 text-foreground"
 							placeholder="Enter image"
-							capture="environment"
 							accept="image/*"
 							onChange={(e) => handleFileChange(e)}
 						/>

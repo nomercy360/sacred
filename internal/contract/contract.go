@@ -2,6 +2,7 @@ package contract
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"sacred/internal/db"
 	"time"
@@ -27,31 +28,43 @@ type UserResponse struct {
 }
 
 type UserProfileResponse struct {
-	ID         string            `json:"id"`
-	FirstName  *string           `json:"first_name"`
-	LastName   *string           `json:"last_name"`
-	Username   string            `json:"username"`
-	CreatedAt  time.Time         `json:"created_at"`
-	AvatarURL  *string           `json:"avatar_url"`
-	Interests  []db.Interest     `json:"interests"`
-	Followers  int               `json:"followers"`
-	SavedItems []db.WishlistItem `json:"wishlist_items"`
+	ID         string        `json:"id"`
+	FirstName  *string       `json:"first_name"`
+	LastName   *string       `json:"last_name"`
+	Username   string        `json:"username"`
+	CreatedAt  time.Time     `json:"created_at"`
+	AvatarURL  *string       `json:"avatar_url"`
+	Interests  []db.Interest `json:"interests"`
+	Followers  int           `json:"followers"`
+	SavedItems []db.Wish     `json:"wishlist_items"`
 }
 
 type AuthResponse struct {
-	Token string       `json:"token"`
-	User  UserResponse `json:"user"`
+	Token  string       `json:"token"`
+	User   UserResponse `json:"user"`
+	Wishes []db.Wish    `json:"wishes"`
 }
 
-type CreateWishItemRequest struct {
-	URL        *string  `json:"url"`
-	WishlistID string   `json:"wishlist_id"`
-	Name       string   `json:"name"`
-	Price      *float64 `json:"price"`
-	Currency   *string  `json:"currency"`
-	ImageURL   *string  `json:"image_url"`
-	Notes      *string  `json:"notes"`
-	IsPublic   bool     `json:"is_public"`
+type CreateWishRequest struct {
+	URL      *string  `json:"url"`
+	Name     string   `json:"name"`
+	Price    *float64 `json:"price"`
+	Currency *string  `json:"currency"`
+	ImageURL *string  `json:"image_url"`
+	Notes    *string  `json:"notes"`
+	IsPublic bool     `json:"is_public"`
+}
+
+type FollowUserRequest struct {
+	FollowingID string `json:"following_id"`
+}
+
+func (r *FollowUserRequest) Validate() error {
+	if r.FollowingID == "" {
+		return fmt.Errorf("following_id is empty")
+	}
+
+	return nil
 }
 
 var validCurrencies = map[string]struct{}{
@@ -61,7 +74,7 @@ var validCurrencies = map[string]struct{}{
 	"THB": {},
 }
 
-func (r *CreateWishItemRequest) Validate() error {
+func (r *CreateWishRequest) Validate() error {
 	if r.URL != nil {
 		parsed, err := url.Parse(*r.URL)
 		if err != nil {
@@ -98,10 +111,6 @@ func (r *CreateWishItemRequest) Validate() error {
 
 	if r.Name == "" {
 		return errors.New("name cannot be empty")
-	}
-
-	if r.WishlistID == "" {
-		return errors.New("wishlist_id cannot be empty")
 	}
 
 	if r.Currency != nil {

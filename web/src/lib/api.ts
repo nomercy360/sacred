@@ -102,9 +102,9 @@ export const fetchCategories = async () => {
 	return data
 }
 
-export const fetchUserWishlist = async () => {
+export const fetchUserWishes = async () => {
 	const { data } = await apiFetch({
-		endpoint: `/user/wishlist`,
+		endpoint: `/user/wishes`,
 		method: 'GET',
 	})
 
@@ -140,14 +140,48 @@ export type NewItemRequest = {
 }
 
 
-export const fetchAddWishlistItem = async (wishlistID: string, item: NewItemRequest) => {
+export const fetchAddWish = async (item: NewItemRequest) => {
 	const { data } = await apiFetch({
-		endpoint: `/wishlist/items`,
+		endpoint: `/wishes`,
 		method: 'POST',
 		body: {
 			...item,
-			wishlist_id: wishlistID,
 		},
+	})
+
+	return data
+}
+
+
+export type Wish = {
+	id: string
+	user_id: string
+	name: string
+	notes: string | null
+	image_url: string | null
+	url: string | null
+	created_at: string
+	currency: string | null
+	price: number | null
+	is_public: boolean
+	is_fulfilled: boolean
+	is_reserved: boolean
+	reserved_by: string | null
+}
+
+export type Wishlist = {
+	id: string
+	user_id: string
+	name: string
+	description: string
+	is_public: boolean
+	created_at: string
+}
+
+export const fetchWish = async (id: string) => {
+	const { data } = await apiFetch({
+		endpoint: `/wishes/${id}`,
+		method: 'GET',
 	})
 
 	return data

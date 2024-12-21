@@ -156,6 +156,10 @@ func getAuthConfig(secret string) echojwt.Config {
 
 			c.Set("user", token)
 
+			if claims.UID == "" {
+				return echo.NewHTTPError(http.StatusUnauthorized, "auth is invalid")
+			}
+
 			return nil
 		},
 	}
@@ -203,7 +207,7 @@ func main() {
 	}
 
 	e := echo.New()
-	//e.Use(middleware.Recover())
+	e.Use(middleware.Recover())
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
@@ -252,13 +256,16 @@ func main() {
 
 	g.Use(echojwt.WithConfig(authCfg))
 
-	g.POST("/wishlist/items", a.AddWishlistItemHandler)
+	g.POST("/wishes", a.AddWishHandler)
+	g.GET("/wishes/:id", a.GetWishHandler)
 	g.PUT("/user/settings", a.UpdateUserPreferences)
 	g.GET("/categories", a.ListCategories)
-	g.GET("/user/wishlist", a.GetUserWishlistHandler)
+	g.GET("/user/wishes", a.ListUserWishes)
 	g.GET("/ideas", a.ListIdeas)
 	g.GET("/profiles", a.ListProfiles)
 	g.POST("/presigned-url", a.GetPresignedURL)
+	g.POST("/users/follow", a.FollowUser)
+	g.POST("/users/unfollow", a.UnfollowUser)
 
 	done := make(chan bool, 1)
 

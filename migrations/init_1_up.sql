@@ -46,17 +46,17 @@ CREATE TABLE wishlists
     deleted_at  DATETIME
 );
 
-CREATE TABLE wishlist_items
+CREATE TABLE wishes
 (
     id           TEXT PRIMARY KEY,
-    wishlist_id  TEXT NOT NULL REFERENCES wishlists (id),
+    user_id      TEXT NOT NULL REFERENCES users (id),
     name         TEXT,
     url          TEXT,
     price        REAL,
     currency     TEXT,
     image_url    TEXT,
     notes        TEXT,
-    is_purchased BOOLEAN  DEFAULT 0,
+    is_fulfilled BOOLEAN  DEFAULT 0,
     is_public    BOOLEAN  DEFAULT 1,
     is_favorite  BOOLEAN  DEFAULT 0,
     reserved_by  TEXT REFERENCES users (id),
@@ -66,6 +66,13 @@ CREATE TABLE wishlist_items
     source_id    TEXT,
     source_type  TEXT CHECK (source_type IN ('idea', 'wishlist_item')),
     deleted_at   DATETIME
+);
+
+CREATE TABLE wishlist_items
+(
+    wishlist_id TEXT NOT NULL REFERENCES wishlists (id),
+    wish_id     TEXT NOT NULL REFERENCES user_wishes (id),
+    PRIMARY KEY (wishlist_id, wish_id)
 );
 
 CREATE TABLE ideas
@@ -85,11 +92,10 @@ CREATE TABLE ideas
 
 CREATE TABLE followers
 (
-    id           TEXT PRIMARY KEY,
     follower_id  TEXT NOT NULL REFERENCES users (id),
     following_id TEXT NOT NULL REFERENCES users (id),
     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (follower_id, following_id)
+    PRIMARY KEY (follower_id, following_id)
 );
 
 INSERT INTO categories (id, name, image_url)
@@ -174,74 +180,74 @@ VALUES ('GFT001', 'Oodie Wearable Blanket', 'A warm, cozy wearable blanket perfe
         'https://www.kodak.com/en/consumer/product/printomatic');
 
 INSERT INTO users (id, chat_id, username, first_name, last_name, language_code, email, referral_code, avatar_url)
-VALUES ('1', 123456789, 'testuser', 'Джимми', 'Две Куртки', 'en', 'jimbo@mail.com', '1',
+VALUES ('U1', 123456789, 'testuser', 'Джимми', 'Две Куртки', 'en', 'jimbo@mail.com', '1',
         'https://assets.peatch.io/avatars/1.svg'),
-       ('2', 123456790, 'jane_doe', 'Джейн', 'Доу', 'en', 'jane.doe@example.com', 'REF2',
+       ('U2', 123456790, 'jane_doe', 'Джейн', 'Доу', 'en', 'jane.doe@example.com', 'REF2',
         'https://assets.peatch.io/avatars/2.svg'),
-       ('3', 123456791, 'ivan_smith', 'Иван', 'Смит', 'ru', 'ivan.smith@example.com', 'REF3',
+       ('U3', 123456791, 'ivan_smith', 'Иван', 'Смит', 'ru', 'ivan.smith@example.com', 'REF3',
         'https://assets.peatch.io/avatars/3.svg'),
-       ('4', 123456792, 'maria_garcia', 'Мария', 'Гарсия', 'es', 'maria.garcia@example.com', 'REF4',
+       ('U4', 123456792, 'maria_garcia', 'Мария', 'Гарсия', 'es', 'maria.garcia@example.com', 'REF4',
         'https://assets.peatch.io/avatars/4.svg');
 
 -- Вставка вишлистов для каждого пользователя
-INSERT INTO wishlists (id, user_id, name, description, is_public)
-VALUES ('WL1', '1', 'My Wishlist', 'Мой список желаний.', 1),
-       ('WL2', '2', 'Fashion Favorites', 'Мои любимые модные вещи.', 1),
-       ('WL3', '3', 'Tech Gadgets', 'Лучшие технологические новинки, которые я хочу.', 1),
-       ('WL4', '4', 'Home Essentials', 'Необходимые предметы для дома и декора.', 1);
+-- INSERT INTO wishlists (id, user_id, name, description, is_public)
+-- VALUES ('WL1', '1', 'My Wishlist', 'Мой список желаний.', 1),
+--        ('WL2', '2', 'Fashion Favorites', 'Мои любимые модные вещи.', 1),
+--        ('WL3', '3', 'Tech Gadgets', 'Лучшие технологические новинки, которые я хочу.', 1),
+--        ('WL4', '4', 'Home Essentials', 'Необходимые предметы для дома и декора.', 1);
 
 -- Вставка предметов в вишлисты
-INSERT INTO wishlist_items (id, wishlist_id, name, url, price, currency, image_url, notes, is_purchased, is_public,
-                            source_id, source_type)
+INSERT INTO wishes (id, user_id, name, url, price, currency, image_url, notes, is_fulfilled, is_public,
+                         source_id, source_type)
 VALUES
     -- Предметы для My Wishlist
-    ('WI1', 'WL1', 'Smartwatch', 'https://example.com/smartwatch', 199.99, 'USD', '/placeholder.jpg',
+    ('WI1', 'U1', 'Smartwatch', 'https://example.com/smartwatch', 199.99, 'USD', '/placeholder.jpg',
      'Смарт-часы с мониторингом активности', 0, 1, 'GFT003', 'idea'),
-    ('WI2', 'WL1', 'Wireless Earbuds', 'https://example.com/earbuds', 99.99, 'USD', '/placeholder.jpg',
+    ('WI2', 'U1', 'Wireless Earbuds', 'https://example.com/earbuds', 99.99, 'USD', '/placeholder.jpg',
      'Беспроводные наушники с шумоподавлением', 0, 1, 'GFT019', 'idea'),
     -- Предметы для Jane's Fashion Favorites
-    ('WI32', 'WL2', 'Stylish Jacket', 'https://example.com/jacket', 120.00, 'USD', '/placeholder.jpg', 'Кожаная куртка',
+    ('WI32', 'U2', 'Stylish Jacket', 'https://example.com/jacket', 120.00, 'USD', '/placeholder.jpg', 'Кожаная куртка',
      0, 1, 'GFT001', 'idea'),
-    ('WI3', 'WL2', 'Designer Handbag', 'https://example.com/handbag', 250.00, 'USD', '/placeholder.jpg', 'Черная сумка',
+    ('WI3', 'U2', 'Designer Handbag', 'https://example.com/handbag', 250.00, 'USD', '/placeholder.jpg', 'Черная сумка',
      0, 1, 'GFT009', 'idea'),
 
     -- Предметы для Ivan's Tech Gadgets
-    ('WI4', 'WL3', 'Smartphone X', 'https://example.com/smartphone', 999.99, 'USD', '/placeholder.jpg',
+    ('WI4', 'U3', 'Smartphone X', 'https://example.com/smartphone', 999.99, 'USD', '/placeholder.jpg',
      'Последняя модель смартфона', 0, 1, 'GFT018', 'idea'),
-    ('WI5', 'WL3', 'Wireless Charger', 'https://example.com/charger', 49.99, 'USD', '/placeholder.jpg',
+    ('WI5', 'U3', 'Wireless Charger', 'https://example.com/charger', 49.99, 'USD', '/placeholder.jpg',
      'Быстрая зарядка', 0,
      1, 'GFT019', 'idea'),
 
     -- Предметы для Maria's Home Essentials
-    ('WI6', 'WL4', 'Modern Lamp', 'https://example.com/lamp', 80.00, 'USD', '/placeholder.jpg',
+    ('WI6', 'U4', 'Modern Lamp', 'https://example.com/lamp', 80.00, 'USD', '/placeholder.jpg',
      'Лампа с регулируемой яркостью',
      0, 1, 'GFT002', 'idea'),
-    ('WI7', 'WL4', 'Comfortable Sofa', 'https://example.com/sofa', 600.00, 'USD', '/placeholder.jpg', 'Серый диван', 0,
+    ('WI7', 'U4', 'Comfortable Sofa', 'https://example.com/sofa', 600.00, 'USD', '/placeholder.jpg', 'Серый диван', 0,
      1,
      'GFT004', 'idea'),
 
-    ('WI8', 'WL2', 'Red Scarf', 'https://example.com/red-scarf', 25.00, 'USD', '/placeholder.jpg',
+    ('WI8', 'U5', 'Red Scarf', 'https://example.com/red-scarf', 25.00, 'USD', '/placeholder.jpg',
      'Теплый шерстяной шарф', 0, 1, NULL, 'wishlist_item'),
-    ('WI9', 'WL2', 'Leather Boots', 'https://example.com/leather-boots', 150.00, 'USD', '/placeholder.jpg',
+    ('WI9', 'U5', 'Leather Boots', 'https://example.com/leather-boots', 150.00, 'USD', '/placeholder.jpg',
      'Высокие кожаные ботинки', 0, 1, NULL, NULL),
 
     -- Предметы для Ivan's Tech Gadgets (WL3)
-    ('WI10', 'WL3', 'Smart LED Light Bulb', 'https://example.com/led-bulb', 15.99, 'USD', '/placeholder.jpg',
+    ('WI10', 'U3', 'Smart LED Light Bulb', 'https://example.com/led-bulb', 15.99, 'USD', '/placeholder.jpg',
      'Умная светодиодная лампочка с управлением через приложение', 0, 1, NULL, NULL),
-    ('WI11', 'WL3', 'Portable SSD 1TB', 'https://example.com/portable-ssd', 120.00, 'USD', '/placeholder.jpg',
+    ('WI11', 'U3', 'Portable SSD 1TB', 'https://example.com/portable-ssd', 120.00, 'USD', '/placeholder.jpg',
      'Быстрый и надежный переносной SSD накопитель', 0, 1, NULL, NULL),
 
     -- Предметы для Maria's Home Essentials (WL4)
-    ('WI12', 'WL4', 'Ceramic Vase', 'https://example.com/ceramic-vase', 45.00, 'USD', '/placeholder.jpg',
+    ('WI12', 'U4', 'Ceramic Vase', 'https://example.com/ceramic-vase', 45.00, 'USD', '/placeholder.jpg',
      'Элегантная керамическая ваза для цветов', 0, 1, NULL, NULL),
-    ('WI13', 'WL4', 'Set of Kitchen Knives', 'https://example.com/kitchen-knives', 89.99, 'USD', '/placeholder.jpg',
+    ('WI13', 'U4', 'Set of Kitchen Knives', 'https://example.com/kitchen-knives', 89.99, 'USD', '/placeholder.jpg',
      'Набор кухонных ножей высокого качества', 0, 1, NULL, NULL);
 
 -- Вставка подписчиков (фолловеров)
-INSERT INTO followers (id, follower_id, following_id)
-VALUES ('F1', '2', '1'),
-       ('F2', '3', '1'),
-       ('F3', '4', '1'),
-       ('F4', '1', '2'),
-       ('F5', '1', '3'),
-       ('F6', '1', '4');
+INSERT INTO followers (follower_id, following_id)
+VALUES ('U2', 'U1'),
+       ('U3', 'U1'),
+       ('U4', 'U1'),
+       ('U1', 'U2'),
+       ('U1', 'U3'),
+       ('U1', 'U4');

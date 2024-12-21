@@ -79,3 +79,32 @@ func (s *storage) CreateIdea(ctx context.Context, idea Idea) error {
 
 	return nil
 }
+
+func (s *storage) GetIdeaByID(ctx context.Context, id string) (Idea, error) {
+	var res Idea
+
+	query := `
+		SELECT id, name, description, category_id, price, currency, image_url, url, created_at, updated_at, deleted_at
+		FROM ideas
+		WHERE id = ?
+	`
+
+	if err := s.db.QueryRowContext(ctx, query, id).Scan(
+		res.ID,
+		res.Name,
+		res.Description,
+		res.CategoryID,
+		res.Price,
+		res.Currency,
+		res.ImageURL,
+		res.URL,
+		res.CreatedAt,
+		res.UpdatedAt,
+	); err != nil && IsNoRowsError(err) {
+		return Idea{}, ErrNotFound
+	} else if err != nil {
+		return Idea{}, err
+	}
+
+	return res, nil
+}

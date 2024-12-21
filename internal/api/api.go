@@ -15,17 +15,19 @@ type storager interface {
 	GetUserByChatID(chatID int64) (db.User, error)
 	GetUserByID(id string) (db.User, error)
 	CreateUser(ctx context.Context, user db.User) error
-	UpdateWishlistItem(ctx context.Context, item db.WishlistItem) (db.WishlistItem, error)
-	CreateWishlistItem(ctx context.Context, item db.WishlistItem) (db.WishlistItem, error)
+	UpdateWish(ctx context.Context, wish db.Wish) (db.Wish, error)
+	CreateWish(ctx context.Context, wish db.Wish) (db.Wish, error)
 	CreateWishlist(ctx context.Context, list db.Wishlist) (db.Wishlist, error)
-	GetWishlistItemByID(ctx context.Context, id string) (db.WishlistItem, error)
+	GetWishByID(ctx context.Context, id string) (db.Wish, error)
 	GetWishlistByID(ctx context.Context, id string) (db.Wishlist, error)
 	UpdateUser(ctx context.Context, user db.User, interests []string) error
 	ListCategories(ctx context.Context) ([]db.Category, error)
-	GetWishlistByUserID(ctx context.Context, userID string) (db.Wishlist, error)
 	ListIdeas(ctx context.Context, userID string) ([]db.Idea, error)
 	ListUsers(ctx context.Context, uid string) ([]db.User, error)
-	GetWishlistItemsByUserID(ctx context.Context, userID string) ([]db.WishlistItem, error)
+	GetWishesByUserID(ctx context.Context, userID string) ([]db.Wish, error)
+	FollowUser(ctx context.Context, uid, followID string) error
+	UnfollowUser(ctx context.Context, uid, UnfollowID string) error
+	GetIdeaByID(ctx context.Context, id string) (db.Idea, error)
 }
 
 type API struct {

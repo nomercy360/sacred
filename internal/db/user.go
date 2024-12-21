@@ -34,7 +34,7 @@ type Interest struct {
 	ImageURL string `json:"image_url"`
 }
 
-type ItemsArray []WishlistItem
+type ItemsArray []Wish
 
 func (ia *InterestsArray) Scan(src interface{}) error {
 	var source []byte
@@ -82,8 +82,9 @@ func IsNoRowsError(err error) bool {
 
 func IsUniqueViolationError(err error) bool {
 	var sqliteErr sqlite3.Error
-	if errors.As(err, &sqliteErr) {
-		return errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintUnique)
+	errors.As(err, &sqliteErr)
+	if errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintPrimaryKey) {
+		return true
 	}
 	return false
 }
@@ -177,7 +178,7 @@ func (s *storage) GetUserByID(id string) (User, error) {
 		    u.chat_id, 
 		    u.created_at, 
 		    u.first_name,
-		    u.last_name, 
+		    u.last_name,
 		    u.email,
 		    u.referral_code, 
 		    u.referred_by,
@@ -301,4 +302,39 @@ func (s *storage) ListUsers(ctx context.Context, uid string) ([]User, error) {
 	}
 
 	return users, nil
+}
+
+func (s *storage) FollowUser(ctx context.Context, uid, followID string) error {
+	query := `
+		INSERT INTO followers (following_id, follower_id)
+		VALUES (?, ?)
+	`
+
+	_, err := s.db.ExecContext(
+		ctx,
+		query,
+		followID,
+		uid,
+	)
+
+	if err != nil && !IsUniqueViolationError(err) {
+		return err
+	}
+
+	return nil
+}
+
+func (s *storage) UnfollowUser(ctx context.Context, uid, unfollowID string) error {
+	query := `
+		DELETE FROM followers WHERE following_id = ? AND follower_id = ? 
+	`
+
+	_, err := s.db.ExecContext(
+		ctx,
+		query,
+		unfollowID,
+		uid,
+	)
+
+	return err
 }

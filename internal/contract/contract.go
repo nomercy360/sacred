@@ -122,9 +122,9 @@ func (r *CreateWishRequest) Validate() error {
 	return nil
 }
 
-type WishlistItemResponse struct {
+type WishResponse struct {
 	ID          string    `json:"id"`
-	WishlistID  string    `json:"wishlist_id"`
+	UserID      string    `json:"user_id"`
 	Title       *string   `json:"title"`
 	URL         string    `json:"url"`
 	Price       *float64  `json:"price"`

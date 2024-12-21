@@ -79,8 +79,8 @@ export default function UserBoardPage() {
 												href={`/wishes/${item.id}`}>
 										<img src={item.image_url!} alt={item.name}
 												 class="rounded-2xl mb-4 aspect-square object-cover size-full" />
-										<div class="text-sm font-semibold">
-											{item.name}
+										<div class="flex flex-col items-center justify-center text-sm font-semibold">
+											<p>{item.name}</p>
 											<span
 												class="text-xs text-secondary-foreground">{' '}{item.price}{currencySymbol(item.currency!)}</span>
 										</div>

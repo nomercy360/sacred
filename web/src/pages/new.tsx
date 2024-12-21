@@ -7,6 +7,7 @@ import { Link } from '~/components/link'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { queryClient } from '~/App'
 import { store } from '~/store'
+import { useNavigate } from '@solidjs/router'
 
 const NewItem = () => {
 	const mainButton = useMainButton()
@@ -24,7 +25,7 @@ const NewItem = () => {
 	const [imgFile, setImgFile] = createSignal<File | null>(null)
 	const [previewUrl, setPreviewUrl] = createSignal('')
 
-	const [currency, setCurrency] = createSignal('USD')
+	const navigate = useNavigate()
 
 	async function save() {
 		if (imgFile() && imgFile() !== null) {
@@ -34,7 +35,8 @@ const NewItem = () => {
 				await uploadToS3(data.url, imgFile()!)
 				setState('image_url', `https://assets.peatch.io/${data.file_name}`)
 				await fetchAddWish(state)
-				await queryClient.invalidateQueries({ queryKey: ['wishlist'] })
+				await queryClient.invalidateQueries({ queryKey: ['wishes'] })
+				navigate('/')
 			} catch (e) {
 				console.error(e)
 			} finally {
@@ -140,8 +142,8 @@ const NewItem = () => {
 						/>
 					</TextField>
 					<Select
-						value={currency()}
-						onChange={setCurrency}
+						value={state.currency}
+						onChange={(e) => setState('currency', e)}
 						options={['USD', 'EUR', 'RUB', 'THB']}
 						placeholder="Currency"
 						itemComponent={(props) => <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>}

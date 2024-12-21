@@ -27,6 +27,7 @@ func (a *API) AddWishHandler(c echo.Context) error {
 		URL:      req.URL,
 		Name:     req.Name,
 		Price:    req.Price,
+		Currency: req.Currency,
 		ImageURL: req.ImageURL,
 		Notes:    req.Notes,
 		IsPublic: req.IsPublic,

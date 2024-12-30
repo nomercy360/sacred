@@ -1,69 +1,57 @@
 import { store } from '~/store'
+import { showToast } from '~/components/ui/toast'
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string
-export const CDN_URL = 'https://assets.peatch.io'
 
-export const apiFetch = async ({
-																 endpoint,
-																 method = 'GET',
-																 body = null,
-																 showProgress = true,
-																 responseContentType = 'json' as 'json' | 'blob',
-															 }: {
-	endpoint: string
-	method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
-	body?: any
-	showProgress?: boolean
-	responseContentType?: string
-}) => {
-	const headers: { [key: string]: string } = {
-		'Content-Type': 'application/json',
-		Authorization: `Bearer ${store.token}`,
-	}
-
+export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 	try {
-		// showProgress && window.Telegram.WebApp.MainButton.showProgress(false)
-
 		const response = await fetch(`${API_BASE_URL}/v1${endpoint}`, {
-			method,
-			headers,
-			body: body ? JSON.stringify(body) : undefined,
+			...options,
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${store.token}`,
+				...(options.headers || {}),
+			},
 		})
 
-		if (!response.ok) {
-			const errorResponse = await response.json()
-			throw { error: errorResponse.message, data: null }
+		let data
+		try {
+			data = await response.json()
+		} catch {
+			showToast({ title: 'Failed to get response from server', variant: 'error', duration: 2500 })
+			return { error: 'Failed to get response from server', data: null }
 		}
 
-		switch (response.status) {
-			case 204:
-				return { data: null, error: null }
-			default:
-				switch (responseContentType) {
-					case 'json':
-						const reps = await response.json()
-						return { data: reps, error: null }
-					case 'blob':
-						const resp = await response.blob()
-						return { data: resp, error: null }
-					default:
-						throw new Error('Invalid response content type')
-				}
+		if (!response.ok) {
+			const errorMessage =
+				Array.isArray(data?.error)
+					? data.error.join('\n')
+					: typeof data?.error === 'string'
+						? data.error
+						: 'An error occurred'
+
+			showToast({ title: errorMessage, variant: 'error', duration: 2500 })
+			return { error: errorMessage, data: null }
 		}
-	} finally {
-		// showProgress && window.Telegram.WebApp.MainButton.hideProgress()
+
+		return { data, error: null }
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
+		showToast({ title: errorMessage, variant: 'error', duration: 2500 })
+		return { error: errorMessage, data: null }
 	}
 }
 
 
 export async function fetchPresignedUrl(filename: string) {
-	const response = await apiFetch({
-		endpoint: '/presigned-url',
-		method: 'POST',
-		body: { file_name: filename },
-	})
+	const { data, error } = await apiRequest('/presigned-url',
+		{
+			method: 'POST',
+			body: JSON.stringify({ filename }),
+		})
 
-	return response as any
+
+	return data
 }
 
 export async function uploadToS3(url: string, file: File) {
@@ -86,16 +74,16 @@ export async function uploadToS3(url: string, file: File) {
 // }
 
 export const saveUserPreferences = async (preferences: any) => {
-	return await apiFetch({
-		endpoint: '/user/settings',
+	const { data, error } = await apiRequest('/user/settings', {
 		method: 'PUT',
-		body: preferences,
+		body: JSON.stringify(preferences),
 	})
+
+	return { data, error }
 }
 
 export const fetchCategories = async () => {
-	const { data } = await apiFetch({
-		endpoint: '/categories',
+	const { data } = await apiRequest('/categories', {
 		method: 'GET',
 	})
 
@@ -103,8 +91,7 @@ export const fetchCategories = async () => {
 }
 
 export const fetchUserWishes = async () => {
-	const { data } = await apiFetch({
-		endpoint: `/user/wishes`,
+	const { data } = await apiRequest('/user/wishes', {
 		method: 'GET',
 	})
 
@@ -112,8 +99,7 @@ export const fetchUserWishes = async () => {
 }
 
 export const fetchIdeas = async () => {
-	const { data } = await apiFetch({
-		endpoint: `/ideas`,
+	const { data } = await apiRequest('/ideas', {
 		method: 'GET',
 	})
 
@@ -121,8 +107,7 @@ export const fetchIdeas = async () => {
 }
 
 export const fetchProfiles = async () => {
-	const { data } = await apiFetch({
-		endpoint: `/profiles`,
+	const { data } = await apiRequest('/profiles', {
 		method: 'GET',
 	})
 
@@ -130,35 +115,40 @@ export const fetchProfiles = async () => {
 }
 
 export type NewItemRequest = {
-	name: string
+	name: string | null
 	notes: string | null
 	url: string | null
-	image_url: string | null
+	images: { url: string, width: number, height: number, size: number }[]
 	price: number | null
 	currency: string | null
 	is_public: boolean
+	category_ids: string[]
 }
-
 
 export const fetchAddWish = async (item: NewItemRequest) => {
-	const { data } = await apiFetch({
-		endpoint: `/wishes`,
+	const { data, error } = await apiRequest('/wishes', {
 		method: 'POST',
-		body: {
-			...item,
-		},
+		body: JSON.stringify(item),
 	})
 
-	return data
+	return { data, error }
 }
 
+export type WishImage = {
+	id: string
+	url: string
+	width: number
+	height: number
+	size: number
+	position: number
+}
 
 export type Wish = {
 	id: string
 	user_id: string
 	name: string
 	notes: string | null
-	image_url: string | null
+	images: Array<WishImage>
 	url: string | null
 	created_at: string
 	currency: string | null
@@ -167,6 +157,11 @@ export type Wish = {
 	is_fulfilled: boolean
 	is_reserved: boolean
 	reserved_by: string | null
+	categories: Array<{
+		id: string
+		name: string
+		image_url: string
+	}>
 }
 
 export type Wishlist = {
@@ -179,8 +174,7 @@ export type Wishlist = {
 }
 
 export const fetchWish = async (id: string) => {
-	const { data } = await apiFetch({
-		endpoint: `/wishes/${id}`,
+	const { data } = await apiRequest(`/wishes/${id}`, {
 		method: 'GET',
 	})
 

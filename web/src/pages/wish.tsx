@@ -43,14 +43,14 @@ const ViewItem = () => {
 				</Show>
 				<h1 class="text-2xl font-bold text-center">{item.data?.name}</h1>
 				<Show when={item.data?.url}>
-					<a
-						href={item.data?.url}
+					<Link
+						href={item.data?.url!}
 						target="_blank"
 						rel="noopener noreferrer"
 						class="text-primary underline"
 					>
 						View item online
-					</a>
+					</Link>
 				</Show>
 				<Show when={item.data?.price !== null}>
 					<div class="text-lg">

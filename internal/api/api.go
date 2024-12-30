@@ -16,7 +16,7 @@ type storager interface {
 	GetUserByID(id string) (db.User, error)
 	CreateUser(ctx context.Context, user db.User) error
 	UpdateWish(ctx context.Context, wish db.Wish) (db.Wish, error)
-	CreateWish(ctx context.Context, wish db.Wish) (db.Wish, error)
+	CreateWish(ctx context.Context, wish db.Wish, categories []string) error
 	CreateWishlist(ctx context.Context, list db.Wishlist) (db.Wishlist, error)
 	GetWishByID(ctx context.Context, id string) (db.Wish, error)
 	GetWishlistByID(ctx context.Context, id string) (db.Wishlist, error)
@@ -28,13 +28,13 @@ type storager interface {
 	FollowUser(ctx context.Context, uid, followID string) error
 	UnfollowUser(ctx context.Context, uid, UnfollowID string) error
 	GetIdeaByID(ctx context.Context, id string) (db.Idea, error)
+	CreateWishImage(ctx context.Context, image db.WishImage) (db.WishImage, error)
 }
 
 type API struct {
-	storage  storager
-	jobQueue chan MetadataFetchJob
-	mutex    *sync.Mutex
-	s3Client *s3.Client
+	storage storager
+	mutex   *sync.Mutex
+	s3      *s3.Client
 
 	cfg Config
 }
@@ -48,9 +48,9 @@ type Config struct {
 
 func New(storage storager, cfg Config, s3 *s3.Client) *API {
 	return &API{
-		storage:  storage,
-		cfg:      cfg,
-		s3Client: s3,
+		storage: storage,
+		cfg:     cfg,
+		s3:      s3,
 	}
 }
 

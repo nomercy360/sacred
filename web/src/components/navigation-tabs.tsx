@@ -13,7 +13,7 @@ export default function NavigationTabs(props: any) {
 		},
 		{
 			href: '/',
-			icon: 'bookmark',
+			icon: 'note_stack',
 		},
 		{
 			href: '/people',
@@ -37,11 +37,11 @@ export default function NavigationTabs(props: any) {
 							href={href}
 							state={{ from: location.pathname }}
 							class={cn('size-10 flex items-center justify-center rounded-full flex-col text-sm text-secondary-foreground', {
-								'bg-info': location.pathname === href,
+								'bg-primary': location.pathname === href,
 							})}
 						>
 							<span
-								class={cn('material-symbols-rounded text-[24px]', { 'text-info-foreground': location.pathname === href })}>
+								class={cn('material-symbols-rounded text-[20px]', { 'text-primary-foreground': location.pathname === href })}>
 								{icon}</span>
 						</Link>
 					))}

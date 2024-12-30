@@ -8,6 +8,8 @@ import PeoplePage from '~/pages/people'
 import FeedPage from '~/pages/feed'
 import NewItem from '~/pages/new'
 import ShareProfile from '~/pages/share'
+import CreateFromLinkPage from '~/pages/create/from-link'
+import CreateFromImagePage from '~/pages/create/from-images'
 
 export const routes: RouteDefinition[] = [
 	{
@@ -26,6 +28,10 @@ export const routes: RouteDefinition[] = [
 				'path': '/feed',
 				'component': FeedPage,
 			},
+			{
+				'path': '/new',
+				'component': NewItem,
+			},
 		],
 	},
 	{
@@ -33,12 +39,16 @@ export const routes: RouteDefinition[] = [
 		component: SetupProfilePage,
 	},
 	{
-		path: '/share',
-		component: ShareProfile,
+		path: '/create/from-link',
+		component: CreateFromLinkPage,
 	},
 	{
-		'path': '/new',
-		'component': NewItem,
+		path: '/create/from-images',
+		component: CreateFromImagePage,
+	},
+	{
+		path: '/share',
+		component: ShareProfile,
 	},
 	{
 		'path': '/wishes/:id',

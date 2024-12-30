@@ -68,10 +68,29 @@ CREATE TABLE wishes
     deleted_at   DATETIME
 );
 
+CREATE TABLE wish_images
+(
+    id         TEXT PRIMARY KEY,
+    wish_id    TEXT    NOT NULL REFERENCES wishes (id) ON DELETE CASCADE,
+    url        TEXT    NOT NULL,
+    width      INTEGER,
+    height     INTEGER,
+    size_bytes INTEGER,
+    position   INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE wish_categories
+(
+    wish_id     TEXT NOT NULL REFERENCES wishes (id),
+    category_id TEXT NOT NULL REFERENCES categories (id),
+    PRIMARY KEY (wish_id, category_id)
+);
+
 CREATE TABLE wishlist_items
 (
     wishlist_id TEXT NOT NULL REFERENCES wishlists (id),
-    wish_id     TEXT NOT NULL REFERENCES user_wishes (id),
+    wish_id     TEXT NOT NULL REFERENCES wishes (id),
     PRIMARY KEY (wishlist_id, wish_id)
 );
 
@@ -198,7 +217,7 @@ VALUES ('U1', 123456789, 'testuser', 'Джимми', 'Две Куртки', 'en'
 
 -- Вставка предметов в вишлисты
 INSERT INTO wishes (id, user_id, name, url, price, currency, image_url, notes, is_fulfilled, is_public,
-                         source_id, source_type)
+                    source_id, source_type)
 VALUES
     -- Предметы для My Wishlist
     ('WI1', 'U1', 'Smartwatch', 'https://example.com/smartwatch', 199.99, 'USD', '/placeholder.jpg',

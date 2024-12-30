@@ -3,46 +3,13 @@ import { cn } from '~/lib/utils'
 import { fetchCategories, saveUserPreferences } from '~/lib/api'
 import { showToast } from '~/components/ui/toast'
 import { useNavigate } from '@solidjs/router'
-import { setUser, store } from '~/store'
+import { setUser } from '~/store'
 import { useMainButton } from '~/lib/useMainButton'
-import { useNavigation } from '~/lib/useNavigation'
 import { useBackButton } from '~/lib/useBackButton'
+import FormLayout from '~/components/form-layout'
+import FormInput from '~/components/form-input'
+import CategoriesSelect from '~/components/categories-select'
 
-
-type SetupHeaderProps = {
-	title: string
-	description: string
-	step: number
-}
-
-
-function SetupHeader(props: SetupHeaderProps) {
-
-	const maxSteps = 3
-
-	return (
-		<div class="flex-shrink-0 max-w-[350px] text-center py-6 flex flex-col items-center justify-start w-full">
-			<div class="flex flex-row items-center justify-center space-x-1">
-				<For each={[...Array(maxSteps).keys()]}>
-					{(index) => (
-						<div
-							class={cn(
-								'w-4 h-1.5 rounded-xl',
-								index === props.step - 1 ? 'bg-primary' : 'bg-muted',
-							)}
-						/>
-					)}
-				</For>
-			</div>
-			<p class="mt-5 leading-tight text-2xl font-extrabold">
-				{props.title}
-			</p>
-			<p class="mt-2 text-sm text-secondary-foreground">
-				{props.description}
-			</p>
-		</div>
-	)
-}
 
 type Category = {
 	id: string
@@ -55,33 +22,12 @@ export default function SetupProfilePage() {
 
 	const [step, setStep] = createSignal(1)
 	const [email, setEmail] = createSignal('')
-	const [emailInput, setEmailInput] = createSignal<HTMLInputElement | null>(null)
 
 	const mainButton = useMainButton()
 
 	const navigate = useNavigate()
 
 	const backButton = useBackButton()
-
-	function toggleCategory(id: string) {
-		const index = selectedCategories().indexOf(id)
-		if (index === -1) {
-			setSelectedCategories([...selectedCategories(), id])
-		} else {
-			setSelectedCategories(selectedCategories().filter((c) => c !== id))
-		}
-		window.Telegram.WebApp.HapticFeedback.selectionChanged()
-	}
-
-	function isSelected(id: string) {
-		return selectedCategories().includes(id)
-	}
-
-	createEffect(() => {
-		if (emailInput()) {
-			emailInput()?.focus()
-		}
-	})
 
 	function isEmailValid(email: string) {
 		return !/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(email)
@@ -111,8 +57,6 @@ export default function SetupProfilePage() {
 	function decrementStep() {
 		setStep(step() - 1)
 	}
-
-	const [categories, {}] = createResource<Category[]>(fetchCategories, { initialValue: [] })
 
 	createEffect(() => {
 		if (step() === 1) {
@@ -147,52 +91,42 @@ export default function SetupProfilePage() {
 		backButton.hide()
 	})
 
+	const formHeaders = [
+		{
+			title: 'Choose things you wish to discover',
+			description: 'We will find and recommend products for you',
+			step: 1,
+		},
+		{
+			title: 'Add your email',
+			description: 'No one sees it, and we will not spam you. By the way, you agree with terms and privacy policy by continuing.',
+			step: 2,
+		},
+	]
+
 	return (
-		<div
-			class="w-full flex flex-col h-screen items-center justify-start"
+		<FormLayout
+			title={formHeaders[step() - 1].title}
+			description={formHeaders[step() - 1].description}
+			step={1}
 		>
 			<Switch>
 				<Match when={step() === 1}>
-					<SetupHeader
-						title="Choose things you wish to&nbsp;discover"
-						description="We will find and recommend products for you"
-						step={1}
+					<CategoriesSelect
+						selectedCategories={selectedCategories()}
+						setSelectedCategories={setSelectedCategories}
 					/>
-					<div class="pb-[200px] h-full w-full grid grid-cols-3 gap-0.5 overflow-y-scroll flex-shrink-0">
-						<Show when={categories.state === 'ready'}>
-							<For each={categories()}>
-								{(category) => (
-									<button
-										style={{ 'background-image': !isSelected(category.id) ? `url(${category.image_url}), url('/placeholder.jpg')` : '' }}
-										class={cn('rounded-2xl flex items-center justify-center aspect-square bg-cover bg-center', isSelected(category.id) && 'bg-blue-600')}
-										onClick={() => toggleCategory(category.id)}
-									>
-										<p class="text-white font-bold">
-											{category.name}
-										</p>
-									</button>
-								)}
-							</For>
-						</Show>
-					</div>
 				</Match>
 				<Match when={step() === 2}>
-					<SetupHeader
-						title="Add your email"
-						description="No one sees it, and we will not spam you. By the way, you agree with terms and privacy policy by continuing."
-						step={2}
-					/>
-					<input
-						class="text-center text-2xl w-full h-20 px-4 mt-12 bg-transparent placeholder:text-secondary-foreground focus:outline-none focus:ring-0 focus:border-0"
+					<FormInput
 						placeholder="Email"
 						type="email"
 						value={email()}
 						onInput={(e) => setEmail(e.currentTarget.value)}
 						autofocus={true}
-						ref={setEmailInput}
 					/>
 				</Match>
 			</Switch>
-		</div>
+		</FormLayout>
 	)
 }

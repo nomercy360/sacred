@@ -239,8 +239,6 @@ func main() {
 
 	a := api.New(storage, apiCfg, s3Client)
 
-	a.InitializeJobQueue(context.Background())
-
 	tmConfig := middleware.TimeoutConfig{
 		Timeout: 20 * time.Second,
 	}

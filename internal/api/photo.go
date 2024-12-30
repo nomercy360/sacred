@@ -5,9 +5,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"path/filepath"
-	"sacred/internal/nanoid"
 	"sacred/internal/terrors"
-	"strings"
 	"time"
 )
 
@@ -18,22 +16,7 @@ type PresignedURLRequest struct {
 type PresignedURLResponse struct {
 	URL      string `json:"url"`
 	FileName string `json:"file_name"`
-}
-
-func extFromFileName(fileName string) (string, error) {
-	allowed := map[string]bool{
-		".jpg":  true,
-		".jpeg": true,
-		".png":  true,
-		".gif":  true,
-		".webp": true,
-		".avif": true,
-	}
-	ext := strings.ToLower(filepath.Ext(fileName))
-	if !allowed[ext] {
-		return "", fmt.Errorf("unsupported file extension: %s", ext)
-	}
-	return ext, nil
+	AssetURL string `json:"asset_url"`
 }
 
 func (a *API) GetPresignedURL(c echo.Context) error {
@@ -52,15 +35,14 @@ func (a *API) GetPresignedURL(c echo.Context) error {
 		return terrors.Unauthorized(nil, "unauthorized")
 	}
 
-	fileExt, err := extFromFileName(req.FileName)
-
-	if err != nil {
-		return terrors.BadRequest(err, "invalid file extension")
+	fileExt := filepath.Ext(req.FileName)
+	if fileExt == "" {
+		fileExt = ".jpg" // Default extension
 	}
 
-	fileName := fmt.Sprintf("%s/%s/%s", uid, time.Now().Format("2006-01-02"), nanoid.Must(8)+fileExt)
+	fileName := fmt.Sprintf("wishes/%d%s", time.Now().Unix(), fileExt)
 
-	url, err := a.s3Client.GetPresignedURL(fileName, 15*time.Minute)
+	url, err := a.s3.GetPresignedURL(fileName, 15*time.Minute)
 
 	if err != nil {
 		return terrors.InternalServer(err, "failed to get presigned url")
@@ -69,6 +51,7 @@ func (a *API) GetPresignedURL(c echo.Context) error {
 	res := PresignedURLResponse{
 		URL:      url,
 		FileName: fileName,
+		AssetURL: fmt.Sprintf("%s/%s", a.cfg.AssetsURL, fileName),
 	}
 
 	return c.JSON(http.StatusOK, res)

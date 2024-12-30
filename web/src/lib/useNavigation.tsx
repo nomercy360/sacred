@@ -55,7 +55,10 @@ export function NavigationProvider(props: { children: JSX.Element }) {
 	}
 
 	createEffect(() => {
-		if (location.pathname !== '/' && location.pathname !== '/setup') {
+		if (location.pathname !== '/'
+			&& location.pathname !== '/setup'
+			&& location.pathname !== '/create/from-link'
+		) {
 			backButton.setVisible()
 			backButton.onClick(navigateBack)
 		} else {

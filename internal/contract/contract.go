@@ -45,14 +45,21 @@ type AuthResponse struct {
 	Wishes []db.Wish    `json:"wishes"`
 }
 
+type CreateImage struct {
+	URL    string `json:"url"`
+	Width  int    `json:"width"`
+	Height int    `json:"height"`
+	Size   int    `json:"size"`
+}
 type CreateWishRequest struct {
-	URL      *string  `json:"url"`
-	Name     string   `json:"name"`
-	Price    *float64 `json:"price"`
-	Currency *string  `json:"currency"`
-	ImageURL *string  `json:"image_url"`
-	Notes    *string  `json:"notes"`
-	IsPublic bool     `json:"is_public"`
+	URL         *string       `json:"url"`
+	Name        *string       `json:"name"`
+	Price       *float64      `json:"price"`
+	Currency    *string       `json:"currency"`
+	Images      []CreateImage `json:"images"`
+	Notes       *string       `json:"notes"`
+	IsPublic    bool          `json:"is_public"`
+	CategoryIDs []string      `json:"category_ids"`
 }
 
 type FollowUserRequest struct {
@@ -90,27 +97,31 @@ func (r *CreateWishRequest) Validate() error {
 		return errors.New("price cannot be negative")
 	}
 
-	if r.ImageURL != nil {
-		parsed, err := url.Parse(*r.ImageURL)
-		if err != nil {
-			return err
-		}
+	if len(r.Images) > 5 {
+		return errors.New("image_urls cannot be longer than 5")
+	} else if len(r.Images) > 0 {
+		for _, imgURL := range r.Images {
+			parsed, err := url.Parse(imgURL.URL)
+			if err != nil {
+				return err
+			}
 
-		if parsed.Scheme == "" || parsed.Host == "" {
-			return errors.New("invalid image URL")
+			if parsed.Scheme == "" || parsed.Host == "" {
+				return errors.New("invalid image URL")
+			}
 		}
+	}
+
+	if len(r.CategoryIDs) == 0 {
+		return errors.New("categories can not be empty")
 	}
 
 	if r.Notes != nil && len(*r.Notes) > 1000 {
 		return errors.New("notes cannot be longer than 1000 characters")
 	}
 
-	if len(r.Name) > 200 {
-		return errors.New("name cannot be longer than 200 characters")
-	}
-
-	if r.Name == "" {
-		return errors.New("name cannot be empty")
+	if r.Name != nil && len(*r.Name) > 200 && len(*r.Name) < 1 {
+		return errors.New("name cannot be longer than 200 characters and cannot be empty")
 	}
 
 	if r.Currency != nil {
@@ -128,7 +139,6 @@ type WishResponse struct {
 	Title       *string   `json:"title"`
 	URL         string    `json:"url"`
 	Price       *float64  `json:"price"`
-	ImageURL    *string   `json:"image_url"`
 	Notes       *string   `json:"notes"`
 	IsPurchased bool      `json:"is_purchased"`
 	CreatedAt   time.Time `json:"created_at"`

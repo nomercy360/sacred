@@ -1,4 +1,4 @@
-import { fetchUserWishes, Wish, Wishlist } from '~/lib/api'
+import { fetchUserWishes, Wish, WishImage } from '~/lib/api'
 import { Match, Switch, Show, For } from 'solid-js'
 import { ImageButton } from '~/components/image-button'
 import { createQuery } from '@tanstack/solid-query'
@@ -18,6 +18,12 @@ export default function UserBoardPage() {
 		{ name: 'Sport', image: 'sports' },
 		{ name: 'Technology', image: 'technology' },
 	]
+
+	function resolveImage(images: WishImage[]) {
+		// find image with position 1 or else return link to placeholder
+		const img = images.find((img) => img.position === 1)
+		return img ? img.url : '/placeholder.jpg'
+	}
 
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
@@ -72,12 +78,12 @@ export default function UserBoardPage() {
 					</Match>
 
 					<Match when={!wishes.isLoading && wishes.data?.length}>
-						<div class="grid grid-cols-2 gap-2 px-2">
+						<div class="grid grid-cols-2 gap-2 px-2 overflow-y-scroll">
 							<For each={wishes.data}>
 								{(item) => (
 									<Link class="p-4 flex flex-col items-center"
 												href={`/wishes/${item.id}`}>
-										<img src={item.image_url!} alt={item.name}
+										<img src={resolveImage(item.images)} alt={item.name}
 												 class="rounded-2xl mb-4 aspect-square object-cover size-full" />
 										<div class="flex flex-col items-center justify-center text-sm font-semibold">
 											<p>{item.name}</p>

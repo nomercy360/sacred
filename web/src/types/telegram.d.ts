@@ -112,6 +112,8 @@ interface WebApp {
 	setBottomBarColor(color: string): void
 
 	setHeaderColor(color: string): void
+
+	readTextFromClipboard(callback: (text: string) => void): void
 }
 
 interface BackButton {

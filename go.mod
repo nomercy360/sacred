@@ -11,9 +11,9 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/labstack/echo-jwt/v4 v4.3.0
 	github.com/labstack/echo/v4 v4.13.2
-	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/telegram-mini-apps/init-data-golang v1.2.0
+	golang.org/x/image v0.23.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

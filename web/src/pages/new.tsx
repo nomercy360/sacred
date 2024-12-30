@@ -9,7 +9,7 @@ export const [createWishStore, setCreateWishStore] = createStore<NewItemRequest>
 	url: null,
 	images: [],
 	price: null,
-	currency: null,
+	currency: '',
 	is_public: true,
 	category_ids: [],
 })

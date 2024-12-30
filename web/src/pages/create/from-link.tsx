@@ -50,8 +50,12 @@ export default function CreateFromLinkPage() {
 		} else if (step() === 2) {
 			setStep(step() + 1)
 		} else if (step() === 3) {
-			setStep(step() + 1)
-		} else {
+			if (createWishStore.name) {
+				setStep(step() + 1)
+			} else {
+				setStep(5)
+			}
+		} else if (step() === 4) {
 			const images = selectedImages().map((url, i) => ({ url, width: 0, height: 0, size: 0 })) as {
 				url: string,
 				width: number,
@@ -67,11 +71,18 @@ export default function CreateFromLinkPage() {
 			} finally {
 				window.Telegram.WebApp.MainButton.hideProgress()
 			}
+		} else if (step() === 5) {
+			setStep(step() - 1)
 		}
 	}
 
 	function decrementStep() {
-		setStep(step() - 1)
+		// if step is 5 and user not specified name, go back to step 3
+		if (step() === 5 && !createWishStore.name) {
+			setStep(3)
+		} else {
+			setStep(step() - 1)
+		}
 	}
 
 	createEffect(() => {
@@ -110,6 +121,15 @@ export default function CreateFromLinkPage() {
 			backButton.onClick(decrementStep)
 
 			mainButton.enable('Save & Publish')
+		} else if (step() === 5) {
+			backButton.setVisible()
+			backButton.onClick(decrementStep)
+
+			if (!createWishStore.name) {
+				mainButton.disable('Add title to continue')
+			} else {
+				mainButton.enable('Continue')
+			}
 		}
 	})
 
@@ -128,19 +148,18 @@ export default function CreateFromLinkPage() {
 	const formHeaders = [
 		{
 			title: 'Fix the link',
-			description: 'Paste a link from clipboard',
 		},
 		{
 			title: 'Choose categories',
-			description: 'Select categories that fit the wish',
 		},
 		{
 			title: 'Select images',
-			description: 'Choose images to save',
 		},
 		{
 			title: 'Review and save',
-			description: 'Check if everything is correct',
+		},
+		{
+			title: 'Give name to the wish',
 		},
 	]
 
@@ -161,7 +180,6 @@ export default function CreateFromLinkPage() {
 	return (
 		<FormLayout
 			title={formHeaders[step() - 1].title}
-			description={formHeaders[step() - 1].description}
 			step={step()}
 		>
 			<Switch>
@@ -214,20 +232,18 @@ export default function CreateFromLinkPage() {
 					</Show>
 				</Match>
 				<Match when={step() === 4}>
-					<div class="overflow-y-scroll">
-						<p class="text-xl font-extrabold">
+					<div class="overflow-y-scroll w-full flex items-center justify-start flex-col">
+						<button class="text-xl font-extrabold" onClick={() => setStep(5)}>
 							{createWishStore.name}
-						</p>
+						</button>
 						<Show when={createWishStore.price && createWishStore.currency}>
-							<p class="text-lg text-secondary-foreground">
+							<button class="text-sm text-muted-foreground h-8 px-2.5">
 								{createWishStore.price} {currencySymbol(createWishStore.currency!)}
-							</p>
+							</button>
 						</Show>
 						<Show when={!createWishStore.price || !createWishStore.currency}>
-							<button
-								class="bg-secondary w-full flex h-12 items-center justify-start gap-4 rounded-xl px-3 text-sm text-muted-foreground"
-							>
-								<span class="text-nowrap">Add price and currency</span>
+							<button class="text-sm text-muted-foreground h-8 py-3 px-2.5">
+								Add price and currency
 							</button>
 						</Show>
 						<div class="flex flex-col space-y-0.5 w-full items-center">
@@ -241,6 +257,14 @@ export default function CreateFromLinkPage() {
 							</For>
 						</div>
 					</div>
+				</Match>
+				<Match when={step() === 5}>
+					<FormTextArea
+						placeholder="Title"
+						value={createWishStore.name || ''}
+						onInput={(e) => setCreateWishStore({ name: e.currentTarget.value })}
+						autofocus={true}
+					/>
 				</Match>
 			</Switch>
 		</FormLayout>

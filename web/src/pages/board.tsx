@@ -76,7 +76,6 @@ export default function UserBoardPage() {
 							</div>
 						</div>
 					</Match>
-
 					<Match when={!wishes.isLoading && wishes.data?.length}>
 						<div class="grid grid-cols-2 gap-2 px-2 overflow-y-scroll">
 							<For each={wishes.data}>

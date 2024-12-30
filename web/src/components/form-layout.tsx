@@ -1,9 +1,9 @@
-import { For } from 'solid-js'
+import { For, Show } from 'solid-js'
 import { cn } from '~/lib/utils'
 
 type FormHeaderProps = {
 	title: string
-	description: string
+	description?: string
 	step: number
 	children: any
 }
@@ -33,9 +33,11 @@ export default function FormLayout(props: FormHeaderProps) {
 				<p class="mt-5 leading-tight text-2xl font-extrabold">
 					{props.title}
 				</p>
-				<p class="mt-2 text-sm text-secondary-foreground">
-					{props.description}
-				</p>
+				<Show when={props.description}>
+					<p class="mt-2 text-sm text-secondary-foreground">
+						{props.description}
+					</p>
+				</Show>
 			</div>
 			{props.children}
 		</div>

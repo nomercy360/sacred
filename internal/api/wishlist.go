@@ -46,10 +46,11 @@ func (a *API) handlePhotoUpload(imgURL string) (int, int, string, error) {
 	width := img.Bounds().Dx()
 	height := img.Bounds().Dy()
 
-	fileExt := filepath.Ext(imgURL)
+	fileExt := filepath.Ext(parsedURL.Path)
 	if fileExt == "" {
 		fileExt = ".jpg"
 	}
+
 	fileName := fmt.Sprintf("wishes/%d%s", time.Now().Unix(), fileExt)
 
 	s3Path, err := a.s3.UploadFile(imageData, fileName)

@@ -24,6 +24,19 @@ type MetadataResponse = {
 	}
 }
 
+type Currency = {
+	value: string
+	label: string
+	disabled: boolean
+}
+
+const currencies: Currency[] = [
+	{ value: 'USD', label: '$', disabled: false },
+	{ value: 'EUR', label: '€', disabled: false },
+	{ value: 'RUB', label: '₽', disabled: false },
+	{ value: 'THB', label: '฿', disabled: false },
+]
+
 export default function CreateFromLinkPage() {
 	const [link, setLink] = createSignal('')
 
@@ -146,7 +159,7 @@ export default function CreateFromLinkPage() {
 	})
 
 	onMount(() => {
-		setCreateWishStore({ images: [], category_ids: [], name: null, price: null, currency: null })
+		setCreateWishStore({ images: [], category_ids: [], name: null, price: null, currency: 'USD' })
 		mainButton.onClick(onContinue)
 	})
 
@@ -271,16 +284,22 @@ export default function CreateFromLinkPage() {
 							</NumberFieldGroup>
 						</NumberField>
 						<Select
-							value={createWishStore.currency}
-							onChange={(e) => setCreateWishStore({ currency: e })}
-							options={['USD', 'EUR', 'RUB', 'THB']}
-							itemComponent={(props) => <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>}
+							options={currencies}
+							optionValue="value"
+							optionTextValue="label"
+							optionDisabled="disabled"
+							selectedOption={currencies.find((c) => c.value === createWishStore.currency)}
+							onSelectedOptionChange={(value: Currency) => setCreateWishStore({ currency: value.value })}
+							itemComponent={(props) => (
+								<SelectItem item={props.item}>
+									{props.item.rawValue.label}
+								</SelectItem>
+							)}
 						>
-							<SelectTrigger
-								aria-label="Currency"
-								class="w-12"
-							>
-								<SelectValue<string>>{(state) => state.selectedOption()}</SelectValue>
+							<SelectTrigger aria-label="Currency" class="w-12">
+								<SelectValue<Currency>>
+									{(state) => state.selectedOption().label}
+								</SelectValue>
 							</SelectTrigger>
 							<SelectContent />
 						</Select>

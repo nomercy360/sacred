@@ -2,24 +2,22 @@ import { For, Show } from 'solid-js'
 import { cn } from '~/lib/utils'
 
 type FormHeaderProps = {
-	title: string
+	title?: string
 	description?: string
 	step: number
 	children: any
+	maxSteps: number
 }
 
 
 export default function FormLayout(props: FormHeaderProps) {
-
-	const maxSteps = 3
-
 	return (
 		<div
 			class="w-full flex flex-col h-screen items-center justify-start"
 		>
 			<div class="flex-shrink-0 max-w-[350px] text-center py-6 flex flex-col items-center justify-start w-full">
 				<div class="flex flex-row items-center justify-center space-x-1">
-					<For each={[...Array(maxSteps).keys()]}>
+					<For each={[...Array(props.maxSteps).keys()]}>
 						{(index) => (
 							<div
 								class={cn(
@@ -30,9 +28,11 @@ export default function FormLayout(props: FormHeaderProps) {
 						)}
 					</For>
 				</div>
-				<p class="mt-5 leading-tight text-2xl font-extrabold">
-					{props.title}
-				</p>
+				<Show when={props.title}>
+					<p class="mt-5 leading-tight text-2xl font-extrabold">
+						{props.title}
+					</p>
+				</Show>
 				<Show when={props.description}>
 					<p class="mt-2 text-sm text-secondary-foreground">
 						{props.description}

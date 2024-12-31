@@ -1,4 +1,4 @@
-import type { Component, ComponentProps, JSX, ValidComponent } from 'solid-js'
+import { Component, ComponentProps, createSignal, JSX, onMount, ValidComponent } from 'solid-js'
 import { splitProps } from 'solid-js'
 
 import * as NumberFieldPrimitive from '@kobalte/core/number-field'
@@ -9,6 +9,7 @@ import { cn } from '~/lib/utils'
 const NumberField = NumberFieldPrimitive.Root
 
 const NumberFieldGroup: Component<ComponentProps<'div'>> = (props) => {
+
 	const [local, others] = splitProps(props, ['class'])
 	return (
 		<div
@@ -50,10 +51,18 @@ const NumberFieldInput = <T extends ValidComponent = 'input'>(
 	props: PolymorphicProps<T, NumberFieldInputProps<T>>,
 ) => {
 	const [local, others] = splitProps(props as NumberFieldInputProps, ['class'])
+	const [input, setInput] = createSignal<HTMLInputElement | null>(null)
+
+	onMount(() => {
+		if (input()) {
+			input()?.focus()
+		}
+	})
 	return (
 		<NumberFieldPrimitive.Input
+			ref={setInput}
 			class={cn(
-				'flex h-12 w-full rounded-md bg-neutral-700 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[invalid]:border-error-foreground data-[invalid]:text-error-foreground',
+				'flex h-12 w-full rounded-md bg-secondary px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[invalid]:border-error-foreground data-[invalid]:text-error-foreground',
 				local.class,
 			)}
 			{...others}

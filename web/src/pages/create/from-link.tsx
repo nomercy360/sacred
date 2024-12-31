@@ -9,17 +9,13 @@ import { currencySymbol } from '~/lib/utils'
 import { createWishStore, setCreateWishStore } from '~/pages/new'
 import { queryClient } from '~/App'
 import { useNavigate } from '@solidjs/router'
-import {
-	Drawer,
-	DrawerContent,
-	DrawerDescription,
-	DrawerHeader,
-	DrawerTitle,
-	DrawerTrigger,
-	DrawerFooter,
-	DrawerClose,
-} from '~/components/ui/drawer'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
+import {
+	NumberField, NumberFieldDecrementTrigger, NumberFieldErrorMessage,
+	NumberFieldGroup,
+	NumberFieldIncrementTrigger,
+	NumberFieldInput,
+} from '~/components/ui/number-field'
 
 type MetadataResponse = {
 	image_urls: string[]
@@ -41,8 +37,6 @@ export default function CreateFromLinkPage() {
 
 	const [selectedImages, setSelectedImages] = createSignal<string[]>([])
 
-	const [drawerOpen, setDrawerOpen] = createSignal<boolean>(false)
-
 	const onContinue = async () => {
 		if (step() === 1) {
 			setStep(step() + 1)
@@ -58,17 +52,21 @@ export default function CreateFromLinkPage() {
 
 				if (title) {
 					setCreateWishStore({ name: title })
-				} else {
-					setDrawerOpen(true)
 				}
 			})
 		} else if (step() === 2) {
 			setStep(step() + 1)
 		} else if (step() === 3) {
 			if (createWishStore.name) {
+				setStep(6)
+			} else {
 				setStep(step() + 1)
 			}
 		} else if (step() === 4) {
+			setStep(step() + 1)
+		} else if (step() === 5) {
+			setStep(step() + 1)
+		} else if (step() === 6) {
 			const images = selectedImages().map((url, i) => ({ url, width: 0, height: 0, size: 0 })) as {
 				url: string,
 				width: number,
@@ -84,11 +82,6 @@ export default function CreateFromLinkPage() {
 			} finally {
 				window.Telegram.WebApp.MainButton.hideProgress()
 			}
-		} else if (step() === 5) {
-			setStep(step() + 1)
-		} else if (step() === 6) {
-			setStep(4)
-			setDrawerOpen(false)
 		}
 	}
 
@@ -133,18 +126,9 @@ export default function CreateFromLinkPage() {
 			if (!createWishStore.name) {
 				mainButton.disable('Add title to continue')
 			} else {
-				mainButton.enable('Save & Publish')
-			}
-		} else if (step() === 5) {
-			backButton.setVisible()
-			backButton.onClick(decrementStep)
-
-			if (!createWishStore.name) {
-				mainButton.disable('Add title to continue')
-			} else {
 				mainButton.enable('Continue')
 			}
-		} else if (step() === 6) {
+		} else if (step() === 5) {
 			backButton.setVisible()
 			backButton.onClick(decrementStep)
 
@@ -153,6 +137,11 @@ export default function CreateFromLinkPage() {
 			} else {
 				mainButton.enable('Continue')
 			}
+		} else if (step() === 6) {
+			backButton.setVisible()
+			backButton.onClick(decrementStep)
+
+			mainButton.enable('Save & Publish')
 		}
 	})
 
@@ -179,13 +168,13 @@ export default function CreateFromLinkPage() {
 			title: 'Select images',
 		},
 		{
-			title: 'Review and save',
+			title: 'Give name to the wish',
 		},
 		{
-			title: 'Review and save',
+			title: 'Add price and currency',
 		},
 		{
-			title: 'Review and save',
+			title: undefined,
 		},
 	]
 
@@ -207,6 +196,7 @@ export default function CreateFromLinkPage() {
 		<FormLayout
 			title={formHeaders[step() - 1].title}
 			step={step()}
+			maxSteps={6}
 		>
 			<Switch>
 				<Match when={step() === 1}>
@@ -257,95 +247,76 @@ export default function CreateFromLinkPage() {
 						</div>
 					</Show>
 				</Match>
-				<Match when={step() >= 4}>
-					<Drawer
-						open={drawerOpen()}
-					>
-						<div class="overflow-y-scroll w-full flex items-center justify-start flex-col">
-							<DrawerTrigger class="flex flex-col items-center justify-center"
-														 onClick={() => {
-															 setDrawerOpen(true)
-															 setStep(5)
-														 }}
+				<Match when={step() == 4}>
+					<FormTextArea
+						placeholder="start typing"
+						value={createWishStore.name || ''}
+						onInput={(e) => setCreateWishStore({ name: e.currentTarget.value })}
+						autofocus={true}
+					/>
+				</Match>
+				<Match when={step() == 5}>
+					<div class="flex flex-row items-center justify-center space-x-4">
+						<NumberField
+							class="flex w-36 flex-col gap-2"
+							onRawValueChange={(value) => setCreateWishStore({ price: value })}
+							maxValue={1000000}
+							minValue={0}
+							step={100}
+						>
+							<NumberFieldGroup>
+								<NumberFieldInput />
+								<NumberFieldIncrementTrigger />
+								<NumberFieldDecrementTrigger />
+							</NumberFieldGroup>
+						</NumberField>
+						<Select
+							value={createWishStore.currency}
+							onChange={(e) => setCreateWishStore({ currency: e })}
+							options={['USD', 'EUR', 'RUB', 'THB']}
+							itemComponent={(props) => <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>}
+						>
+							<SelectTrigger
+								aria-label="Currency"
+								class="w-12"
 							>
-								<span class="text-xl font-extrabold">
-									{createWishStore.name}
+								<SelectValue<string>>{(state) => state.selectedOption()}</SelectValue>
+							</SelectTrigger>
+							<SelectContent />
+						</Select>
+					</div>
+				</Match>
+				<Match when={step() == 6}>
+					<div class="overflow-y-scroll w-full flex items-center justify-start flex-col">
+						<button
+							class="w-full flex flex-col items-center justify-center"
+							onClick={() => setStep(4)}
+						>
+							<span class="mb-2 text-xl font-extrabold">
+								{createWishStore.name}
+							</span>
+							<Show when={createWishStore.price && createWishStore.currency}>
+								<span class="text-sm text-muted-foreground">
+									{createWishStore.price} {currencySymbol(createWishStore.currency!)}
 								</span>
-								<Show when={createWishStore.price && createWishStore.currency}>
-									<span class="text-sm text-muted-foreground">
-										{createWishStore.price} {currencySymbol(createWishStore.currency!)}
-									</span>
-								</Show>
-								<Show when={!createWishStore.price || !createWishStore.currency}>
-									<span class="text-sm text-muted-foreground">
-										Add price and currency
-									</span>
-								</Show>
-							</DrawerTrigger>
-							<div class="flex flex-col space-y-0.5 w-full items-center">
-								<For each={selectedImages()}>
-									{(url) => (
-										<div
-											class="size-full aspect-square bg-center bg-cover rounded-2xl"
-											style={{ 'background-image': `url(${url})` }}
-										/>
-									)}
-								</For>
-							</div>
+							</Show>
+							<Show when={!createWishStore.price || !createWishStore.currency}>
+								<span class="text-sm text-muted-foreground">
+									Add price and currency
+								</span>
+							</Show>
+						</button>
+						<div class="mt-7 flex flex-col space-y-0.5 w-full items-center">
+							<For each={selectedImages()}>
+								{(url) => (
+									<div
+										class="size-full aspect-square bg-center bg-cover rounded-2xl"
+										style={{ 'background-image': `url(${url})` }}
+									/>
+								)}
+							</For>
 						</div>
-						<DrawerContent class="h-[90vh]">
-							<div class="mx-auto w-full max-w-sm">
-								<DrawerHeader class="relative">
-									<div class="absolute top-0 left-0 w-full flex flex-row justify-between items-center">
-										<DrawerClose class="flex items-center justify-center bg-secondary rounded-full size-10"
-																 onClick={() => setDrawerOpen(false)}>
-											<span class="material-symbols-rounded text-[20px]">
-												close
-											</span>
-										</DrawerClose>
-										<Show when={step() === 6}>
-											<Select
-												value={createWishStore.currency}
-												onChange={(e) => setCreateWishStore({ currency: e })}
-												options={['USD', 'EUR', 'RUB', 'THB']}
-												itemComponent={(props) => <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>}
-											>
-												<SelectTrigger
-													aria-label="Currency"
-													class="size-10 rounded-full"
-												>
-													<SelectValue<string>>{(state) => state.selectedOption()}</SelectValue>
-												</SelectTrigger>
-												<SelectContent />
-											</Select>
-										</Show>
-									</div>
-									<DrawerTitle>
-										{step() === 5 ? 'Edit title' : 'Edit Price'}
-									</DrawerTitle>
-								</DrawerHeader>
-								<div class="p-4 pb-0">
-									<Show when={step() === 5}>
-										<FormTextArea
-											placeholder="start typing"
-											value={createWishStore.name || ''}
-											onInput={(e) => setCreateWishStore({ name: e.currentTarget.value })}
-											autofocus={true}
-										/>
-									</Show>
-									<Show when={step() === 6}>
-										<FormInput
-											type="number"
-											placeholder="Price"
-											value={createWishStore.price || ''}
-											onInput={(e) => setCreateWishStore({ price: parseFloat(e.currentTarget.value) })}
-											autofocus={true}
-										/>
-									</Show>
-								</div>
-							</div>
-						</DrawerContent>
-					</Drawer>
+					</div>
 				</Match>
 			</Switch>
 		</FormLayout>

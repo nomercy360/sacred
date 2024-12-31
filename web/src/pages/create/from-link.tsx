@@ -102,10 +102,15 @@ export default function CreateFromLinkPage() {
 		setStep(step() - 1)
 	}
 
+	function goBack() {
+		navigate('/new')
+	}
+
 	createEffect(() => {
 		if (step() === 1) {
-			backButton.hide()
+			backButton.setVisible()
 			backButton.offClick(decrementStep)
+			backButton.onClick(goBack)
 
 			const linkRegex = /^(http|https):\/\/[^ "]+$/
 			if (!linkRegex.test(link())) {
@@ -114,7 +119,7 @@ export default function CreateFromLinkPage() {
 				mainButton.enable('Continue')
 			}
 		} else if (step() === 2) {
-			backButton.setVisible()
+			backButton.offClick(goBack)
 			backButton.onClick(decrementStep)
 
 			if (createWishStore.category_ids.length < 1) {
@@ -123,9 +128,6 @@ export default function CreateFromLinkPage() {
 				mainButton.enable('Continue with chosen')
 			}
 		} else if (step() === 3) {
-			backButton.setVisible()
-			backButton.onClick(decrementStep)
-
 			if (metaWithImages() === null) {
 				mainButton.disable('Loading...')
 			} else if (selectedImages().length < 1) {
@@ -134,26 +136,18 @@ export default function CreateFromLinkPage() {
 				mainButton.enable('Continue with chosen')
 			}
 		} else if (step() === 4) {
-			backButton.setVisible()
-			backButton.onClick(decrementStep)
 			if (!createWishStore.name) {
 				mainButton.disable('Add title to continue')
 			} else {
 				mainButton.enable('Continue')
 			}
 		} else if (step() === 5) {
-			backButton.setVisible()
-			backButton.onClick(decrementStep)
-
 			if (!createWishStore.price) {
 				mainButton.enable('Continue without price')
 			} else {
 				mainButton.enable('Continue')
 			}
 		} else if (step() === 6) {
-			backButton.setVisible()
-			backButton.onClick(decrementStep)
-
 			mainButton.enable('Save & Publish')
 		}
 	})
@@ -252,6 +246,7 @@ export default function CreateFromLinkPage() {
 												} else {
 													setSelectedImages(selectedImages().filter((i) => i !== url))
 												}
+												window.Telegram.WebApp.HapticFeedback.selectionChanged()
 											}}
 										/>
 									</div>

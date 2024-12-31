@@ -63,6 +63,7 @@ export function NavigationProvider(props: { children: JSX.Element }) {
 			backButton.onClick(navigateBack)
 		} else {
 			backButton.hide()
+			backButton.offClick(navigateBack)
 		}
 	})
 

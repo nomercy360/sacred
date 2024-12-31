@@ -1,4 +1,5 @@
 import FormLayout from '~/components/form-layout'
+import FormInput, { FormTextArea } from '~/components/form-input'
 import { createEffect, createSignal, For, Match, onCleanup, onMount, Show, Switch } from 'solid-js'
 import { useMainButton } from '~/lib/useMainButton'
 import { useBackButton } from '~/lib/useBackButton'
@@ -6,10 +7,21 @@ import CategoriesSelect from '~/components/categories-select'
 import { fetchAddWish } from '~/lib/api'
 import { currencySymbol } from '~/lib/utils'
 import { createWishStore, setCreateWishStore } from '~/pages/new'
-import { FormTextArea } from '~/components/form-input'
+import { queryClient } from '~/App'
+import { useNavigate } from '@solidjs/router'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
+import {
+	NumberField, NumberFieldDecrementTrigger,
+	NumberFieldGroup,
+	NumberFieldIncrementTrigger,
+	NumberFieldInput,
+} from '~/components/ui/number-field'
 
-export default function CreateFromImagePage() {
+
+export default function CreateFromImagesPage() {
 	const [step, setStep] = createSignal(1)
+
+	const navigate = useNavigate()
 
 	const mainButton = useMainButton()
 
@@ -21,9 +33,17 @@ export default function CreateFromImagePage() {
 		} else if (step() === 2) {
 			setStep(step() + 1)
 		} else if (step() === 3) {
-
-		} else {
-			await fetchAddWish(createWishStore)
+			setStep(step() + 1)
+		} else if (step() === 4) {
+			setStep(step() + 1)
+		} else if (step() === 5) {
+			window.Telegram.WebApp.MainButton.showProgress(false)
+			const { data, error } = await fetchAddWish(createWishStore)
+			window.Telegram.WebApp.MainButton.hideProgress()
+			if (!error) {
+				await queryClient.invalidateQueries({ queryKey: ['wishes'] })
+				navigate('/')
+			}
 		}
 	}
 
@@ -31,10 +51,15 @@ export default function CreateFromImagePage() {
 		setStep(step() - 1)
 	}
 
+	function goBack() {
+		navigate('/new')
+	}
+
 	createEffect(() => {
 		if (step() === 1) {
-			backButton.hide()
+			backButton.setVisible()
 			backButton.offClick(decrementStep)
+			backButton.onClick(goBack)
 
 			if (createWishStore.category_ids.length < 1) {
 				mainButton.disable('Select at least 1')
@@ -42,22 +67,30 @@ export default function CreateFromImagePage() {
 				mainButton.enable('Continue with chosen')
 			}
 		} else if (step() === 2) {
-			backButton.setVisible()
-			backButton.onClick(decrementStep)
-
 			if (!createWishStore.name) {
 				mainButton.disable('Add title to continue')
 			} else {
 				mainButton.enable('Continue')
 			}
 		} else if (step() === 3) {
-			backButton.setVisible()
-			backButton.onClick(decrementStep)
+			if (!createWishStore.price) {
+				mainButton.enable('Continue without price')
+			} else {
+				mainButton.enable('Continue')
+			}
+		} else if (step() === 4) {
+			if (!createWishStore.url) {
+				mainButton.enable('Continue without link')
+			} else {
+				mainButton.enable('Continue')
+			}
+		} else if (step() === 5) {
+			mainButton.enable('Save & Publish')
 		}
 	})
 
 	onMount(() => {
-		setCreateWishStore({ category_ids: [], name: null, price: null, currency: null })
+		setCreateWishStore({ category_ids: [], name: null, price: null, currency: 'USD', url: null })
 		mainButton.onClick(onContinue)
 	})
 
@@ -70,23 +103,27 @@ export default function CreateFromImagePage() {
 
 	const formHeaders = [
 		{
-			title: 'Select categories',
-			description: 'Choose categories for the wish',
+			title: 'Choose categories',
 		},
 		{
 			title: 'Give name to the wish',
-			description: 'Add title to the wish',
 		},
 		{
-			title: 'Select images',
-			description: 'Choose images to save',
+			title: 'Add price',
+		},
+		{
+			title: 'Add link',
+		},
+		{
+			title: undefined,
 		},
 	]
+
 	return (
 		<FormLayout
 			title={formHeaders[step() - 1].title}
-			description={formHeaders[step() - 1].description}
 			step={step()}
+			maxSteps={6}
 		>
 			<Switch>
 				<Match when={step() === 1}>
@@ -97,39 +134,82 @@ export default function CreateFromImagePage() {
 				</Match>
 				<Match when={step() === 2}>
 					<FormTextArea
-						placeholder="Title"
+						placeholder="start typing"
 						value={createWishStore.name || ''}
 						onInput={(e) => setCreateWishStore({ name: e.currentTarget.value })}
 						autofocus={true}
 					/>
 				</Match>
 				<Match when={step() === 3}>
-					<p class="text-xl font-extrabold">{createWishStore.name}</p>
-					<Show when={createWishStore.price && createWishStore.currency}>
-						<p class="text-lg text-secondary-foreground">
-							{createWishStore.price} {currencySymbol(createWishStore.currency!)}
-						</p>
-					</Show>
-					<Show when={!createWishStore.price || !createWishStore.currency}>
-						<button
-							class="bg-secondary w-full flex h-12 items-center justify-start gap-4 rounded-xl px-3 text-sm text-muted-foreground"
+					<Select
+						value={createWishStore.currency}
+						onChange={(e) => setCreateWishStore({ currency: e })}
+						options={['USD', 'EUR', 'RUB', 'THB']}
+						itemComponent={(props) => <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>}
+					>
+						<SelectTrigger
+							aria-label="Currency"
+							class="size-12 rounded-full bg-secondary text-xs font-medium absolute right-4 top-4"
 						>
-							<span class="text-nowrap">Add price and currency</span>
+							<SelectValue<string>>{(state) => state.selectedOption()}</SelectValue>
+						</SelectTrigger>
+						<SelectContent />
+					</Select>
+					<NumberField
+						class="mt-12 flex w-36 flex-col gap-2"
+						onRawValueChange={(value) => setCreateWishStore({ price: value })}
+						maxValue={1000000}
+						minValue={0}
+						step={100}
+					>
+						<NumberFieldGroup>
+							<NumberFieldInput />
+							<NumberFieldIncrementTrigger />
+							<NumberFieldDecrementTrigger />
+						</NumberFieldGroup>
+					</NumberField>
+				</Match>
+				<Match when={step() == 4}>
+					<FormTextArea
+						placeholder="start typing"
+						value={createWishStore.url || ''}
+						onInput={(e) => setCreateWishStore({ url: e.currentTarget.value })}
+						autofocus={true}
+					/>
+				</Match>
+				<Match when={step() == 5}>
+					<div class="overflow-y-scroll w-full flex items-center justify-start flex-col">
+						<button
+							class="w-full flex flex-col items-center justify-center"
+							onClick={() => setStep(2)}
+						>
+							<span class="mb-2 text-xl font-extrabold">
+								{createWishStore.name}
+							</span>
+							<Show when={createWishStore.price && createWishStore.currency}>
+								<span class="text-sm text-muted-foreground">
+									{createWishStore.price} {currencySymbol(createWishStore.currency!)}
+								</span>
+							</Show>
+							<Show when={!createWishStore.price || !createWishStore.currency}>
+								<span class="text-sm text-muted-foreground">
+									Add price and currency
+								</span>
+							</Show>
 						</button>
-					</Show>
-					<div class="flex flex-col space-y-0.5 w-full items-center">
-						<For each={createWishStore.images}>
-							{(img) => (
-								<div
-									class="size-full aspect-square bg-center bg-cover rounded-2xl"
-									style={{ 'background-image': `url(${img.url})` }}
-								/>
-							)}
-						</For>
+						<div class="mt-7 flex flex-col space-y-0.5 w-full items-center">
+							<For each={createWishStore.images}>
+								{(img) => (
+									<div
+										class="size-full bg-center bg-cover rounded-2xl"
+										style={{ 'background-image': `url(${img.url})`, 'aspect-ratio': `${img.width}/${img.height}` }}
+									/>
+								)}
+							</For>
+						</div>
 					</div>
 				</Match>
 			</Switch>
 		</FormLayout>
 	)
 }
-

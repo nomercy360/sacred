@@ -25,8 +25,6 @@ type MetadataResponse = {
 }
 
 export default function CreateFromLinkPage() {
-	const [link, setLink] = createSignal('')
-
 	const [step, setStep] = createSignal(1)
 
 	const navigate = useNavigate()
@@ -39,14 +37,14 @@ export default function CreateFromLinkPage() {
 
 	function updateLink(newLink: string) {
 		console.log('Received link:', newLink)
-		setLink(newLink)
+		setCreateWishStore({ url: newLink })
 	}
 
 	const onContinue = async () => {
 		if (step() === 1) {
 			setStep(step() + 1)
 			setMetaWithImages(null)
-			fetchMetadata(link()).then((data) => {
+			fetchMetadata(createWishStore.url!).then((data) => {
 				setMetaWithImages(data)
 				let title = null
 				if (data.metadata['og:title']) {
@@ -105,7 +103,7 @@ export default function CreateFromLinkPage() {
 			backButton.onClick(goBack)
 
 			const linkRegex = /^(http|https):\/\/[^ "]+$/
-			if (!linkRegex.test(link())) {
+			if (!linkRegex.test(createWishStore.url || '')) {
 				mainButton.disable('Continue')
 			} else {
 				mainButton.enable('Continue')
@@ -202,8 +200,8 @@ export default function CreateFromLinkPage() {
 				<Match when={step() === 1}>
 					<FormTextArea
 						placeholder="https://nike.com/product/nike-air-max-90"
-						value={link()}
-						onInput={(e) => setLink(e.currentTarget.value)}
+						value={createWishStore.url || ''}
+						onInput={(e) => setCreateWishStore({ url: e.currentTarget.value })}
 						autofocus={true}
 					/>
 				</Match>

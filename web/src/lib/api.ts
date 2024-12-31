@@ -44,14 +44,11 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 
 
 export async function fetchPresignedUrl(filename: string) {
-	const { data, error } = await apiRequest('/presigned-url',
+	return await apiRequest('/presigned-url',
 		{
 			method: 'POST',
-			body: JSON.stringify({ filename }),
+			body: JSON.stringify({ file_name: filename }),
 		})
-
-
-	return data
 }
 
 export async function uploadToS3(url: string, file: File) {
@@ -63,15 +60,6 @@ export async function uploadToS3(url: string, file: File) {
 		},
 	})
 }
-
-// export const fetchPresignedUrl = async (file: string) => {
-// 	const { path, url } = await apiFetch({
-// 		endpoint: `/presigned-url?filename=${file}`,
-// 		showProgress: false,
-// 	})
-//
-// 	return { path, url }
-// }
 
 export const saveUserPreferences = async (preferences: any) => {
 	const { data, error } = await apiRequest('/user/settings', {

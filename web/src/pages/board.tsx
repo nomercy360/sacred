@@ -25,6 +25,19 @@ export default function UserBoardPage() {
 		return img ? img.url : '/placeholder.jpg'
 	}
 
+	function resolveAspectRatio(images: WishImage[]) {
+		// find image with position 1 or else return link to placeholder
+		const img = images.find((img) => img.position === 1)
+		return img ? `${img.width}/${img.height}` : `1/1`
+	}
+
+	function splitIntoGroups(array, groupCount) {
+		if (!array) return [];
+		const groups = Array.from({ length: groupCount }, () => []);
+		array.forEach((item, index) => groups[index % groupCount].push(item));
+		return groups;
+	}
+
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
 			<div class="flex-shrink-0 w-full flex flex-row justify-between items-center p-5">
@@ -77,19 +90,24 @@ export default function UserBoardPage() {
 						</div>
 					</Match>
 					<Match when={!wishes.isLoading && wishes.data?.length}>
-						<div class="grid grid-cols-2 gap-2 px-2 overflow-y-scroll">
-							<For each={wishes.data}>
-								{(item) => (
-									<Link class="p-4 flex flex-col items-center"
-												href={`/wishes/${item.id}`}>
-										<img src={resolveImage(item.images)} alt={item.name}
-												 class="rounded-2xl mb-4 aspect-square object-cover size-full" />
-										<div class="flex flex-col items-center justify-center text-sm font-semibold">
-											<p>{item.name}</p>
-											<span
-												class="text-xs text-secondary-foreground">{' '}{item.price}{currencySymbol(item.currency!)}</span>
-										</div>
-									</Link>
+						<div class="grid grid-cols-2 gap-0.5">
+							<For each={splitIntoGroups(wishes.data, 2)}>
+								{(group) => (
+									<div class="flex flex-col gap-0.5">
+										<For each={group}>
+											{(item) => (
+												<Link
+													class="bg-center bg-cover rounded-[25px] border-[0.5px] border-border/70"
+													style={{
+														'background-image': `url(${resolveImage(item.images)})`,
+														'aspect-ratio': resolveAspectRatio(item.images),
+													}}
+													href={`/wishes/${item.id}`}
+												>
+												</Link>
+											)}
+										</For>
+									</div>
 								)}
 							</For>
 						</div>

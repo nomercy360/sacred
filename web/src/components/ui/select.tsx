@@ -23,26 +23,12 @@ const SelectTrigger = <T extends ValidComponent = 'button'>(
 	return (
 		<SelectPrimitive.Trigger
 			class={cn(
-				'flex h-12 w-full items-center justify-between rounded-xl bbg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+				'flex items-center justify-center rounded-xl bbg-transparent text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
 				local.class,
 			)}
 			{...others}
 		>
 			{local.children}
-			<SelectPrimitive.Icon
-				as="svg"
-				xmlns="http://www.w3.org/2000/svg"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				class="size-4 opacity-50"
-			>
-				<path d="M8 9l4 -4l4 4" />
-				<path d="M16 15l-4 4l-4 -4" />
-			</SelectPrimitive.Icon>
 		</SelectPrimitive.Trigger>
 	)
 }

@@ -11,7 +11,7 @@ import { queryClient } from '~/App'
 import { useNavigate } from '@solidjs/router'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import {
-	NumberField, NumberFieldDecrementTrigger, NumberFieldErrorMessage,
+	NumberField, NumberFieldDecrementTrigger,
 	NumberFieldGroup,
 	NumberFieldIncrementTrigger,
 	NumberFieldInput,
@@ -23,19 +23,6 @@ type MetadataResponse = {
 		[key: string]: string
 	}
 }
-
-type Currency = {
-	value: string
-	label: string
-	disabled: boolean
-}
-
-const currencies: Currency[] = [
-	{ value: 'USD', label: '$', disabled: false },
-	{ value: 'EUR', label: '€', disabled: false },
-	{ value: 'RUB', label: '₽', disabled: false },
-	{ value: 'THB', label: '฿', disabled: false },
-]
 
 export default function CreateFromLinkPage() {
 	const [link, setLink] = createSignal('')
@@ -49,6 +36,11 @@ export default function CreateFromLinkPage() {
 	const backButton = useBackButton()
 
 	const [selectedImages, setSelectedImages] = createSignal<string[]>([])
+
+	function updateLink(newLink: string) {
+		console.log('Received link:', newLink)
+		setLink(newLink)
+	}
 
 	const onContinue = async () => {
 		if (step() === 1) {
@@ -153,6 +145,7 @@ export default function CreateFromLinkPage() {
 	})
 
 	onMount(() => {
+		window.Telegram.WebApp.readTextFromClipboard(updateLink)
 		setCreateWishStore({ images: [], category_ids: [], name: null, price: null, currency: 'USD' })
 		mainButton.onClick(onContinue)
 	})
@@ -178,7 +171,7 @@ export default function CreateFromLinkPage() {
 			title: 'Give name to the wish',
 		},
 		{
-			title: 'Add price and currency',
+			title: 'Add price',
 		},
 		{
 			title: undefined,
@@ -264,41 +257,33 @@ export default function CreateFromLinkPage() {
 					/>
 				</Match>
 				<Match when={step() == 5}>
-					<div class="flex flex-row items-center justify-center space-x-4">
-						<NumberField
-							class="flex w-36 flex-col gap-2"
-							onRawValueChange={(value) => setCreateWishStore({ price: value })}
-							maxValue={1000000}
-							minValue={0}
-							step={100}
+					<Select
+						value={createWishStore.currency}
+						onChange={(e) => setCreateWishStore({ currency: e })}
+						options={['USD', 'EUR', 'RUB', 'THB']}
+						itemComponent={(props) => <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>}
+					>
+						<SelectTrigger
+							aria-label="Currency"
+							class="size-12 rounded-full bg-secondary text-xs font-medium absolute right-4 top-4"
 						>
-							<NumberFieldGroup>
-								<NumberFieldInput />
-								<NumberFieldIncrementTrigger />
-								<NumberFieldDecrementTrigger />
-							</NumberFieldGroup>
-						</NumberField>
-						<Select
-							options={currencies}
-							optionValue="value"
-							optionTextValue="label"
-							optionDisabled="disabled"
-							selectedOption={currencies.find((c) => c.value === createWishStore.currency)}
-							onSelectedOptionChange={(value: Currency) => setCreateWishStore({ currency: value.value })}
-							itemComponent={(props) => (
-								<SelectItem item={props.item}>
-									{props.item.rawValue.label}
-								</SelectItem>
-							)}
-						>
-							<SelectTrigger aria-label="Currency" class="w-12">
-								<SelectValue<Currency>>
-									{(state) => state.selectedOption().label}
-								</SelectValue>
-							</SelectTrigger>
-							<SelectContent />
-						</Select>
-					</div>
+							<SelectValue<string>>{(state) => state.selectedOption()}</SelectValue>
+						</SelectTrigger>
+						<SelectContent />
+					</Select>
+					<NumberField
+						class="mt-12 flex w-36 flex-col gap-2"
+						onRawValueChange={(value) => setCreateWishStore({ price: value })}
+						maxValue={1000000}
+						minValue={0}
+						step={100}
+					>
+						<NumberFieldGroup>
+							<NumberFieldInput />
+							<NumberFieldIncrementTrigger />
+							<NumberFieldDecrementTrigger />
+						</NumberFieldGroup>
+					</NumberField>
 				</Match>
 				<Match when={step() == 6}>
 					<div class="overflow-y-scroll w-full flex items-center justify-start flex-col">

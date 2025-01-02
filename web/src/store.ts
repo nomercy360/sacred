@@ -20,11 +20,13 @@ type User = {
 }
 
 export const [store, setStore] = createStore<{
+	onboarding: boolean
 	user: User | null
 	token: string
 	following: number[]
 	wishes: Wish[]
 }>({
+	onboarding: true,
 	user: null as any,
 	token: null as any,
 	following: [],

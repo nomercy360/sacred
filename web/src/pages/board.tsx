@@ -1,8 +1,9 @@
 import { fetchUserWishes, Wish, WishImage } from '~/lib/api'
-import { Match, Switch, For } from 'solid-js'
+import { Match, Switch, For, createSignal, Show } from 'solid-js'
 import { createQuery } from '@tanstack/solid-query'
 import { Link } from '~/components/link'
-import { store } from '~/store'
+import { setStore, store } from '~/store'
+import { cn } from '~/lib/utils'
 
 export default function UserBoardPage() {
 	const wishes = createQuery<Wish[]>(() => ({
@@ -29,7 +30,8 @@ export default function UserBoardPage() {
 
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
-			<div class="bg-background h-20 fixed flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5">
+			<div
+				class="bg-background h-20 fixed flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5">
 				<Link class="flex flex-row space-x-2 items-center justify-start" href="/settings">
 					<img
 						src={store.user?.avatar_url}
@@ -128,6 +130,99 @@ export default function UserBoardPage() {
 						</div>
 					</Match>
 				</Switch>
+			</div>
+			<Show when={store.onboarding}>
+				<OnboardingPopup onClose={() => setStore('onboarding', false)} />
+			</Show>
+		</div>
+	)
+}
+
+function OnboardingPopup(props: { onClose: () => void }) {
+	const texts = [
+		{
+			title: 'Explore ideas',
+			description: 'Need legal or career advice? Just type your message in the chat!',
+		},
+		{
+			title: 'Save them',
+			description: 'Need legal or career advice? Just type your message in the chat!',
+		},
+		{
+			title: 'Peep others',
+			description: 'Need legal or career advice? Just type your message in the chat!',
+		},
+		{
+			title: 'Upload things',
+			description: 'Need legal or career advice? Just type your message in the chat!',
+		},
+	]
+
+	const [step, setStep] = createSignal(0)
+
+	const tabs = [
+		{
+			icon: 'interests',
+		},
+		{
+			icon: 'note_stack',
+		},
+		{
+			icon: 'group',
+		},
+
+		{
+			icon: 'add',
+		},
+	]
+
+	function onNext() {
+		if (step() === 3) {
+			setStep(0)
+		} else {
+			setStep(step() + 1)
+		}
+		window.Telegram.WebApp.HapticFeedback.selectionChanged()
+	}
+
+	return (
+		<div class="flex justify-end flex-col h-screen fixed inset-0 w-full backdrop-blur-sm z-50">
+			<div class="items-center bg-background rounded-t-2xl px-4 pt-4 pb-12 flex flex-col justify-between h-[300px]">
+				<div class="w-full flex flex-row items-center justify-between">
+					<button
+						onClick={props.onClose}
+						class="text-secondary-foreground  flex items-center justify-center bg-secondary rounded-full size-10">
+						<span class="material-symbols-rounded text-[20px]">close</span>
+					</button>
+					<button
+						class="text-secondary-foreground flex items-center justify-center bg-secondary rounded-2xl px-3 h-10"
+						onClick={onNext}
+					>
+						Next
+					</button>
+				</div>
+				<div class="max-w-[270px] text-center gap-1 flex flex-col items-center justify-center">
+					<p class="text-xl font-extrabold">
+						{texts[step()].title}
+					</p>
+					<p class="text-secondary-foreground">
+						{texts[step()].description}
+					</p>
+				</div>
+				<div class="flex flex-row items-center space-x-8">
+					{tabs.map(({ icon }, index) => (
+						<span
+							class={cn('size-10 flex items-center justify-center rounded-full flex-col text-sm text-secondary-foreground', {
+								'bg-primary': step() === index,
+							})}
+						>
+							<span
+								class={cn('material-symbols-rounded text-[20px]', { 'text-primary-foreground': step() === index })}>
+								{icon}
+							</span>
+						</span>
+					))}
+				</div>
 			</div>
 		</div>
 	)

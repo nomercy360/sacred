@@ -172,7 +172,18 @@ func (a *API) SaveWishToBookmarks(c echo.Context) error {
 		return terrors.BadRequest(nil, "wish id cannot be empty")
 	}
 
-	err := a.storage.SaveWishToBookmarks(c.Request().Context(), uid, wid)
+	wish, err := a.storage.GetWishByID(c.Request().Context(), uid, wid)
+	if err != nil && errors.Is(err, db.ErrNotFound) {
+		return terrors.NotFound(err, "wish not found")
+	} else if err != nil {
+		return terrors.InternalServer(err, "cannot get wish")
+	}
+
+	if wish.UserID == uid {
+		return terrors.BadRequest(nil, "cannot bookmark own wish")
+	}
+
+	err = a.storage.SaveWishToBookmarks(c.Request().Context(), uid, wid)
 
 	if err != nil && errors.Is(err, db.ErrAlreadyExists) {
 		return terrors.Conflict(err, "Wish was already copied")

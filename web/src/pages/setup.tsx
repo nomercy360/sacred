@@ -9,13 +9,6 @@ import FormLayout from '~/components/form-layout'
 import FormInput from '~/components/form-input'
 import CategoriesSelect from '~/components/categories-select'
 
-
-type Category = {
-	id: string
-	name: string
-	image_url: string
-}
-
 export default function SetupProfilePage() {
 	const [selectedCategories, setSelectedCategories] = createSignal<string[]>([])
 
@@ -35,7 +28,9 @@ export default function SetupProfilePage() {
 	const onContinue = async () => {
 		if (step() === 1) {
 			setStep(2)
-		} else {
+		} else if (step() === 2) {
+			setStep(3)
+		} else if (step() === 3) {
 			try {
 				const { data, error } = await saveUserPreferences({
 					email: email(),
@@ -62,17 +57,18 @@ export default function SetupProfilePage() {
 			backButton.hide()
 			backButton.offClick(decrementStep)
 
-			if (selectedCategories().length < 5) {
-				mainButton.disable('Select at least 5 categories')
-			} else {
-				mainButton.enable('Continue')
-			}
+			mainButton.enable('Set up profile')
 		} else if (step() === 2) {
 			backButton.setVisible()
 			backButton.onClick(decrementStep)
-
 			if (isEmailValid(email())) {
 				mainButton.disable('Continue')
+			} else {
+				mainButton.enable('Continue')
+			}
+		} else if (step() === 3) {
+			if (selectedCategories().length < 5) {
+				mainButton.disable('Select at least 5 categories')
 			} else {
 				mainButton.enable('Continue')
 			}
@@ -92,14 +88,14 @@ export default function SetupProfilePage() {
 
 	const formHeaders = [
 		{
-			title: 'Choose things you wish to discover',
-			description: 'We will find and recommend products for you',
-			step: 1,
+			title: undefined,
+			description: undefined,
 		},
 		{
 			title: 'Add your email',
-			description: 'No one sees it, and we will not spam you. By the way, you agree with terms and privacy policy by continuing.',
-			step: 2,
+		},
+		{
+			title: 'Choose things you wish to discover',
 		},
 	]
 
@@ -108,22 +104,36 @@ export default function SetupProfilePage() {
 			title={formHeaders[step() - 1].title}
 			description={formHeaders[step() - 1].description}
 			step={1}
-			maxSteps={2}
+			maxSteps={3}
 		>
 			<Switch>
 				<Match when={step() === 1}>
+					<div class="px-8 text-center">
+						<p class="text-xl font-extrabold">Gifts are solved</p>
+						<p class="mt-3 text-base">
+							Wished helps to find and save gift ideas for yourself and loved ones, and never miss important dates.
+						</p>
+					</div>
+				</Match>
+				<Match when={step() === 2}>
+					<div class="px-10 text-center h-full flex flex-col items-center justify-between pb-5">
+						<FormInput
+							placeholder="email@website.com"
+							type="email"
+							value={email()}
+							onInput={(e) => setEmail(e.currentTarget.value)}
+							autofocus={true}
+						/>
+						<p class="text-sm text-muted-foreground">
+							No one sees it, and we will not spam you. By the way, you agree with terms and privacy policy by
+							continuing.
+						</p>
+					</div>
+				</Match>
+				<Match when={step() === 3}>
 					<CategoriesSelect
 						selectedCategories={selectedCategories()}
 						setSelectedCategories={setSelectedCategories}
-					/>
-				</Match>
-				<Match when={step() === 2}>
-					<FormInput
-						placeholder="Email"
-						type="email"
-						value={email()}
-						onInput={(e) => setEmail(e.currentTarget.value)}
-						autofocus={true}
 					/>
 				</Match>
 			</Switch>

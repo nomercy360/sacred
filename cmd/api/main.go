@@ -261,9 +261,15 @@ func main() {
 	g.GET("/user/wishes", a.ListUserWishes)
 	g.GET("/ideas", a.ListIdeas)
 	g.GET("/profiles", a.ListProfiles)
+	g.GET("/profiles/:id", a.GetUserProfile)
 	g.POST("/presigned-url", a.GetPresignedURL)
 	g.POST("/users/follow", a.FollowUser)
 	g.POST("/users/unfollow", a.UnfollowUser)
+	g.POST("/wishes/:id/bookmark", a.SaveWishToBookmarks)
+	g.DELETE("/wishes/:id/bookmark", a.RemoveWishFromBookmarks)
+	g.GET("/wishes/bookmarks", a.ListBookmarkedWishes)
+	g.POST("/wishes/:id/copy", a.CopyWishHandler)
+	g.DELETE("/wishes/:id", a.DeleteWishHandler)
 
 	done := make(chan bool, 1)
 

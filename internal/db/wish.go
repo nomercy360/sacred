@@ -8,26 +8,33 @@ import (
 )
 
 type Wish struct {
-	ID          string      `db:"id" json:"id"`
-	UserID      string      `db:"user_id" json:"user_id"`
-	Name        *string     `db:"name" json:"name"`
-	URL         *string     `db:"url" json:"url"`
-	Price       *float64    `db:"price" json:"price"`
-	Currency    *string     `db:"currency" json:"currency"`
-	Notes       *string     `db:"notes" json:"notes"`
-	SourceID    *string     `db:"source_id" json:"source_id"`
-	SourceType  *string     `db:"source_type" json:"source_type"`
-	IsFulfilled bool        `db:"is_fulfilled" json:"is_fulfilled"`
-	IsPublic    bool        `db:"is_public" json:"is_public"`
-	IsFavorite  bool        `db:"is_favorite" json:"is_favorite"`
-	ReservedBy  *string     `db:"reserved_by" json:"reserved_by"`
-	ReservedAt  *time.Time  `db:"reserved_at" json:"reserved_at"`
-	CreatedAt   time.Time   `db:"created_at" json:"created_at"`
-	UpdatedAt   time.Time   `db:"updated_at" json:"updated_at"`
-	DeletedAt   *time.Time  `db:"deleted_at" json:"deleted_at"`
-	Images      []WishImage `json:"images"`
-	Categories  []Category  `json:"categories"`
+	ID           string      `db:"id" json:"id"`
+	UserID       string      `db:"user_id" json:"user_id"`
+	Name         *string     `db:"name" json:"name"`
+	URL          *string     `db:"url" json:"url"`
+	Price        *float64    `db:"price" json:"price"`
+	Currency     *string     `db:"currency" json:"currency"`
+	Notes        *string     `db:"notes" json:"notes"`
+	SourceID     *string     `db:"source_id" json:"source_id"`
+	SourceType   *string     `db:"source_type" json:"source_type"`
+	IsFulfilled  bool        `db:"is_fulfilled" json:"is_fulfilled"`
+	IsPublic     bool        `db:"is_public" json:"is_public"`
+	IsFavorite   bool        `db:"is_favorite" json:"is_favorite"`
+	ReservedBy   *string     `db:"reserved_by" json:"reserved_by"`
+	ReservedAt   *time.Time  `db:"reserved_at" json:"reserved_at"`
+	CreatedAt    time.Time   `db:"created_at" json:"created_at"`
+	UpdatedAt    time.Time   `db:"updated_at" json:"updated_at"`
+	DeletedAt    *time.Time  `db:"deleted_at" json:"deleted_at"`
+	Images       []WishImage `json:"images"`
+	Categories   []Category  `json:"categories"`
+	IsBookmarked bool        `db:"is_bookmarked" json:"is_bookmarked"`
+	CopiedWishID *string     `db:"copied_wish_id" json:"copied_wish_id"` // whether the current user has copied this wish to their own list
 }
+
+var (
+	WishSourceCopy = "wishlist_item"
+	IdeaSourceCopy = "idea"
+)
 
 func UnmarshalJSONToSlice[T any](src interface{}) ([]T, error) {
 	var source []byte
@@ -65,7 +72,7 @@ type WishImage struct {
 	Height    int       `db:"height" json:"height"`
 }
 
-func (s *storage) GetWishByID(ctx context.Context, id string) (Wish, error) {
+func (s *storage) GetWishByID(ctx context.Context, uid, id string) (Wish, error) {
 	query := `SELECT 
     		w.id, 
     		w.user_id,
@@ -81,8 +88,20 @@ func (s *storage) GetWishByID(ctx context.Context, id string) (Wish, error) {
     		w.reserved_at,
     		w.created_at, 
     		w.updated_at,
+    		w.source_id,
+    		w.source_type,
     		json_group_array(distinct json_object('id', wi.id, 'wish_id', wi.wish_id, 'url', wi.url, 'position', wi.position, 'size_bytes', wi.size_bytes, 'width', wi.width, 'height', wi.height)) filter (where wi.id is not null) as images,
-			json_group_array(distinct json_object('id', wc.category_id, 'name', c.name, 'image_url', c.image_url)) filter (where wc.category_id is not null) as categories
+			json_group_array(distinct json_object('id', wc.category_id, 'name', c.name, 'image_url', c.image_url)) filter (where wc.category_id is not null) as categories,
+			(SELECT uw.id 
+				 FROM wishes uw
+				 WHERE uw.source_id = w.id AND uw.user_id = ?
+				 LIMIT 1
+			 ) AS copied_wish_id,
+			EXISTS (
+				SELECT 1 
+				FROM user_bookmarks ub
+				WHERE ub.user_id = ? AND ub.wish_id = w.id
+			) AS is_bookmarked
 		FROM wishes w
 		LEFT JOIN wish_images wi ON w.id = wi.wish_id
 		LEFT JOIN wish_categories wc ON w.id = wc.wish_id
@@ -94,7 +113,7 @@ func (s *storage) GetWishByID(ctx context.Context, id string) (Wish, error) {
 	var imagesData interface{}
 	var categoriesData interface{}
 
-	if err := s.db.QueryRowContext(ctx, query, id).Scan(
+	if err := s.db.QueryRowContext(ctx, query, uid, uid, id).Scan(
 		&item.ID,
 		&item.UserID,
 		&item.Name,
@@ -109,8 +128,12 @@ func (s *storage) GetWishByID(ctx context.Context, id string) (Wish, error) {
 		&item.ReservedAt,
 		&item.CreatedAt,
 		&item.UpdatedAt,
+		&item.SourceID,
+		&item.SourceType,
 		&imagesData,
 		&categoriesData,
+		&item.CopiedWishID,
+		&item.IsBookmarked,
 	); err != nil && IsNoRowsError(err) {
 		return Wish{}, ErrNotFound
 	} else if err != nil {
@@ -135,7 +158,7 @@ func (s *storage) GetWishByID(ctx context.Context, id string) (Wish, error) {
 }
 
 func (s *storage) CreateWish(ctx context.Context, item Wish, categories []string) error {
-	query := `INSERT INTO wishes (id, user_id, name, url, price, currency, notes, is_fulfilled, is_public) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO wishes (id, user_id, name, url, price, currency, notes, is_fulfilled, is_public, source_id, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -152,9 +175,15 @@ func (s *storage) CreateWish(ctx context.Context, item Wish, categories []string
 		item.Notes,
 		item.IsFulfilled,
 		item.IsPublic,
+		item.SourceID,
+		item.SourceType,
 	)
 
-	if err != nil {
+	if err != nil && IsUniqueViolationError(err) {
+		tx.Rollback()
+		return ErrAlreadyExists
+	} else if err != nil {
+		tx.Rollback()
 		return err
 	}
 
@@ -173,8 +202,8 @@ func (s *storage) CreateWish(ctx context.Context, item Wish, categories []string
 	return nil
 }
 
-func (s *storage) UpdateWish(ctx context.Context, item Wish) (Wish, error) {
-	query := `UPDATE wishes SET name = ?, url = ?, price = ?, notes = ?, is_fulfilled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+func (s *storage) UpdateWish(ctx context.Context, uid string, item Wish) (Wish, error) {
+	query := `UPDATE wishes SET name = ?, url = ?, price = ?, notes = ?, is_fulfilled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?`
 
 	_, err := s.db.ExecContext(ctx, query,
 		item.ID,
@@ -184,13 +213,14 @@ func (s *storage) UpdateWish(ctx context.Context, item Wish) (Wish, error) {
 		item.Notes,
 		item.IsFulfilled,
 		item.ID,
+		uid,
 	)
 
 	if err != nil {
 		return Wish{}, err
 	}
 
-	return s.GetWishByID(ctx, item.ID)
+	return s.GetWishByID(ctx, uid, item.ID)
 }
 
 func (s *storage) baseWishesQuery() string {
@@ -320,4 +350,37 @@ func (s *storage) CreateWishImage(ctx context.Context, image WishImage) (WishIma
 	}
 
 	return image, nil
+}
+
+func (s *storage) DeleteWish(ctx context.Context, uid, id string) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	query := `DELETE FROM wish_images WHERE wish_id = ?`
+	_, err = tx.ExecContext(ctx, query, id)
+
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	query = `DELETE FROM wish_categories WHERE wish_id = ?`
+	_, err = tx.ExecContext(ctx, query, id)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	query = `DELETE FROM wishes WHERE id = ? AND user_id = ?`
+	_, err = tx.ExecContext(ctx, query, id, uid)
+
+	if err != nil {
+		tx.Rollback()
+	}
+
+	return tx.Commit()
 }

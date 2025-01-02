@@ -83,7 +83,7 @@ func IsNoRowsError(err error) bool {
 func IsUniqueViolationError(err error) bool {
 	var sqliteErr sqlite3.Error
 	errors.As(err, &sqliteErr)
-	if errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintPrimaryKey) {
+	if errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintUnique) {
 		return true
 	}
 	return false

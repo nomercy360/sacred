@@ -1,6 +1,5 @@
-import { createEffect, createResource, createSignal, For, Match, onCleanup, onMount, Show, Switch } from 'solid-js'
-import { cn } from '~/lib/utils'
-import { fetchCategories, saveUserPreferences } from '~/lib/api'
+import { createEffect, createSignal, Match, onCleanup, onMount, Switch } from 'solid-js'
+import { saveUserPreferences } from '~/lib/api'
 import { showToast } from '~/components/ui/toast'
 import { useNavigate } from '@solidjs/router'
 import { setUser } from '~/store'
@@ -109,6 +108,7 @@ export default function SetupProfilePage() {
 			title={formHeaders[step() - 1].title}
 			description={formHeaders[step() - 1].description}
 			step={1}
+			maxSteps={2}
 		>
 			<Switch>
 				<Match when={step() === 1}>

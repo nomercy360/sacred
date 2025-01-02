@@ -1,40 +1,45 @@
-export function useMainButton() {
+function createButtonHandlers(button: any) {
+	const getColorSchemeParams = (isActive: boolean, text?: string) => {
+		const baseParams = {
+			is_active: isActive,
+			is_visible: true,
+			text,
+			text_color: isActive ? '#F5F5F5' : '#D9D9D9',
+			color: isActive ? '#000000' : '#7A7A7A',
+		}
+
+		if (window.Telegram.WebApp.colorScheme === 'dark') {
+			baseParams.color = isActive ? '#141414' : '#B9BABF'
+			baseParams.text_color = isActive ? '#FFFFFF' : '#838489'
+		}
+
+		return baseParams
+	}
+
 	return {
 		setVisible: (text: string) => {
-			window.Telegram.WebApp.MainButton.setParams({
+			button.setParams({
 				is_visible: true,
-				text_color: '#FFFFFF',
-				color: '#3F8AF7',
 				text,
 			})
 		},
 		hide: () => {
-			window.Telegram.WebApp.MainButton.isVisible = false
+			button.isVisible = false
 		},
 		enable: (text?: string) => {
-			return window.Telegram.WebApp.MainButton.setParams({
-				is_active: true,
-				is_visible: true,
-				text_color: window.Telegram.WebApp.themeParams.button_text_color,
-				color: window.Telegram.WebApp.themeParams.button_color,
-				text,
-			})
+			return button.setParams(getColorSchemeParams(true, text))
 		},
 		disable: (text?: string) => {
-			return window.Telegram.WebApp.MainButton.setParams({
-				is_active: false,
-				is_visible: true,
-				text,
-			})
+			return button.setParams(getColorSchemeParams(false, text))
 		},
 		setParams: (params: {
-			text?: string
-			isVisible?: boolean
-			color?: string
-			textColor?: string
-			isEnabled?: boolean
+			text?: string;
+			isVisible?: boolean;
+			color?: string;
+			textColor?: string;
+			isEnabled?: boolean;
 		}) => {
-			return window.Telegram.WebApp.MainButton.setParams({
+			return button.setParams({
 				is_visible: params.isVisible,
 				text: params.text,
 				color: params.color,
@@ -43,16 +48,24 @@ export function useMainButton() {
 			})
 		},
 		onClick: (callback: () => void) => {
-			window.Telegram.WebApp.MainButton.onClick(callback)
+			button.onClick(callback)
 		},
 		offClick: (callback: () => void) => {
-			window.Telegram.WebApp.MainButton.offClick(callback)
+			button.offClick(callback)
 		},
 		showProgress: (leaveActive = false) => {
-			window.Telegram.WebApp.MainButton.showProgress(leaveActive)
+			button.showProgress(leaveActive)
 		},
 		hideProgress: () => {
-			window.Telegram.WebApp.MainButton.hideProgress()
+			button.hideProgress()
 		},
 	}
+}
+
+export function useMainButton() {
+	return createButtonHandlers(window.Telegram.WebApp.MainButton)
+}
+
+export function useSecondaryButton() {
+	return createButtonHandlers(window.Telegram.WebApp.SecondaryButton)
 }

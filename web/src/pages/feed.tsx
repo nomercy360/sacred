@@ -1,12 +1,24 @@
 import { createQuery } from '@tanstack/solid-query'
 import { fetchIdeas } from '~/lib/api'
 import { For, Show } from 'solid-js'
+import { store } from '~/store'
 
 const FeedPage = () => {
 	const ideas = createQuery(() => ({
 		queryKey: ['ideas'],
 		queryFn: () => fetchIdeas(),
 	}))
+
+	function shareBoardURL() {
+		const url =
+			'https://t.me/share/url?' +
+			new URLSearchParams({
+				url: 'https://t.me/sacred_wished/app?startapp=u_' + store.user?.username,
+			}).toString() +
+			`&text=Check out ${store.user?.first_name}'s wishes`
+
+		window.Telegram.WebApp.openTelegramLink(url)
+	}
 
 	return (
 		<div
@@ -28,7 +40,7 @@ const FeedPage = () => {
 				</button>
 			</div>
 			<div class="grid grid-cols-2 gap-0.5 pb-[200px] h-full w-full overflow-y-scroll">
-				<Show when={ideas.isSuccess}>
+				<Show when={ideas.isSuccess && ideas.data?.length > 0}>
 					<div class="flex flex-col gap-0.5">
 						<For each={ideas.data.slice(0, Math.ceil(ideas.data.length / 2))}>
 							{(idea) => (

@@ -15,10 +15,10 @@ type storager interface {
 	GetUserByChatID(chatID int64) (db.User, error)
 	GetUserByID(id string) (db.User, error)
 	CreateUser(ctx context.Context, user db.User) error
-	UpdateWish(ctx context.Context, wish db.Wish) (db.Wish, error)
+	UpdateWish(ctx context.Context, uid string, wish db.Wish) (db.Wish, error)
 	CreateWish(ctx context.Context, wish db.Wish, categories []string) error
 	CreateWishlist(ctx context.Context, list db.Wishlist) (db.Wishlist, error)
-	GetWishByID(ctx context.Context, id string) (db.Wish, error)
+	GetWishByID(ctx context.Context, uid, id string) (db.Wish, error)
 	GetWishlistByID(ctx context.Context, id string) (db.Wishlist, error)
 	UpdateUser(ctx context.Context, user db.User, interests []string) error
 	ListCategories(ctx context.Context) ([]db.Category, error)
@@ -29,6 +29,10 @@ type storager interface {
 	UnfollowUser(ctx context.Context, uid, UnfollowID string) error
 	GetIdeaByID(ctx context.Context, id string) (db.Idea, error)
 	CreateWishImage(ctx context.Context, image db.WishImage) (db.WishImage, error)
+	SaveWishToBookmarks(ctx context.Context, uid, wishID string) error
+	RemoveWishFromBookmarks(ctx context.Context, uid, wishID string) error
+	ListBookmarkedWishes(ctx context.Context, uid string) ([]db.Wish, error)
+	DeleteWish(ctx context.Context, uid, id string) error
 }
 
 type API struct {

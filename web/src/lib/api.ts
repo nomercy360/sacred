@@ -15,11 +15,13 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 		})
 
 		let data
-		try {
-			data = await response.json()
-		} catch {
-			showToast({ title: 'Failed to get response from server', variant: 'error', duration: 2500 })
-			return { error: 'Failed to get response from server', data: null }
+		if (response.status !== 204) {
+			try {
+				data = await response.json()
+			} catch {
+				showToast({ title: 'Failed to get response from server', variant: 'error', duration: 2500 })
+				return { error: 'Failed to get response from server', data: null }
+			}
 		}
 
 		if (!response.ok) {
@@ -150,6 +152,27 @@ export type Wish = {
 		name: string
 		image_url: string
 	}>
+	copied_wish_id: string | null
+	is_bookmarked: boolean
+}
+
+export type UserProfile = {
+	id: string
+	first_name: string
+	last_name: string
+	username: string
+	created_at: string
+	avatar_url: string
+	interests: Array<{
+		id: string
+		name: string
+		image_url: string
+		created_at: string
+		updated_at: string
+		deleted_at: any
+	}>
+	followers: number
+	wishlist_items: Array<Wish>
 }
 
 export type Wishlist = {
@@ -165,6 +188,62 @@ export const fetchWish = async (id: string) => {
 	const { data } = await apiRequest(`/wishes/${id}`, {
 		method: 'GET',
 	})
+
+	return data
+}
+
+export const fetchUserProfile = async (id: string) => {
+	const { data } = await apiRequest(`/profiles/${id}`, {
+		method: 'GET',
+	})
+
+	return data
+}
+
+export const copyWish = async (id: string) => {
+	const { data, error } = await apiRequest(`/wishes/${id}/copy`, {
+		method: 'POST',
+	})
+
+	if (error) {
+		throw new Error(error)
+	}
+
+	return data
+}
+
+export const deleteWish = async (id: string) => {
+	const { data, error } = await apiRequest(`/wishes/${id}`, {
+		method: 'DELETE',
+	})
+
+	if (error) {
+		throw new Error(error)
+	}
+
+	return { data }
+}
+
+export const saveBookmark = async (id: string) => {
+	const { data, error } = await apiRequest(`/wishes/${id}/bookmark`, {
+		method: 'POST',
+	})
+
+	if (error) {
+		throw new Error(error)
+	}
+
+	return data
+}
+
+export const removeBookmark = async (id: string) => {
+	const { data, error } = await apiRequest(`/wishes/${id}/bookmark`, {
+		method: 'DELETE',
+	})
+
+	if (error) {
+		throw new Error(error)
+	}
 
 	return data
 }

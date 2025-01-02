@@ -39,6 +39,10 @@ export const routes: RouteDefinition[] = [
 		component: SetupProfilePage,
 	},
 	{
+		path: '/profiles/:id',
+		component: lazy(() => import('./pages/profile')),
+	},
+	{
 		path: '/create/from-link',
 		component: CreateFromLinkPage,
 	},

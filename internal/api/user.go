@@ -1,9 +1,11 @@
 package api
 
 import (
+	"errors"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"sacred/internal/contract"
+	"sacred/internal/db"
 	"sacred/internal/terrors"
 )
 
@@ -57,6 +59,37 @@ func (a *API) UpdateUserPreferences(c echo.Context) error {
 		ReferredBy:   updated.ReferredBy,
 		Interests:    updated.Interests,
 		AvatarURL:    updated.AvatarURL,
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (a *API) GetUserProfile(c echo.Context) error {
+	uid := c.Param("id")
+	if uid == "" {
+		return terrors.BadRequest(nil, "user id cannot be empty")
+	}
+
+	user, err := a.storage.GetUserByID(uid)
+	if err != nil {
+		return terrors.InternalServer(err, "cannot get user")
+	}
+
+	items, err := a.storage.GetWishesByUserID(c.Request().Context(), uid)
+	if err != nil {
+		return terrors.InternalServer(err, "cannot get wishlist items")
+	}
+
+	resp := contract.UserProfileResponse{
+		ID:         user.ID,
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		Username:   user.Username,
+		CreatedAt:  user.CreatedAt,
+		Interests:  user.Interests,
+		AvatarURL:  user.AvatarURL,
+		Followers:  user.Followers,
+		SavedItems: items,
 	}
 
 	return c.JSON(http.StatusOK, resp)
@@ -129,4 +162,49 @@ func (a *API) FollowUser(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+func (a *API) SaveWishToBookmarks(c echo.Context) error {
+	uid := getUserID(c)
+	wid := c.Param("id")
+
+	if wid == "" {
+		return terrors.BadRequest(nil, "wish id cannot be empty")
+	}
+
+	err := a.storage.SaveWishToBookmarks(c.Request().Context(), uid, wid)
+
+	if err != nil && errors.Is(err, db.ErrAlreadyExists) {
+		return terrors.Conflict(err, "Wish was already copied")
+	} else if err != nil {
+		return terrors.InternalServer(err, "Cannot create copied wish")
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+func (a *API) RemoveWishFromBookmarks(c echo.Context) error {
+	uid := getUserID(c)
+	wid := c.Param("id")
+
+	if wid == "" {
+		return terrors.BadRequest(nil, "wish id cannot be empty")
+	}
+
+	if err := a.storage.RemoveWishFromBookmarks(c.Request().Context(), uid, wid); err != nil {
+		return terrors.InternalServer(err, "could not remove wish from bookmarks")
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+func (a *API) ListBookmarkedWishes(c echo.Context) error {
+	uid := getUserID(c)
+
+	items, err := a.storage.ListBookmarkedWishes(c.Request().Context(), uid)
+	if err != nil {
+		return terrors.InternalServer(err, "could not list bookmarked wishes")
+	}
+
+	return c.JSON(http.StatusOK, items)
 }

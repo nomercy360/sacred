@@ -1,9 +1,10 @@
 import { fetchUserWishes, Wish, WishImage } from '~/lib/api'
-import { Match, Switch, For, createSignal, Show } from 'solid-js'
+import { Match, Switch, For, createSignal, Show, createEffect, onCleanup } from 'solid-js'
 import { createQuery } from '@tanstack/solid-query'
 import { Link } from '~/components/link'
 import { setStore, store } from '~/store'
 import { cn } from '~/lib/utils'
+import { resolveAspectRatio, resolveImage, splitIntoGroups } from '~/pages/profile'
 
 export default function UserBoardPage() {
 	const wishes = createQuery<Wish[]>(() => ({
@@ -11,21 +12,9 @@ export default function UserBoardPage() {
 		queryFn: () => fetchUserWishes(),
 	}))
 
-	function resolveImage(images: WishImage[]) {
-		const img = images.find((img) => img.position === 1)
-		return img ? img.url : '/placeholder.jpg'
-	}
-
-	function resolveAspectRatio(images: WishImage[]) {
-		const img = images.find((img) => img.position === 1)
-		return img ? `${img.width}/${img.height}` : `1/1`
-	}
-
-	function splitIntoGroups(array: Wish[] | undefined, groupCount: number) {
-		if (!array) return []
-		const groups: Wish[][] = Array.from({ length: groupCount }, () => [])
-		array.forEach((item, index) => groups[index % groupCount].push(item))
-		return groups
+	async function closeOnboardingPopup() {
+		window.Telegram.WebApp.CloudStorage.setItem('onboarding', 'done')
+		setStore('onboarding', false)
 	}
 
 	return (
@@ -132,7 +121,7 @@ export default function UserBoardPage() {
 				</Switch>
 			</div>
 			<Show when={store.onboarding}>
-				<OnboardingPopup onClose={() => setStore('onboarding', false)} />
+				<OnboardingPopup onClose={closeOnboardingPopup} />
 			</Show>
 		</div>
 	)
@@ -158,69 +147,80 @@ function OnboardingPopup(props: { onClose: () => void }) {
 		},
 	]
 
+	const [popupRef, setPopupRef] = createSignal<HTMLDivElement | null>(null)
 	const [step, setStep] = createSignal(0)
 
 	const tabs = [
-		{
-			icon: 'interests',
-		},
-		{
-			icon: 'note_stack',
-		},
-		{
-			icon: 'group',
-		},
-
-		{
-			icon: 'add',
-		},
+		{ icon: 'interests' },
+		{ icon: 'note_stack' },
+		{ icon: 'group' },
+		{ icon: 'add' },
 	]
+
+	function handleClickOutside(event: MouseEvent) {
+		if (popupRef() && !popupRef()?.contains(event.target as Node)) {
+			props.onClose()
+		}
+	}
+
+	createEffect(() => {
+		document.addEventListener('mousedown', handleClickOutside)
+		onCleanup(() => {
+			document.removeEventListener('mousedown', handleClickOutside)
+		})
+	})
 
 	function onNext() {
 		if (step() === 3) {
-			setStep(0)
-		} else {
-			setStep(step() + 1)
+			props.onClose()
+			return
 		}
+		setStep(step() + 1)
 		window.Telegram.WebApp.HapticFeedback.selectionChanged()
 	}
 
 	return (
 		<div class="flex justify-end flex-col h-screen fixed inset-0 w-full backdrop-blur-sm z-50">
-			<div class="items-center bg-background rounded-t-2xl px-4 pt-4 pb-12 flex flex-col justify-between h-[300px]">
+			<div
+				class="items-center bg-background rounded-t-2xl px-4 pt-4 pb-12 flex flex-col justify-between h-[300px] animate-slide-up"
+				ref={setPopupRef}
+			>
 				<div class="w-full flex flex-row items-center justify-between">
 					<button
 						onClick={props.onClose}
-						class="text-secondary-foreground  flex items-center justify-center bg-secondary rounded-full size-10">
+						class="text-secondary-foreground flex items-center justify-center bg-secondary rounded-full size-10"
+					>
 						<span class="material-symbols-rounded text-[20px]">close</span>
 					</button>
 					<button
 						class="text-secondary-foreground flex items-center justify-center bg-secondary rounded-2xl px-3 h-10"
 						onClick={onNext}
 					>
-						Next
+						{step() === 3 ? 'Close' : 'Next'}
 					</button>
 				</div>
 				<div class="max-w-[270px] text-center gap-1 flex flex-col items-center justify-center">
-					<p class="text-xl font-extrabold">
-						{texts[step()].title}
-					</p>
-					<p class="text-secondary-foreground">
-						{texts[step()].description}
-					</p>
+					<p class="text-xl font-extrabold">{texts[step()].title}</p>
+					<p class="text-secondary-foreground">{texts[step()].description}</p>
 				</div>
 				<div class="flex flex-row items-center space-x-8">
 					{tabs.map(({ icon }, index) => (
 						<span
-							class={cn('size-10 flex items-center justify-center rounded-full flex-col text-sm text-secondary-foreground', {
-								'bg-primary': step() === index,
-							})}
+							class={cn(
+								'size-10 flex items-center justify-center rounded-full flex-col text-sm text-secondary-foreground',
+								{
+									'bg-primary': step() === index,
+								},
+							)}
 						>
-							<span
-								class={cn('material-symbols-rounded text-[20px]', { 'text-primary-foreground': step() === index })}>
-								{icon}
-							</span>
-						</span>
+              <span
+								class={cn('material-symbols-rounded text-[20px]', {
+									'text-primary-foreground': step() === index,
+								})}
+							>
+                {icon}
+              </span>
+            </span>
 					))}
 				</div>
 			</div>

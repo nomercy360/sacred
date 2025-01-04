@@ -7,29 +7,30 @@ import { Link } from '~/components/link'
 import { store } from '~/store'
 import { useParams } from '@solidjs/router'
 
+
+export function resolveImage(images: WishImage[]) {
+	const img = images.find((img) => img.position === 1)
+	return img ? img.url : '/placeholder.jpg'
+}
+
+export function resolveAspectRatio(images: WishImage[]) {
+	const img = images.find((img) => img.position === 1)
+	return img ? `${img.width}/${img.height}` : `1/1`
+}
+
+export function splitIntoGroups(array: Wish[] | undefined, groupCount: number) {
+	if (!array) return []
+	const groups: Wish[][] = Array.from({ length: groupCount }, () => [])
+	array.forEach((item, index) => groups[index % groupCount].push(item))
+	return groups
+}
+
 export default function UserProfilePage() {
 	const params = useParams()
 	const wishes = createQuery<UserProfile>(() => ({
 		queryKey: ['profile', params.id],
 		queryFn: () => fetchUserProfile(params.id),
 	}))
-
-	function resolveImage(images: WishImage[]) {
-		const img = images.find((img) => img.position === 1)
-		return img ? img.url : '/placeholder.jpg'
-	}
-
-	function resolveAspectRatio(images: WishImage[]) {
-		const img = images.find((img) => img.position === 1)
-		return img ? `${img.width}/${img.height}` : `1/1`
-	}
-
-	function splitIntoGroups(array: Wish[] | undefined, groupCount: number) {
-		if (!array) return []
-		const groups: Wish[][] = Array.from({ length: groupCount }, () => [])
-		array.forEach((item, index) => groups[index % groupCount].push(item))
-		return groups
-	}
 
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
@@ -39,7 +40,7 @@ export default function UserProfilePage() {
 				</button>
 				<p class="text-black text-2xl font-extrabold">
 					<Show when={!wishes.isLoading} fallback={<span>Loading...</span>}>
-						{store.user?.first_name} board
+						{wishes.data?.first_name} {wishes.data?.last_name}
 					</Show>
 				</p>
 				<button class="flex items-center justify-center bg-secondary rounded-full size-10">

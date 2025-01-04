@@ -18,6 +18,7 @@ const NewItem = () => {
 	const navigate = useNavigate()
 
 	const handleFileChange = async (event: any) => {
+		setCreateWishStore('images', [])
 		const files = event.target.files
 		if (files && files.length > 0) {
 			const maxSize = 1024 * 1024 * 7 // 7MB
@@ -73,7 +74,6 @@ const NewItem = () => {
 			// Update state with all valid images
 			if (newImages.length > 0) {
 				setCreateWishStore('images', (prev) => [...prev, ...newImages])
-				console.log('Updated state with new images:', createWishStore.images)
 				navigate('/create/from-images')
 			} else {
 				window.Telegram.WebApp.showAlert('No valid files were selected.')
@@ -85,14 +85,14 @@ const NewItem = () => {
 		<div
 			class="relative w-full h-screen grid grid-rows-3 overflow-hidden gap-0.5 pt-8 pb-[120px]"
 		>
-			<button class="w-full flex flex-col items-center justify-center bg-secondary rounded-full">
-				<span class="material-symbols-rounded text-[20px]">
-					attach_file
-				</span>
-				<p class="mt-2 text-sm max-w-[160px] font-medium">
-					Send an&nbsp;image or&nbsp;paste a&nbsp;URL in&nbsp;the chat
-				</p>
-			</button>
+			{/*<button class="w-full flex flex-col items-center justify-center bg-secondary rounded-full">*/}
+			{/*	<span class="material-symbols-rounded text-[20px]">*/}
+			{/*		attach_file*/}
+			{/*	</span>*/}
+			{/*	<p class="mt-2 text-sm max-w-[160px] font-medium">*/}
+			{/*		Send an&nbsp;image or&nbsp;paste a&nbsp;URL in&nbsp;the chat*/}
+			{/*	</p>*/}
+			{/*</button>*/}
 			<label
 				class="text-center w-full flex flex-col items-center justify-center bg-secondary rounded-full">
 				<input

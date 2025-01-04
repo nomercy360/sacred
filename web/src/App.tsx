@@ -4,7 +4,7 @@ import { useNavigate } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
 import Toast from '~/components/toast'
 import { API_BASE_URL } from '~/lib/api'
-import { setToken, setUser, setWishes, store } from '~/store'
+import { setOnboarding, setToken, setUser, setWishes, store } from '~/store'
 import { Toaster } from '~/components/ui/toast'
 
 
@@ -21,6 +21,10 @@ export const queryClient = new QueryClient({
 	},
 })
 
+const updateOnboarding = (err: unknown, value: unknown) => {
+	setOnboarding(value !== 'done')
+}
+
 
 export default function App(props: any) {
 	const [isAuthenticated, setIsAuthenticated] = createSignal(false)
@@ -34,6 +38,11 @@ export default function App(props: any) {
 		console.log('WEBAPP:', window.Telegram)
 
 		try {
+			window.Telegram.WebApp.CloudStorage.getItem(
+				'onboarding',
+				updateOnboarding,
+			)
+
 			const resp = await fetch(`${API_BASE_URL}/auth/telegram?` + initData, {
 				method: 'POST',
 			})
@@ -48,6 +57,8 @@ export default function App(props: any) {
 			window.Telegram.WebApp.expand()
 			window.Telegram.WebApp.disableClosingConfirmation()
 			window.Telegram.WebApp.disableVerticalSwipes()
+
+			// window.Telegram.WebApp.CloudStorage.removeItem('onboarding')
 
 			setIsAuthenticated(true)
 			setIsLoading(false)

@@ -223,6 +223,11 @@ export default function CreateFromLinkPage() {
 		},
 	]
 
+	const splitImages = (images: string[]) => {
+		const middle = Math.ceil(images.length / 2)
+		return [images.slice(0, middle), images.slice(middle)]
+	}
+
 	const fetchMetadata = async (url: string): Promise<MetadataResponse> => {
 		const res = await fetch('https://ecom-scraper-api.mxksim.dev/extract-content', {
 			method: 'POST',
@@ -262,34 +267,47 @@ export default function CreateFromLinkPage() {
 				<Match when={step() === 3}>
 					<Show when={metaWithImages()} fallback={<ImageGridLoader />}>
 						<div class="grid grid-cols-2 gap-0.5 w-full overflow-y-scroll">
-							<For each={metaWithImages()!.image_urls}>
-								{(url) => (
-									<div
-										class="border border-border/60 relative w-full bg-center bg-cover aspect-square rounded-2xl"
-										style={{ 'background-image': `url(${url})` }}
-									>
-										<Show when={selectedImages().includes(url)}>
-											<div
-												class="absolute inset-0 bg-black bg-opacity-20 flex items-start justify-end rounded-2xl p-3">
-												<span
-													class="text-xs font-medium bg-primary text-primary-foreground rounded-full size-6 flex items-center justify-center">
-														{selectedImages().indexOf(url) + 1}
-												</span>
-											</div>
-										</Show>
-										<input
-											type="checkbox"
-											class="absolute size-full opacity-0"
-											checked={selectedImages().includes(url)}
-											onChange={(e) => {
-												if (e.currentTarget.checked) {
-													setSelectedImages([...selectedImages(), url])
-												} else {
-													setSelectedImages(selectedImages().filter((i) => i !== url))
-												}
-												window.Telegram.WebApp.HapticFeedback.selectionChanged()
-											}}
-										/>
+							<For each={splitImages(metaWithImages()!.image_urls)}>
+								{(group) => (
+									<div class="flex flex-col gap-0.5">
+										<For each={group}>
+											{(url) => (
+												<label class="relative rounded-2xl bg-secondary aspect-[3/4]">
+													<img
+														src={url}
+														alt=""
+														loading="lazy"
+														class="w-full h-auto max-h-[500px] object-contain rounded-2xl aspect-auto shrink-0 pointer-events-none select-none"
+														onLoad={(e) => {
+															const img = e.target as HTMLImageElement
+															img.parentElement!.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`
+														}}
+													/>
+													<Show when={selectedImages().includes(url)}>
+														<div
+															class="absolute inset-0 bg-black bg-opacity-20 flex items-start justify-end rounded-2xl p-3">
+															<span
+																class="text-xs font-medium bg-primary text-primary-foreground rounded-full size-6 flex items-center justify-center">
+																	{selectedImages().indexOf(url) + 1}
+															</span>
+														</div>
+													</Show>
+													<input
+														type="checkbox"
+														class="absolute size-fit opacity-0 cursor-pointer z-50"
+														checked={selectedImages().includes(url)}
+														onChange={(e) => {
+															if (e.currentTarget.checked) {
+																setSelectedImages([...selectedImages(), url])
+															} else {
+																setSelectedImages(selectedImages().filter((i) => i !== url))
+															}
+															window.Telegram.WebApp.HapticFeedback.selectionChanged()
+														}}
+													/>
+												</label>
+											)}
+										</For>
 									</div>
 								)}
 							</For>
@@ -356,10 +374,18 @@ export default function CreateFromLinkPage() {
 						<div class="mt-7 flex flex-col space-y-0.5 w-full items-center">
 							<For each={selectedImages()}>
 								{(url) => (
-									<div
-										class="size-full aspect-square bg-center bg-cover rounded-2xl"
-										style={{ 'background-image': `url(${url})` }}
-									/>
+									<div class="relative rounded-2xl bg-secondary aspect-[3/4]">
+										<img
+											src={url}
+											alt=""
+											loading="lazy"
+											class="w-full h-auto max-h-[500px] object-contain rounded-2xl aspect-auto shrink-0 pointer-events-none select-none"
+											onLoad={(e) => {
+												const img = e.target as HTMLImageElement
+												img.parentElement!.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`
+											}}
+										/>
+									</div>
 								)}
 							</For>
 						</div>

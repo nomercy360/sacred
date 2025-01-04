@@ -23,3 +23,18 @@ export function currencySymbol(currency: string) {
 			return ''
 	}
 }
+
+export function getDomainName(url: string): string | null {
+	try {
+		const parsedUrl = new URL(url)
+		let domain = parsedUrl.hostname
+
+		if (domain.startsWith('www.')) {
+			domain = domain.slice(4)
+		}
+
+		return domain
+	} catch (error) {
+		return null
+	}
+}

@@ -1,9 +1,10 @@
-import { For, Show } from 'solid-js'
+import { For, Match, Show, Switch } from 'solid-js'
 import { createMutation, createQuery } from '@tanstack/solid-query'
 import { copyWish, deleteWish, fetchWish, removeBookmark, saveBookmark, Wish } from '~/lib/api'
 import { useParams } from '@solidjs/router'
-import { cn } from '~/lib/utils'
+import { cn, currencySymbol, getDomainName } from '~/lib/utils'
 import { queryClient } from '~/App'
+import { store } from '~/store'
 
 const ViewItem = () => {
 	const params = useParams()
@@ -75,6 +76,17 @@ const ViewItem = () => {
 		}
 	}
 
+	function shareWishURL() {
+		const url =
+			'https://t.me/share/url?' +
+			new URLSearchParams({
+				url: 'https://t.me/sacred_wished/app?startapp=w_' + item.data?.id,
+			}).toString() +
+			`&text=${item.data?.name}`
+
+		window.Telegram.WebApp.openTelegramLink(url)
+	}
+
 	return (
 		<div class="relative w-full flex flex-col h-screen overflow-hidden">
 			<div class="p-5 flex flex-row items-center justify-between">
@@ -83,15 +95,33 @@ const ViewItem = () => {
 				>
 					<span class="material-symbols-rounded text-[20px]">report</span>
 				</button>
-				<h1 class="text-xl font-bold text-center">{item.data?.name}</h1>
+				<div class="flex flex-col items-center text-center">
+					<h1 class="text-xl font-bold text-center">{item.data?.name}</h1>
+					<Switch>
+						<Match when={item.data?.price && item.data?.url}>
+							<a href={item.data?.url!} class="text-sm text-primary underline" target="_blank" rel="noreferrer">
+								{item.data?.price}{currencySymbol(item.data?.currency!)} at {getDomainName(item.data?.url!)}
+							</a>
+						</Match>
+						<Match when={item.data?.price}>
+							<p class="text-sm text-primary">{item.data?.price}{currencySymbol(item.data?.currency!)}</p>
+						</Match>
+						<Match when={item.data?.url}>
+							<a href={item.data?.url!} class="text-sm text-primary underline" target="_blank" rel="noreferrer">
+								at {getDomainName(item.data?.url!)}
+							</a>
+						</Match>
+					</Switch>
+				</div>
 				<button
 					class="flex items-center justify-center bg-secondary rounded-full size-10"
+					onClick={shareWishURL}
 				>
 					<span class="material-symbols-rounded text-[20px]">arrow_outward</span>
 				</button>
 			</div>
 
-			<div class="flex flex-col items-center justify-start space-y-4 overflow-y-scroll h-full">
+			<div class="flex flex-col items-center justify-start space-y-0.5 overflow-y-scroll h-full">
 				<Show when={item.data?.images} fallback={<div class="text-muted">No image available</div>}>
 					<For each={item.data?.images}>
 						{(image) => (
@@ -105,48 +135,50 @@ const ViewItem = () => {
 					</For>
 				</Show>
 			</div>
-			<div
-				class="pt-2 px-4 flex flex-col items-start justify-start border-t shadow-sm h-[95px] fixed bottom-0 w-full bg-background z-50"
-			>
-				<div class="grid grid-cols-2 w-full gap-2">
-					<button
-						class={cn(
-							'text-sm font-medium rounded-xl h-12 px-4 w-full flex flex-row items-center justify-between',
-							{
-								'bg-secondary text-secondary-foreground': item.data?.copied_wish_id,
-								'bg-primary text-primary-foreground': !item.data?.copied_wish_id,
-							},
-						)}
-						onClick={handleCopy}
-					>
-						{item.data?.copied_wish_id ? 'Remove from board' : 'Save to board'}
-						<span class="material-symbols-rounded text-[20px]">
+			<Show when={item.data?.user_id !== store.user?.id}>
+				<div
+					class="pt-2 px-4 flex flex-col items-start justify-start border-t shadow-sm h-[95px] fixed bottom-0 w-full bg-background z-50"
+				>
+					<div class="grid grid-cols-2 w-full gap-2">
+						<button
+							class={cn(
+								'text-sm font-medium rounded-xl h-12 px-4 w-full flex flex-row items-center justify-between',
+								{
+									'bg-secondary text-secondary-foreground': item.data?.copied_wish_id,
+									'bg-primary text-primary-foreground': !item.data?.copied_wish_id,
+								},
+							)}
+							onClick={handleCopy}
+						>
+							{item.data?.copied_wish_id ? 'Remove from board' : 'Save to board'}
+							<span class="material-symbols-rounded text-[20px]">
 							{item.data?.copied_wish_id ? 'remove' : 'add'}
 						</span>
-					</button>
-					<button
-						class={cn(
-							'text-sm font-medium rounded-xl h-12 px-4 w-full flex flex-row items-center justify-between',
-							{
-								'bg-secondary text-secondary-foreground': item.data?.is_bookmarked,
-								'bg-primary text-primary-foreground': !item.data?.is_bookmarked,
-							},
-						)}
-						onClick={() => {
-							if (item.data?.is_bookmarked) {
-								removeFromBookmark.mutate()
-							} else {
-								saveToBookmark.mutate()
-							}
-						}}
-					>
-						{item.data?.is_bookmarked ? 'Remove bookmark' : 'Save bookmark'}
-						<span class="material-symbols-rounded text-[20px]">
+						</button>
+						<button
+							class={cn(
+								'text-sm font-medium rounded-xl h-12 px-4 w-full flex flex-row items-center justify-between',
+								{
+									'bg-secondary text-secondary-foreground': item.data?.is_bookmarked,
+									'bg-primary text-primary-foreground': !item.data?.is_bookmarked,
+								},
+							)}
+							onClick={() => {
+								if (item.data?.is_bookmarked) {
+									removeFromBookmark.mutate()
+								} else {
+									saveToBookmark.mutate()
+								}
+							}}
+						>
+							{item.data?.is_bookmarked ? 'Remove bookmark' : 'Save bookmark'}
+							<span class="material-symbols-rounded text-[20px]">
 							{item.data?.is_bookmarked ? 'bookmark' : 'bookmark_border'}
 						</span>
-					</button>
+						</button>
+					</div>
 				</div>
-			</div>
+			</Show>
 		</div>
 	)
 }

@@ -134,7 +134,7 @@ export default function CreateFromLinkPage() {
 			if (newImages.length > 0) {
 				setCreateWishStore('images', (prev: any) => [...prev, ...newImages])
 				mainButton.hideProgress()
-				updateStep(StepNames.SELECT_IMAGES, StepNames.ADD_LINK)
+				updateStep(StepNames.CHOOSE_CATEGORIES, StepNames.ADD_LINK)
 			} else {
 				window.Telegram.WebApp.showAlert('No valid files were selected.')
 			}

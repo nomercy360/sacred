@@ -21,7 +21,7 @@ export default function NavigationTabs(props: any) {
 		},
 
 		{
-			href: '/new',
+			href: '/create/from-link',
 			icon: 'add',
 		},
 	]

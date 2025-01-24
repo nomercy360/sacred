@@ -32,6 +32,13 @@ function createButtonHandlers(button: any) {
 		disable: (text?: string) => {
 			return button.setParams(getColorSchemeParams(false, text))
 		},
+		toggle: (condition: boolean, textOn: string, textOff?: string) => {
+			if (condition) {
+				button.setParams(getColorSchemeParams(true, textOn))
+			} else {
+				button.setParams(getColorSchemeParams(false, textOff))
+			}
+		},
 		setParams: (params: {
 			text?: string;
 			isVisible?: boolean;

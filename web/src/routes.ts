@@ -28,10 +28,6 @@ export const routes: RouteDefinition[] = [
 				'path': '/feed',
 				'component': FeedPage,
 			},
-			{
-				'path': '/new',
-				'component': NewItem,
-			},
 		],
 	},
 	{
@@ -45,10 +41,6 @@ export const routes: RouteDefinition[] = [
 	{
 		path: '/create/from-link',
 		component: CreateFromLinkPage,
-	},
-	{
-		path: '/create/from-images',
-		component: CreateFromImagePage,
 	},
 	{
 		path: '/share',

@@ -4,9 +4,8 @@ import { createEffect, createSignal, For, Match, onCleanup, onMount, Show, Switc
 import { useMainButton } from '~/lib/useMainButton'
 import { useBackButton } from '~/lib/useBackButton'
 import CategoriesSelect from '~/components/categories-select'
-import { fetchAddWish } from '~/lib/api'
+import { fetchAddWish, fetchPresignedUrl, NewItemRequest, uploadToS3 } from '~/lib/api'
 import { currencySymbol } from '~/lib/utils'
-import { createWishStore, setCreateWishStore } from '~/pages/new'
 import { queryClient } from '~/App'
 import { useNavigate } from '@solidjs/router'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
@@ -16,6 +15,7 @@ import {
 	NumberFieldIncrementTrigger,
 	NumberFieldInput,
 } from '~/components/ui/number-field'
+import { createStore } from 'solid-js/store'
 
 type MetadataResponse = {
 	image_urls: string[]
@@ -24,55 +24,36 @@ type MetadataResponse = {
 	}
 }
 
-const testData = {
-	'image_urls': [
-		'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/ae1e9022-79fc-4f4a-ad62-d2bc9a651f43/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_default/5ee7aa85-4d1b-4486-959b-83b0bcc74ca7/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/0b866732-626b-4b1e-b0f3-634485f1e75c/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_default/327b4af6-5469-4dfb-ac71-549328d400e1/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/777c9d18-2c2e-4b72-8244-70dce5177b1f/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_PDP_936_v1/f_auto,q_auto:eco/f9949ff5-b536-41c0-a9bf-2440c3ef44be/AIR+FORCE+1+SP.png',
-		'https://bat.bing.com/action/0?ti=137000483&Ver=2&mid=afcf2119-6da2-4657-8ce9-4f9fe1a88b5c&bo=3&sid=ed5bf490ca6511ef981337bbd4b0f342&vid=ed5d6cf0ca6511efa9e75dacbc27aac2&vids=1&msclkid=N&pi=918639831&lg=en&sw=800&sh=600&sc=24&tl=%E0%B8%A3%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%97%E0%B9%89%E0%B8%B2%E0%B8%9C%E0%B8%B9%E0%B9%89%E0%B8%8A%E0%B8%B2%E0%B8%A2%20Nike%20Air%20Force%201%20SP%20Nike%20TH&kw=%E0%B8%A3%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%97%E0%B9%89%E0%B8%B2%E0%B8%9C%E0%B8%B9%E0%B9%89%E0%B8%8A%E0%B8%B2%E0%B8%A2%20Nike%20Air%20Force%201%20SP&p=https%3A%2F%2Fwww.nike.com%2Fth%2Ft%2F%25E0%25B8%25A3%25E0%25B8%25AD%25E0%25B8%2587%25E0%25B9%2580%25E0%25B8%2597%25E0%25B9%2589%25E0%25B8%25B2%25E0%25B8%259C%25E0%25B8%25B9%25E0%25B9%2589-air-force-1-sp-T3G0Sg%2FHF8189-001&r=&lt=4096&evt=pageLoad&sv=1&asc=G&cdb=AQAQ&rn=911393',
-		'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/f9949ff5-b536-41c0-a9bf-2440c3ef44be/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_PDP_936_v1/f_auto,q_auto:eco/0b866732-626b-4b1e-b0f3-634485f1e75c/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_PDP_936_v1/f_auto,q_auto:eco/777c9d18-2c2e-4b72-8244-70dce5177b1f/AIR+FORCE+1+SP.png',
-		'https://idsync.rlcdn.com/458359.gif?partner_uid=36b8f361-af1e-4fd4-887b-bfce1b916a56',
-		'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/db03acbc-190a-45d2-9a32-f93b29d7ad4b/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_PDP_936_v1/f_auto,q_auto:eco/ae1e9022-79fc-4f4a-ad62-d2bc9a651f43/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_default/5e334814-828a-4cf4-8b10-0f019c931941/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_default/5a9a19a2-0915-4b69-84e2-02dc3a735c1d/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_PDP_936_v1/f_auto,q_auto:eco/858f9194-f953-404e-a11d-3b680cdea91a/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_PDP_936_v1/f_auto,q_auto:eco/db39076f-cdf2-4557-bf64-b4b5a899578e/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_default/35e64fea-8bd1-4cab-9db3-739ae3b0523d/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_default/894583f7-c695-4417-a2a0-d5a8b48b72e0/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_PDP_936_v1/f_auto,q_auto:eco/db03acbc-190a-45d2-9a32-f93b29d7ad4b/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/db39076f-cdf2-4557-bf64-b4b5a899578e/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_PDP_936_v1/f_auto,q_auto:eco/1c1e845a-0ccb-400a-a25e-457e3b4fb665/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_default/73e8e508-458f-41bd-a338-fa72c2d9483b/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_default/82840e38-31a8-427b-a00f-f1eb9620e1ba/AIR+FORCE+1+SP.png',
-		'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/1c1e845a-0ccb-400a-a25e-457e3b4fb665/AIR+FORCE+1+SP.png',
-		'https://bat.bing.com/action/0?ti=137000483&Ver=2&mid=afcf2119-6da2-4657-8ce9-4f9fe1a88b5c&bo=4&sid=ed5bf490ca6511ef981337bbd4b0f342&vid=ed5d6cf0ca6511efa9e75dacbc27aac2&vids=0&msclkid=N&prodid=HF8189&pagetype=product&en=Y&p=https%3A%2F%2Fwww.nike.com%2Fth%2Ft%2F%25E0%25B8%25A3%25E0%25B8%25AD%25E0%25B8%2587%25E0%25B9%2580%25E0%25B8%2597%25E0%25B9%2589%25E0%25B8%25B2%25E0%25B8%259C%25E0%25B8%25B9%25E0%25B9%2589-air-force-1-sp-T3G0Sg%2FHF8189-001&sw=800&sh=600&sc=24&evt=custom&asc=G&cdb=AQAQ&rn=92315',
-		'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/858f9194-f953-404e-a11d-3b680cdea91a/AIR+FORCE+1+SP.png',
-	],
-	'metadata': {
-		'branch:deeplink:$deeplink_path': 'x-callback-url/product-details?style-color=HF8189-001',
-		'description': '\u0e1e\u0e1a\u0e01\u0e31\u0e1a \u0e23\u0e2d\u0e07\u0e40\u0e17\u0e49\u0e32\u0e1c\u0e39\u0e49\u0e0a\u0e32\u0e22 Nike Air Force 1 SP \u0e44\u0e14\u0e49\u0e17\u0e35\u0e48 Nike.com  \u0e04\u0e37\u0e19\u0e1f\u0e23\u0e35\u0e1e\u0e23\u0e49\u0e2d\u0e21\u0e08\u0e31\u0e14\u0e2a\u0e48\u0e07\u0e1f\u0e23\u0e35 \u0e40\u0e09\u0e1e\u0e32\u0e30\u0e04\u0e33\u0e2a\u0e31\u0e48\u0e07\u0e0b\u0e37\u0e49\u0e2d\u0e17\u0e35\u0e48\u0e23\u0e48\u0e27\u0e21\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23',
-		'keywords': '\u0e23\u0e2d\u0e07\u0e40\u0e17\u0e49\u0e32\u0e1c\u0e39\u0e49\u0e0a\u0e32\u0e22 Nike Air Force 1 SP',
-		'next-head-count': '22',
-		'og:description': '\u0e1e\u0e1a\u0e01\u0e31\u0e1a \u0e23\u0e2d\u0e07\u0e40\u0e17\u0e49\u0e32\u0e1c\u0e39\u0e49\u0e0a\u0e32\u0e22 Nike Air Force 1 SP \u0e44\u0e14\u0e49\u0e17\u0e35\u0e48 Nike.com  \u0e04\u0e37\u0e19\u0e1f\u0e23\u0e35\u0e1e\u0e23\u0e49\u0e2d\u0e21\u0e08\u0e31\u0e14\u0e2a\u0e48\u0e07\u0e1f\u0e23\u0e35 \u0e40\u0e09\u0e1e\u0e32\u0e30\u0e04\u0e33\u0e2a\u0e31\u0e48\u0e07\u0e0b\u0e37\u0e49\u0e2d\u0e17\u0e35\u0e48\u0e23\u0e48\u0e27\u0e21\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23',
-		'og:image': 'https://static.nike.com/a/images/t_default/777c9d18-2c2e-4b72-8244-70dce5177b1f/AIR+FORCE+1+SP.png',
-		'og:locale': 'th_TH',
-		'og:site_name': 'Nike.com',
-		'og:title': '\u0e23\u0e2d\u0e07\u0e40\u0e17\u0e49\u0e32\u0e1c\u0e39\u0e49\u0e0a\u0e32\u0e22 Nike Air Force 1 SP',
-		'og:type': 'website',
-		'og:url': 'https://www.nike.com/th/t/\u0e23\u0e2d\u0e07\u0e40\u0e17\u0e49\u0e32\u0e1c\u0e39\u0e49-air-force-1-sp-T3G0Sg/HF8189-001',
-		'robots': 'index, follow',
-		'viewport': 'width=device-width, initial-scale=1.0, maximum-scale=2.0',
-	},
-}
+const StepNames = {
+	ADD_LINK: 'ADD_LINK',
+	ADD_SIMPLE_LINK: 'ADD_LINK',
+	CHOOSE_CATEGORIES: 'CHOOSE_CATEGORIES',
+	SELECT_IMAGES: 'SELECT_IMAGES',
+	ADD_NAME: 'ADD_NAME',
+	ADD_PRICE: 'ADD_PRICE',
+	CONFIRM: 'CONFIRM',
+} as const
+
+type StepName = typeof StepNames[keyof typeof StepNames];
+
+const FlowNames = {
+	START_WITH_LINK: 'START_WITH_LINK',
+	START_WITH_PHOTOS: 'START_WITH_PHOTOS',
+} as const
+
+type FlowName = typeof FlowNames[keyof typeof FlowNames];
 
 export default function CreateFromLinkPage() {
-	const [step, setStep] = createSignal(1)
+	const [createWishStore, setCreateWishStore] = createStore<NewItemRequest>({
+		name: '',
+		notes: null,
+		url: null,
+		images: [],
+		price: null,
+		currency: '',
+		is_public: true,
+		category_ids: [],
+	})
 
 	const navigate = useNavigate()
 
@@ -80,63 +61,136 @@ export default function CreateFromLinkPage() {
 
 	const backButton = useBackButton()
 
-	const [selectedImages, setSelectedImages] = createSignal<string[]>([])
+	const [activeFlow, setActiveFlow] = createSignal<FlowName>(FlowNames.START_WITH_LINK)
+	const [step, setStep] = createSignal<StepName>(StepNames.ADD_LINK)
+	const [previousStep, setPreviousStep] = createSignal<StepName | null>(null)
+	const [metaWithImages, setMetaWithImages] = createSignal<MetadataResponse | null>(null)
+
+	const updateStep = (newStep: StepName, fromStep: StepName) => {
+		setStep(newStep)
+		setPreviousStep(fromStep)
+	}
 
 	function updateLink(newLink: string) {
 		setCreateWishStore({ url: newLink })
 	}
 
-	const onContinue = async () => {
-		if (step() === 1) {
-			setStep(step() + 1)
-			setMetaWithImages(null)
-			fetchMetadata(createWishStore.url!).then((data) => {
-				setMetaWithImages(data)
-				let title = null
-				if (data.metadata['og:title']) {
-					title = data.metadata['og:title']
-				} else if (data.metadata['title']) {
-					title = data.metadata['title']
+	const handleFileChange = async (event: any) => {
+		setActiveFlow(FlowNames.START_WITH_PHOTOS)
+		const files = event.target.files
+		if (files && files.length > 0) {
+			mainButton.showProgress(false)
+			const maxSize = 1024 * 1024 * 7 // 7MB
+			const newImages = [] as { url: string, width: number, height: number, size: number }[]
+
+			for (const file of files) {
+				if (file.size > maxSize) {
+					window.Telegram.WebApp.showAlert(
+						`File ${file.name} is too large. Try to select a smaller file.`,
+					)
+					continue
 				}
 
-				if (title) {
-					setCreateWishStore({ name: title })
-				}
-			})
-		} else if (step() === 2) {
-			setStep(step() + 1)
+				const reader = new FileReader()
+				const filePromise = new Promise<void>((resolve, reject) => {
+					reader.onload = () => {
+						const img = new Image()
+						img.onload = async () => {
+							const width = img.width
+							const height = img.height
 
-		} else if (step() === 3) {
-			if (createWishStore.name) {
-				setStep(6)
-			} else {
-				setStep(step() + 1)
+							try {
+								const { data, error } = await fetchPresignedUrl(file.name)
+								if (error) {
+									console.error(`Error fetching presigned URL for ${file.name}:`, error)
+									reject(error)
+									return
+								}
+
+								await uploadToS3(data.url, file)
+
+								newImages.push({
+									url: data.asset_url,
+									width,
+									height,
+									size: file.size,
+								})
+
+								resolve()
+							} catch (err) {
+								console.error(`Error uploading ${file.name}:`, err)
+								reject(err)
+							}
+						}
+						img.src = reader.result as string
+					}
+					reader.readAsDataURL(file)
+				})
+
+				await filePromise.catch((error) => console.error(`Error processing file ${file.name}:`, error))
 			}
-		} else if (step() === 4) {
-			setStep(step() + 1)
-		} else if (step() === 5) {
-			setStep(step() + 1)
-		} else if (step() === 6) {
-			const images = selectedImages().map((url, i) => ({ url, width: 0, height: 0, size: 0 })) as {
-				url: string,
-				width: number,
-				height: number,
-				size: number
-			}[]
-			setCreateWishStore({ images })
-			try {
-				window.Telegram.WebApp.MainButton.showProgress(false)
-				await fetchAddWish(createWishStore)
-				await queryClient.invalidateQueries({ queryKey: ['wishes'] })
-				navigate('/')
-			} finally {
-				window.Telegram.WebApp.MainButton.hideProgress()
+
+			// Update state with all valid images
+			if (newImages.length > 0) {
+				setCreateWishStore('images', (prev: any) => [...prev, ...newImages])
+				mainButton.hideProgress()
+				updateStep(StepNames.SELECT_IMAGES, StepNames.ADD_LINK)
+			} else {
+				window.Telegram.WebApp.showAlert('No valid files were selected.')
 			}
 		}
 	}
 
+	const onContinue = async () => {
+		switch (step()) {
+			case StepNames.ADD_LINK:
+				updateStep(StepNames.CHOOSE_CATEGORIES, StepNames.ADD_LINK)
+				setMetaWithImages(null)
+				fetchMetadata(createWishStore.url!).then((data) => {
+					setMetaWithImages(data)
+					const title = data.metadata['og:title'] || data.metadata['title']
+					if (title) setCreateWishStore({ name: title })
+				})
+				break
+
+			case StepNames.CHOOSE_CATEGORIES:
+				const nextStep = activeFlow() === FlowNames.START_WITH_LINK ? StepNames.SELECT_IMAGES : StepNames.ADD_NAME
+				updateStep(nextStep, StepNames.CHOOSE_CATEGORIES)
+				break
+
+			case StepNames.SELECT_IMAGES:
+				if (createWishStore.name) {
+					updateStep(StepNames.CONFIRM, StepNames.SELECT_IMAGES)
+				} else {
+					updateStep(StepNames.ADD_NAME, StepNames.SELECT_IMAGES)
+				}
+				break
+
+			case StepNames.ADD_NAME:
+				updateStep(StepNames.CONFIRM, StepNames.ADD_NAME)
+				break
+
+			case StepNames.ADD_PRICE:
+				updateStep(StepNames.CONFIRM, StepNames.ADD_PRICE)
+				break
+
+			case StepNames.CONFIRM:
+				try {
+					window.Telegram.WebApp.MainButton.showProgress(false)
+					await fetchAddWish(createWishStore)
+					await queryClient.invalidateQueries({ queryKey: ['wishes'] })
+					navigate('/')
+				} finally {
+					window.Telegram.WebApp.MainButton.hideProgress()
+				}
+				break
+		}
+	}
+
 	function decrementStep() {
-		setStep(step() - 1)
+		if (previousStep() !== null) {
+			setStep(previousStep()!)
+		}
 	}
 
 	function goBack() {
@@ -144,54 +198,40 @@ export default function CreateFromLinkPage() {
 	}
 
 	createEffect(() => {
-		if (step() === 1) {
-			backButton.setVisible()
-			backButton.offClick(decrementStep)
-			backButton.onClick(goBack)
+		switch (step()) {
+			case StepNames.ADD_LINK:
+				backButton.setVisible()
+				backButton.offClick(decrementStep)
+				backButton.onClick(goBack)
+				mainButton.toggle(!!createWishStore.url?.match(/^https?:\/\//), 'Continue')
+				break
 
-			const linkRegex = /^(http|https):\/\/[^ "]+$/
-			if (!linkRegex.test(createWishStore.url || '')) {
-				mainButton.disable('Continue')
-			} else {
-				mainButton.enable('Continue')
-			}
-		} else if (step() === 2) {
-			backButton.offClick(goBack)
-			backButton.onClick(decrementStep)
+			case StepNames.CHOOSE_CATEGORIES:
+				backButton.offClick(goBack)
+				backButton.onClick(decrementStep)
+				mainButton.toggle(createWishStore.category_ids.length > 0, 'Continue', 'Select at least 1')
+				break
 
-			if (createWishStore.category_ids.length < 1) {
-				mainButton.disable('Select at least 1')
-			} else {
-				mainButton.enable('Continue with chosen')
-			}
-		} else if (step() === 3) {
-			if (metaWithImages() === null) {
-				mainButton.disable('Loading...')
-			} else if (selectedImages().length < 1) {
-				mainButton.disable('Select at least 1')
-			} else {
-				mainButton.enable('Continue with chosen')
-			}
-		} else if (step() === 4) {
-			if (!createWishStore.name) {
-				mainButton.disable('Add title to continue')
-			} else {
+			case StepNames.SELECT_IMAGES:
+				mainButton.toggle(createWishStore.images.length > 0, 'Continue', 'Select at least 1')
+				break
+
+			case StepNames.ADD_NAME:
+				mainButton.toggle(!!createWishStore.name, 'Add title to continue')
+				break
+
+			case StepNames.ADD_PRICE:
 				mainButton.enable('Continue')
-			}
-		} else if (step() === 5) {
-			if (!createWishStore.price) {
-				mainButton.enable('Continue without price')
-			} else {
-				mainButton.enable('Continue')
-			}
-		} else if (step() === 6) {
-			mainButton.enable('Save & Publish')
+				break
+
+			case StepNames.CONFIRM:
+				mainButton.enable('Save & Publish')
+				break
 		}
 	})
 
 	onMount(() => {
 		window.Telegram.WebApp.readTextFromClipboard(updateLink)
-		setCreateWishStore({ images: [], category_ids: [], name: null, price: null, currency: 'USD' })
 		mainButton.onClick(onContinue)
 	})
 
@@ -202,26 +242,14 @@ export default function CreateFromLinkPage() {
 		backButton.hide()
 	})
 
-	const formHeaders = [
-		{
-			title: 'Fix the link',
-		},
-		{
-			title: 'Choose categories',
-		},
-		{
-			title: 'Select images',
-		},
-		{
-			title: 'Give name to the wish',
-		},
-		{
-			title: 'Add price',
-		},
-		{
-			title: undefined,
-		},
-	]
+	const formHeaders: Record<StepName, string | undefined> = {
+		[StepNames.ADD_LINK]: 'Add the link',
+		[StepNames.CHOOSE_CATEGORIES]: 'Choose categories',
+		[StepNames.SELECT_IMAGES]: 'Select images',
+		[StepNames.ADD_NAME]: 'Give name to the wish',
+		[StepNames.ADD_PRICE]: 'Add price',
+		[StepNames.CONFIRM]: undefined,
+	}
 
 	const splitImages = (images: string[]) => {
 		const middle = Math.ceil(images.length / 2)
@@ -240,16 +268,28 @@ export default function CreateFromLinkPage() {
 		return res.json()
 	}
 
-	const [metaWithImages, setMetaWithImages] = createSignal<MetadataResponse | null>(null)
+	function formatPrice(price: number | null, currency: string) {
+		if (price === null) return ''
+		return `${currencySymbol(currency)}${price}`
+	}
 
 	return (
-		<FormLayout
-			title={formHeaders[step() - 1].title}
-			step={step()}
-			maxSteps={6}
-		>
+		<FormLayout title={formHeaders[step()]} step={Object.values(StepNames).indexOf(step()) + 1} maxSteps={6}>
 			<Switch>
-				<Match when={step() === 1}>
+				<Match when={step() === StepNames.ADD_LINK}>
+					<label
+						class="absolute top-8 right-5 text-center size-10 flex flex-col items-center justify-center bg-secondary rounded-full">
+						<input
+							type="file"
+							class="sr-only w-full"
+							placeholder="Enter image"
+							accept="image/*"
+							onChange={(e) => handleFileChange(e)}
+						/>
+						<span class="material-symbols-rounded text-[20px]">
+							add_a_photo
+						</span>
+					</label>
 					<FormTextArea
 						placeholder="https://nike.com/product/nike-air-max-90"
 						value={createWishStore.url || ''}
@@ -258,13 +298,13 @@ export default function CreateFromLinkPage() {
 					/>
 				</Match>
 
-				<Match when={step() === 2}>
+				<Match when={step() === StepNames.CHOOSE_CATEGORIES}>
 					<CategoriesSelect
 						selectedCategories={createWishStore.category_ids}
 						setSelectedCategories={(ids) => setCreateWishStore({ category_ids: ids })}
 					/>
 				</Match>
-				<Match when={step() === 3}>
+				<Match when={step() === StepNames.SELECT_IMAGES}>
 					<Show when={metaWithImages()} fallback={<ImageGridLoader />}>
 						<div class="grid grid-cols-2 gap-0.5 w-full overflow-y-scroll">
 							<For each={splitImages(metaWithImages()!.image_urls)}>
@@ -283,24 +323,29 @@ export default function CreateFromLinkPage() {
 															img.parentElement!.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`
 														}}
 													/>
-													<Show when={selectedImages().includes(url)}>
+													<Show when={createWishStore.images.find((i: any) => i.url === url)}>
 														<div
 															class="absolute inset-0 bg-black bg-opacity-20 flex items-start justify-end rounded-2xl p-3">
 															<span
 																class="text-xs font-medium bg-primary text-primary-foreground rounded-full size-6 flex items-center justify-center">
-																	{selectedImages().indexOf(url) + 1}
+																	{createWishStore.images.findIndex((i: any) => i.url === url) + 1}
 															</span>
 														</div>
 													</Show>
 													<input
 														type="checkbox"
 														class="absolute size-fit opacity-0 cursor-pointer z-50"
-														checked={selectedImages().includes(url)}
+														checked={!!createWishStore.images.find((i: any) => i.url === url)}
 														onChange={(e) => {
 															if (e.currentTarget.checked) {
-																setSelectedImages([...selectedImages(), url])
+																setCreateWishStore('images', [...createWishStore.images, {
+																	url,
+																	width: 0,
+																	height: 0,
+																	size: 0,
+																}])
 															} else {
-																setSelectedImages(selectedImages().filter((i) => i !== url))
+																setCreateWishStore('images', createWishStore.images.filter((i: any) => i.url !== url))
 															}
 															window.Telegram.WebApp.HapticFeedback.selectionChanged()
 														}}
@@ -314,7 +359,7 @@ export default function CreateFromLinkPage() {
 						</div>
 					</Show>
 				</Match>
-				<Match when={step() == 4}>
+				<Match when={step() === StepNames.ADD_NAME}>
 					<FormTextArea
 						placeholder="start typing"
 						value={createWishStore.name || ''}
@@ -322,7 +367,7 @@ export default function CreateFromLinkPage() {
 						autofocus={true}
 					/>
 				</Match>
-				<Match when={step() == 5}>
+				<Match when={step() === StepNames.ADD_PRICE}>
 					<Select
 						value={createWishStore.currency}
 						onChange={(e) => setCreateWishStore({ currency: e })}
@@ -351,32 +396,23 @@ export default function CreateFromLinkPage() {
 						</NumberFieldGroup>
 					</NumberField>
 				</Match>
-				<Match when={step() == 6}>
+				<Match when={step() === StepNames.CONFIRM}>
 					<div class="overflow-y-scroll w-full flex items-center justify-start flex-col">
-						<button
-							class="w-full flex flex-col items-center justify-center"
-							onClick={() => setStep(4)}
+						<button class="mx-10 mb-2 text-xl font-extrabold border"
+										onClick={() => updateStep(StepNames.ADD_NAME, StepNames.CONFIRM)}
 						>
-							<span class="mb-2 text-xl font-extrabold">
-								{createWishStore.name}
-							</span>
-							<Show when={createWishStore.price && createWishStore.currency}>
-								<span class="text-sm text-muted-foreground">
-									{createWishStore.price} {currencySymbol(createWishStore.currency!)}
-								</span>
-							</Show>
-							<Show when={!createWishStore.price || !createWishStore.currency}>
-								<span class="text-sm text-muted-foreground">
-									Add price and currency
-								</span>
-							</Show>
+							{createWishStore.name}
+						</button>
+						<button class="mx-10 border text-sm text-muted-foreground"
+										onClick={() => updateStep(StepNames.ADD_PRICE, StepNames.CONFIRM)}>
+							{createWishStore.price && createWishStore.currency ? formatPrice(createWishStore.price, createWishStore.currency) : 'Add price'}
 						</button>
 						<div class="mt-7 flex flex-col space-y-0.5 w-full items-center">
-							<For each={selectedImages()}>
-								{(url) => (
+							<For each={createWishStore.images}>
+								{(img) => (
 									<div class="relative rounded-2xl bg-secondary aspect-[3/4]">
 										<img
-											src={url}
+											src={img.url}
 											alt=""
 											loading="lazy"
 											class="w-full h-auto max-h-[500px] object-contain rounded-2xl aspect-auto shrink-0 pointer-events-none select-none"

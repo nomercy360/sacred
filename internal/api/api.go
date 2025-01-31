@@ -33,6 +33,7 @@ type storager interface {
 	RemoveWishFromBookmarks(ctx context.Context, uid, wishID string) error
 	ListBookmarkedWishes(ctx context.Context, uid string) ([]db.Wish, error)
 	DeleteWish(ctx context.Context, uid, id string) error
+	GetPublicWishesFeed(ctx context.Context, uid string, search string) ([]db.Wish, error)
 }
 
 type API struct {

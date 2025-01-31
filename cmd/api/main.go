@@ -260,6 +260,7 @@ func main() {
 	g.GET("/categories", a.ListCategories)
 	g.GET("/user/wishes", a.ListUserWishes)
 	g.GET("/ideas", a.ListIdeas)
+	g.GET("/feed", a.GetWishesFeed)
 	g.GET("/profiles", a.ListProfiles)
 	g.GET("/profiles/:id", a.GetUserProfile)
 	g.POST("/presigned-url", a.GetPresignedURL)

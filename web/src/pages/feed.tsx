@@ -1,12 +1,13 @@
 import { createQuery } from '@tanstack/solid-query'
-import { fetchIdeas } from '~/lib/api'
+import { fetchFeed, Wish } from '~/lib/api'
 import { For, Show } from 'solid-js'
 import { store } from '~/store'
+import { Link } from '~/components/link'
 
 const FeedPage = () => {
-	const ideas = createQuery(() => ({
-		queryKey: ['ideas'],
-		queryFn: () => fetchIdeas(),
+	const wishes = createQuery<Wish[]>(() => ({
+		queryKey: ['feed'],
+		queryFn: () => fetchFeed(),
 	}))
 
 	function shareBoardURL() {
@@ -25,52 +26,56 @@ const FeedPage = () => {
 			class="relative flex flex-col items-center w-full h-screen overflow-hidden"
 		>
 			<div
-				class="bg-background h-20 fixed flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5">
+				class="bg-background h-20 flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5">
 				<button class="flex items-center justify-center bg-secondary rounded-full size-10">
 					<span class="material-symbols-rounded text-[20px]">
 						search
 					</span>
 				</button>
 				<p class="text-black text-xl font-extrabold">
-					Ideas
+					Discover
 				</p>
 				<button class="flex items-center justify-center bg-secondary rounded-full size-10">
 					<span class="material-symbols-rounded text-[20px]">
-						bookmark
+						page_info
 					</span>
 				</button>
 			</div>
 			<div class="grid grid-cols-2 gap-0.5 pb-[200px] h-full w-full overflow-y-scroll">
-				<Show when={ideas.isSuccess && ideas.data?.length > 0}>
+				<Show when={wishes.isSuccess && wishes.data?.length > 0}>
 					<div class="flex flex-col gap-0.5">
-						<For each={ideas.data.slice(0, Math.ceil(ideas.data.length / 2))}>
-							{(idea) => (
-								<div class="border-[0.5px] border-border/70 rounded-3xl" style="aspect-ratio: 1/1">
+						<For each={wishes.data?.slice(0, Math.ceil(wishes.data.length / 2))}>
+							{(wish) => (
+								<Link href={`/wishes/${wish.id}`} class="border-[0.5px] border-border/70 rounded-3xl"
+											state={{ from: '/feed' }}
+											style="aspect-ratio: 1/1">
 									<img class="aspect-auto shrink-0 rounded-3xl"
-											 alt={idea.name}
-											 src={idea.image_url}
+											 alt={wish.name}
+											 src={wish.images[0].url}
 											 onLoad={(e) => {
 												 const img = e.target as HTMLImageElement
-												 img.parentElement!.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`
+												 img.parentElement!.style.aspectRatio = `${wish.images[0].width}/${wish.images[0].height}`
 											 }}
 									/>
-								</div>
+								</Link>
 							)}
 						</For>
 					</div>
 					<div class="flex flex-col gap-0.5 h-full flex-grow">
-						<For each={ideas.data.slice(Math.ceil(ideas.data.length / 2))}>
-							{(idea) => (
-								<div class="border-[0.5px] border-border/70 rounded-3xl" style="aspect-ratio: 1/1">
+						<For each={wishes.data?.slice(Math.ceil(wishes.data.length / 2))}>
+							{(wish) => (
+								<Link href={`/wishes/${wish.id}`} class="border-[0.5px] border-border/70 rounded-3xl"
+											state={{ from: '/feed' }}
+											style="aspect-ratio: 1/1">
 									<img class="aspect-auto shrink-0 rounded-3xl"
-											 alt={idea.name}
-											 src={idea.image_url}
+											 alt={wish.name}
+											 src={wish.images[0].url}
 											 onLoad={(e) => {
 												 const img = e.target as HTMLImageElement
-												 img.parentElement!.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`
+												 img.parentElement!.style.aspectRatio = `${wish.images[0].width}/${wish.images[0].height}`
 											 }}
 									/>
-								</div>
+								</Link>
 							)}
 						</For>
 					</div>

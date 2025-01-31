@@ -88,8 +88,8 @@ export const fetchUserWishes = async () => {
 	return data
 }
 
-export const fetchIdeas = async () => {
-	const { data } = await apiRequest('/ideas', {
+export const fetchFeed = async () => {
+	const { data } = await apiRequest('/feed', {
 		method: 'GET',
 	})
 

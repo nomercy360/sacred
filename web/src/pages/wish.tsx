@@ -88,41 +88,41 @@ const ViewItem = () => {
 	}
 
 	return (
-		<div class="relative w-full flex flex-col h-screen overflow-hidden">
-			<div class="p-5 flex flex-row items-center justify-between">
+		<div class="relative w-full flex flex-col h-screen overflow-y-scroll">
+			<div class="mb-2 mt-5 px-5 flex flex-row items-center justify-between">
 				<button
-					class="flex items-center justify-center bg-secondary rounded-full size-10"
+					class="shrink-0 flex items-center justify-center bg-secondary rounded-full size-10"
 				>
 					<span class="material-symbols-rounded text-[20px]">report</span>
 				</button>
-				<div class="flex flex-col items-center text-center">
-					<h1 class="text-xl font-bold text-center">{item.data?.name}</h1>
-					<Switch>
-						<Match when={item.data?.price && item.data?.url}>
-							<a href={item.data?.url!} class="text-sm text-primary underline" target="_blank" rel="noreferrer">
-								{item.data?.price}{currencySymbol(item.data?.currency!)} at {getDomainName(item.data?.url!)}
-							</a>
-						</Match>
-						<Match when={item.data?.price}>
-							<p class="text-sm text-primary">{item.data?.price}{currencySymbol(item.data?.currency!)}</p>
-						</Match>
-						<Match when={item.data?.url}>
-							<a href={item.data?.url!} class="text-sm text-primary underline" target="_blank" rel="noreferrer">
-								at {getDomainName(item.data?.url!)}
-							</a>
-						</Match>
-					</Switch>
-				</div>
 				<button
-					class="flex items-center justify-center bg-secondary rounded-full size-10"
+					class="shrink-0 flex items-center justify-center bg-secondary rounded-full size-10"
 					onClick={shareWishURL}
 				>
 					<span class="material-symbols-rounded text-[20px]">arrow_outward</span>
 				</button>
 			</div>
+			<div class="flex flex-col items-center text-center px-8">
+				<h1 class="leading-tight text-xl font-bold text-center">{item.data?.name}</h1>
+				<Switch>
+					<Match when={item.data?.price && item.data?.url}>
+						<a href={item.data?.url!} class="text-sm text-muted-foreground" target="_blank" rel="noreferrer">
+							{item.data?.price}{currencySymbol(item.data?.currency!)} at {getDomainName(item.data?.url!)}
+						</a>
+					</Match>
+					<Match when={item.data?.price}>
+						<p class="text-sm text-primary">{item.data?.price}{currencySymbol(item.data?.currency!)}</p>
+					</Match>
+					<Match when={item.data?.url}>
+						<a href={item.data?.url!} class="text-sm text-primary underline" target="_blank" rel="noreferrer">
+							at {getDomainName(item.data?.url!)}
+						</a>
+					</Match>
+				</Switch>
+			</div>
 
-			<div class="flex flex-col items-center justify-start space-y-0.5 overflow-y-scroll h-full">
-				<Show when={item.data?.images} fallback={<div class="text-muted">No image available</div>}>
+			<div class="mt-7 flex flex-col items-center justify-start space-y-0.5">
+				<Show when={item.data?.images} fallback={<ImageLoader />}>
 					<For each={item.data?.images}>
 						{(image) => (
 							<img
@@ -135,7 +135,7 @@ const ViewItem = () => {
 					</For>
 				</Show>
 			</div>
-			<Show when={item.data?.user_id !== store.user?.id}>
+			<Show when={item.isSuccess && item.data?.user_id !== store.user?.id}>
 				<div
 					class="pt-2 px-4 flex flex-col items-start justify-start border-t shadow-sm h-[95px] fixed bottom-0 w-full bg-background z-50"
 				>
@@ -180,6 +180,18 @@ const ViewItem = () => {
 				</div>
 			</Show>
 		</div>
+	)
+}
+
+
+function ImageLoader() {
+	return (
+		<>
+			<div
+				class="rounded-[25px] border-[0.5px] border-border/60 animate-pulse bg-background max-h-[500px] w-full h-full aspect-[3/4]" />
+			<div
+				class="rounded-[25px] border-[0.5px] border-border/60 animate-pulse bg-background max-h-[500px] w-full h-full aspect-[3/4]" />
+		</>
 	)
 }
 

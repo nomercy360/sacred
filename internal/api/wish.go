@@ -87,6 +87,10 @@ func (a *API) AddWishHandler(c echo.Context) error {
 		IsPublic: req.IsPublic,
 	}
 
+	if item.Price == nil {
+		item.Currency = nil
+	}
+
 	err := a.storage.CreateWish(c.Request().Context(), item, req.CategoryIDs)
 	if err != nil {
 		return terrors.InternalServer(err, "cannot create wishlist item")
@@ -247,4 +251,17 @@ func (a *API) DeleteWishHandler(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+func (a *API) GetWishesFeed(c echo.Context) error {
+	uid := getUserID(c)
+
+	searchQuery := c.QueryParam("search")
+
+	wishes, err := a.storage.GetPublicWishesFeed(c.Request().Context(), uid, searchQuery)
+	if err != nil {
+		return terrors.InternalServer(err, "cannot fetch wishes feed")
+	}
+
+	return c.JSON(http.StatusOK, wishes)
 }

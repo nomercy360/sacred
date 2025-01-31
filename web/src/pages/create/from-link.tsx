@@ -16,6 +16,7 @@ import {
 	NumberFieldInput,
 } from '~/components/ui/number-field'
 import { createStore } from 'solid-js/store'
+import { Link } from '~/components/link'
 
 type MetadataResponse = {
 	image_urls: string[]
@@ -50,7 +51,7 @@ export default function CreateFromLinkPage() {
 		url: null,
 		images: [],
 		price: null,
-		currency: '',
+		currency: 'USD',
 		is_public: true,
 		category_ids: [],
 	})
@@ -65,11 +66,6 @@ export default function CreateFromLinkPage() {
 	const [step, setStep] = createSignal<StepName>(StepNames.ADD_LINK)
 	const [previousStep, setPreviousStep] = createSignal<StepName | null>(null)
 	const [metaWithImages, setMetaWithImages] = createSignal<MetadataResponse | null>(null)
-
-	const updateStep = (newStep: StepName, fromStep: StepName) => {
-		setStep(newStep)
-		setPreviousStep(fromStep)
-	}
 
 	function updateLink(newLink: string) {
 		setCreateWishStore({ url: newLink })
@@ -134,7 +130,7 @@ export default function CreateFromLinkPage() {
 			if (newImages.length > 0) {
 				setCreateWishStore('images', (prev: any) => [...prev, ...newImages])
 				mainButton.hideProgress()
-				updateStep(StepNames.CHOOSE_CATEGORIES, StepNames.ADD_LINK)
+				setStep(StepNames.CHOOSE_CATEGORIES)
 			} else {
 				window.Telegram.WebApp.showAlert('No valid files were selected.')
 			}
@@ -144,7 +140,7 @@ export default function CreateFromLinkPage() {
 	const onContinue = async () => {
 		switch (step()) {
 			case StepNames.ADD_LINK:
-				updateStep(StepNames.CHOOSE_CATEGORIES, StepNames.ADD_LINK)
+				setStep(StepNames.CHOOSE_CATEGORIES)
 				setMetaWithImages(null)
 				fetchMetadata(createWishStore.url!).then((data) => {
 					setMetaWithImages(data)
@@ -155,23 +151,23 @@ export default function CreateFromLinkPage() {
 
 			case StepNames.CHOOSE_CATEGORIES:
 				const nextStep = activeFlow() === FlowNames.START_WITH_LINK ? StepNames.SELECT_IMAGES : StepNames.ADD_NAME
-				updateStep(nextStep, StepNames.CHOOSE_CATEGORIES)
+				setStep(nextStep)
 				break
 
 			case StepNames.SELECT_IMAGES:
 				if (createWishStore.name) {
-					updateStep(StepNames.CONFIRM, StepNames.SELECT_IMAGES)
+					setStep(StepNames.CONFIRM)
 				} else {
-					updateStep(StepNames.ADD_NAME, StepNames.SELECT_IMAGES)
+					setStep(StepNames.ADD_NAME)
 				}
 				break
 
 			case StepNames.ADD_NAME:
-				updateStep(StepNames.CONFIRM, StepNames.ADD_NAME)
+				setStep(StepNames.CONFIRM)
 				break
 
 			case StepNames.ADD_PRICE:
-				updateStep(StepNames.CONFIRM, StepNames.ADD_PRICE)
+				setStep(StepNames.CONFIRM)
 				break
 
 			case StepNames.CONFIRM:
@@ -188,27 +184,42 @@ export default function CreateFromLinkPage() {
 	}
 
 	function decrementStep() {
-		if (previousStep() !== null) {
-			setStep(previousStep()!)
-		}
-	}
+		switch (step()) {
+			case StepNames.ADD_LINK:
+				navigate('/')
+				break
 
-	function goBack() {
-		navigate('/new')
+			case StepNames.CHOOSE_CATEGORIES:
+				setStep(StepNames.ADD_LINK)
+				break
+
+			case StepNames.SELECT_IMAGES:
+				setStep(StepNames.CHOOSE_CATEGORIES)
+				break
+
+			case StepNames.ADD_NAME:
+				setStep(StepNames.CONFIRM)
+				break
+
+			case StepNames.ADD_PRICE:
+				setStep(StepNames.CONFIRM)
+				break
+
+			case StepNames.CONFIRM:
+				setStep(StepNames.ADD_PRICE)
+				break
+		}
 	}
 
 	createEffect(() => {
 		switch (step()) {
 			case StepNames.ADD_LINK:
 				backButton.setVisible()
-				backButton.offClick(decrementStep)
-				backButton.onClick(goBack)
+				backButton.onClick(decrementStep)
 				mainButton.toggle(!!createWishStore.url?.match(/^https?:\/\//), 'Continue')
 				break
 
 			case StepNames.CHOOSE_CATEGORIES:
-				backButton.offClick(goBack)
-				backButton.onClick(decrementStep)
 				mainButton.toggle(createWishStore.category_ids.length > 0, 'Continue', 'Select at least 1')
 				break
 
@@ -217,7 +228,7 @@ export default function CreateFromLinkPage() {
 				break
 
 			case StepNames.ADD_NAME:
-				mainButton.toggle(!!createWishStore.name, 'Add title to continue')
+				mainButton.toggle(!!createWishStore.name, 'Continue', 'Add title to continue')
 				break
 
 			case StepNames.ADD_PRICE:
@@ -231,7 +242,6 @@ export default function CreateFromLinkPage() {
 	})
 
 	onMount(() => {
-		window.Telegram.WebApp.readTextFromClipboard(updateLink)
 		mainButton.onClick(onContinue)
 	})
 
@@ -398,24 +408,24 @@ export default function CreateFromLinkPage() {
 				</Match>
 				<Match when={step() === StepNames.CONFIRM}>
 					<div class="overflow-y-scroll w-full flex items-center justify-start flex-col">
-						<button class="mx-10 mb-2 text-xl font-extrabold border"
-										onClick={() => updateStep(StepNames.ADD_NAME, StepNames.CONFIRM)}
+						<button class="mx-10 mb-2 text-xl font-extrabold"
+										onClick={() => setStep(StepNames.ADD_NAME)}
 						>
 							{createWishStore.name}
 						</button>
-						<button class="mx-10 border text-sm text-muted-foreground"
-										onClick={() => updateStep(StepNames.ADD_PRICE, StepNames.CONFIRM)}>
+						<button class="mx-10 text-sm text-muted-foreground"
+										onClick={() => setStep(StepNames.ADD_PRICE)}>
 							{createWishStore.price && createWishStore.currency ? formatPrice(createWishStore.price, createWishStore.currency) : 'Add price'}
 						</button>
 						<div class="mt-7 flex flex-col space-y-0.5 w-full items-center">
 							<For each={createWishStore.images}>
 								{(img) => (
-									<div class="relative rounded-2xl bg-secondary aspect-[3/4]">
+									<div class="relative rounded-2xl bg-secondary w-full aspect-[3/4]">
 										<img
 											src={img.url}
 											alt=""
 											loading="lazy"
-											class="w-full h-auto max-h-[500px] object-contain rounded-2xl aspect-auto shrink-0 pointer-events-none select-none"
+											class="w-full object-contain rounded-2xl aspect-auto shrink-0 pointer-events-none select-none"
 											onLoad={(e) => {
 												const img = e.target as HTMLImageElement
 												img.parentElement!.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`

@@ -223,6 +223,25 @@ func (s *storage) UpdateWish(ctx context.Context, uid string, item Wish) (Wish, 
 	return s.GetWishByID(ctx, uid, item.ID)
 }
 
+func (s *storage) GetPublicWishesFeed(ctx context.Context, userID, searchQuery string) ([]Wish, error) {
+	baseQuery := s.baseWishesQuery() + `
+			WHERE w.is_public = 1 AND w.user_id != ?`
+	args := []interface{}{userID}
+
+	if searchQuery != "" {
+		baseQuery += ` AND (w.name LIKE ? OR w.notes LIKE ?)`
+		searchPattern := "%" + searchQuery + "%"
+		args = append(args, searchPattern, searchPattern)
+	}
+
+	baseQuery += `
+			GROUP BY w.id
+			ORDER BY w.created_at DESC
+			LIMIT 100`
+
+	return s.fetchWishes(ctx, baseQuery, args...)
+}
+
 func (s *storage) baseWishesQuery() string {
 	return `SELECT w.id,
 				   w.user_id,

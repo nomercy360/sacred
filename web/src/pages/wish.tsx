@@ -29,6 +29,12 @@ const ViewItem = () => {
 				}
 				return old
 			})
+			setStore('wishes', (old) => {
+				if (old) {
+					return [...old, data]
+				}
+				return old
+			})
 		},
 	}))
 
@@ -40,6 +46,12 @@ const ViewItem = () => {
 				queryClient.setQueryData(['item', params.id], (old: Wish | undefined) => {
 					if (old) {
 						return { ...old, copied_wish_id: null }
+					}
+					return old
+				})
+				setStore('wishes', (old) => {
+					if (old) {
+						return old.filter((w) => w.id !== item.data!.copied_wish_id)
 					}
 					return old
 				})

@@ -17,6 +17,7 @@ import {
 } from '~/components/ui/number-field'
 import { createStore } from 'solid-js/store'
 import { Link } from '~/components/link'
+import { setStore } from '~/store'
 
 type MetadataResponse = {
 	image_urls: string[]
@@ -173,9 +174,17 @@ export default function CreateFromLinkPage() {
 			case StepNames.CONFIRM:
 				try {
 					window.Telegram.WebApp.MainButton.showProgress(false)
-					await fetchAddWish(createWishStore)
-					await queryClient.invalidateQueries({ queryKey: ['wishes'] })
-					navigate('/')
+
+					const { data, error } = await fetchAddWish(createWishStore)
+					if (!error) {
+						setStore('wishes', (old) => {
+							if (old) {
+								return [...old, data]
+							}
+							return old
+						})
+						navigate('/')
+					}
 				} finally {
 					window.Telegram.WebApp.MainButton.hideProgress()
 				}

@@ -9,6 +9,7 @@ import FeedPage from '~/pages/feed'
 import ShareProfile from '~/pages/share'
 import CreateFromLinkPage from '~/pages/create/from-link'
 import CategoriesEdit from '~/pages/categories-edit'
+import BookmarksPage from '~/pages/bookmarks'
 
 export const routes: RouteDefinition[] = [
 	{
@@ -32,6 +33,10 @@ export const routes: RouteDefinition[] = [
 	{
 		path: '/setup',
 		component: SetupProfilePage,
+	},
+	{
+		path: '/bookmarks',
+		component: BookmarksPage,
 	},
 	{
 		path: '/categories-edit',

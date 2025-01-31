@@ -105,6 +105,14 @@ export const fetchFeed = async () => {
 	return data
 }
 
+export const fetchBookmarks = async () => {
+	const { data } = await apiRequest('/bookmarks', {
+		method: 'GET',
+	})
+
+	return data
+}
+
 export const fetchProfiles = async () => {
 	const { data } = await apiRequest('/profiles', {
 		method: 'GET',
@@ -156,6 +164,8 @@ export type Wish = {
 	is_fulfilled: boolean
 	is_reserved: boolean
 	reserved_by: string | null
+	source_id: string | null
+	source_type: string | null
 	categories: Array<{
 		id: string
 		name: string

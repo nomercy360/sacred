@@ -269,7 +269,7 @@ func main() {
 	g.POST("/users/unfollow", a.UnfollowUser)
 	g.POST("/wishes/:id/bookmark", a.SaveWishToBookmarks)
 	g.DELETE("/wishes/:id/bookmark", a.RemoveWishFromBookmarks)
-	g.GET("/wishes/bookmarks", a.ListBookmarkedWishes)
+	g.GET("/bookmarks", a.ListBookmarkedWishes)
 	g.POST("/wishes/:id/copy", a.CopyWishHandler)
 	g.DELETE("/wishes/:id", a.DeleteWishHandler)
 

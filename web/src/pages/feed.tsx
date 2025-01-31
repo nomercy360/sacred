@@ -1,8 +1,7 @@
 import { createQuery } from '@tanstack/solid-query'
 import { fetchFeed, Wish } from '~/lib/api'
-import { For, Show } from 'solid-js'
-import { store } from '~/store'
 import { Link } from '~/components/link'
+import { WishesGrid } from '~/pages/bookmarks'
 
 const FeedPage = () => {
 	const wishes = createQuery<Wish[]>(() => ({
@@ -33,46 +32,7 @@ const FeedPage = () => {
 					</span>
 				</Link>
 			</div>
-			<div class="grid grid-cols-2 gap-0.5 pb-[200px] h-full w-full overflow-y-scroll">
-				<Show when={wishes.isSuccess && wishes.data?.length > 0}>
-					<div class="flex flex-col gap-0.5">
-						<For each={wishes.data?.slice(0, Math.ceil(wishes.data.length / 2))}>
-							{(wish) => (
-								<Link href={`/wishes/${wish.id}`} class="border-[0.5px] border-border/70 rounded-3xl"
-											state={{ from: '/feed' }}
-											style="aspect-ratio: 1/1">
-									<img class="aspect-auto shrink-0 rounded-3xl"
-											 alt={wish.name}
-											 src={wish.images[0].url}
-											 onLoad={(e) => {
-												 const img = e.target as HTMLImageElement
-												 img.parentElement!.style.aspectRatio = `${wish.images[0].width}/${wish.images[0].height}`
-											 }}
-									/>
-								</Link>
-							)}
-						</For>
-					</div>
-					<div class="flex flex-col gap-0.5 h-full flex-grow">
-						<For each={wishes.data?.slice(Math.ceil(wishes.data.length / 2))}>
-							{(wish) => (
-								<Link href={`/wishes/${wish.id}`} class="border-[0.5px] border-border/70 rounded-3xl"
-											state={{ from: '/feed' }}
-											style="aspect-ratio: 1/1">
-									<img class="aspect-auto shrink-0 rounded-3xl"
-											 alt={wish.name}
-											 src={wish.images[0].url}
-											 onLoad={(e) => {
-												 const img = e.target as HTMLImageElement
-												 img.parentElement!.style.aspectRatio = `${wish.images[0].width}/${wish.images[0].height}`
-											 }}
-									/>
-								</Link>
-							)}
-						</For>
-					</div>
-				</Show>
-			</div>
+			<WishesGrid wishes={wishes as any} source="/feed" />
 		</div>
 	)
 }

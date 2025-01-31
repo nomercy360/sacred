@@ -106,7 +106,7 @@ func (s *storage) GetWishByID(ctx context.Context, uid, id string) (Wish, error)
 		LEFT JOIN wish_images wi ON w.id = wi.wish_id
 		LEFT JOIN wish_categories wc ON w.id = wc.wish_id
 		LEFT JOIN categories c ON wc.category_id = c.id
-		WHERE w.id = ? AND w.deleted_at IS NULL
+		WHERE w.id = ?
 		GROUP BY w.id`
 
 	var item Wish
@@ -225,7 +225,7 @@ func (s *storage) UpdateWish(ctx context.Context, uid string, item Wish) (Wish, 
 
 func (s *storage) GetPublicWishesFeed(ctx context.Context, userID, searchQuery string) ([]Wish, error) {
 	baseQuery := s.baseWishesQuery() + `
-			WHERE w.is_public = 1 AND w.user_id != ? AND w.deleted_at IS NULL`
+			WHERE w.is_public = 1 AND w.user_id != ?`
 	args := []interface{}{userID}
 
 	if searchQuery != "" {
@@ -344,7 +344,7 @@ func (s *storage) ListWishes(ctx context.Context) ([]Wish, error) {
 
 func (s *storage) GetWishesByUserID(ctx context.Context, userID string) ([]Wish, error) {
 	query := s.baseWishesQuery() + `
-			WHERE w.user_id = ? AND w.deleted_at IS NULL
+			WHERE w.user_id = ?
         	GROUP BY w.id
 			ORDER BY w.created_at DESC
 			LIMIT 100`
@@ -372,12 +372,34 @@ func (s *storage) CreateWishImage(ctx context.Context, image WishImage) (WishIma
 }
 
 func (s *storage) DeleteWish(ctx context.Context, uid, id string) error {
-	query := `UPDATE wishes SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?`
-
-	_, err := s.db.ExecContext(ctx, query, id, uid)
+	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	defer tx.Rollback()
+
+	query := `DELETE FROM wish_images WHERE wish_id = ?`
+	_, err = tx.ExecContext(ctx, query, id)
+
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	query = `DELETE FROM wish_categories WHERE wish_id = ?`
+	_, err = tx.ExecContext(ctx, query, id)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	query = `DELETE FROM wishes WHERE id = ? AND user_id = ?`
+	_, err = tx.ExecContext(ctx, query, id, uid)
+
+	if err != nil {
+		tx.Rollback()
+	}
+
+	return tx.Commit()
 }

@@ -69,6 +69,7 @@ const ViewItem = () => {
 				}
 				return old
 			})
+			queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
 		},
 	}))
 
@@ -82,6 +83,7 @@ const ViewItem = () => {
 				}
 				return old
 			})
+			queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
 		},
 	}))
 
@@ -112,6 +114,9 @@ const ViewItem = () => {
 			}
 			return old
 		})
+		if (item.data?.source_id !== null) {
+			queryClient.invalidateQueries({ queryKey: ['item', item.data?.source_id] })
+		}
 		navigate('/')
 	}
 

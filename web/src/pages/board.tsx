@@ -23,9 +23,12 @@ export default function UserBoardPage() {
 					<span class="text-nowrap text-xl font-extrabold">{store.user?.first_name} {store.user?.last_name}</span>
 				</Link>
 				<div class="flex flex-row items-center space-x-3">
-					<button class="flex items-center justify-center bg-secondary rounded-full size-10">
+					<Link
+						href={'/bookmarks'}
+						state={{ from: '/' }}
+						class="flex items-center justify-center bg-secondary rounded-full size-10">
 						<span class="material-symbols-rounded text-[20px]">bookmark</span>
-					</button>
+					</Link>
 					<button class="flex items-center justify-center bg-secondary rounded-full size-10">
 						<span class="material-symbols-rounded text-[20px]">arrow_outward</span>
 					</button>

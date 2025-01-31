@@ -1,17 +1,10 @@
-import { fetchUserWishes, Wish, WishImage } from '~/lib/api'
 import { Match, Switch, For, createSignal, Show, createEffect, onCleanup } from 'solid-js'
-import { createQuery } from '@tanstack/solid-query'
 import { Link } from '~/components/link'
 import { setStore, store } from '~/store'
 import { cn } from '~/lib/utils'
 import { resolveAspectRatio, resolveImage, splitIntoGroups } from '~/pages/profile'
 
 export default function UserBoardPage() {
-	const wishes = createQuery<Wish[]>(() => ({
-		queryKey: ['wishes'],
-		queryFn: () => fetchUserWishes(),
-	}))
-
 	async function closeOnboardingPopup() {
 		window.Telegram.WebApp.CloudStorage.setItem('onboarding', 'done')
 		setStore('onboarding', false)
@@ -41,23 +34,7 @@ export default function UserBoardPage() {
 
 			<div class="overflow-y-scroll text-center flex-1 w-full pt-20 pb-20">
 				<Switch>
-					<Match when={wishes.isLoading}>
-						<p class="mt-4">Loading your wishlist...</p>
-					</Match>
-
-					<Match when={wishes.error}>
-						<div class="mt-4">
-							<p class="text-red-500">Failed to load wishlist.</p>
-							<button
-								class="mt-2 px-4 py-2 bg-primary text-white rounded-2xl"
-								onClick={() => wishes.refetch()}
-							>
-								Retry
-							</button>
-						</div>
-					</Match>
-
-					<Match when={!wishes.isLoading && !wishes.data?.length}>
+					<Match when={!store.wishes.length}>
 						<div
 							class="absolute top-[15%] rotate-[-4deg] left-[10%] w-[240px] text-start pl-5 pt-4 pr-10 pb-8 flex flex-col items-start justify-start gap-2 rounded-[25px] border-2 border-background bg-[#FEF5F3]">
 							<span class="material-symbols-rounded text-[20px]">
@@ -95,9 +72,9 @@ export default function UserBoardPage() {
 							</p>
 						</div>
 					</Match>
-					<Match when={!wishes.isLoading && wishes.data?.length}>
+					<Match when={store.wishes.length}>
 						<div class="grid grid-cols-2 gap-0.5">
-							<For each={splitIntoGroups(wishes.data, 2)}>
+							<For each={splitIntoGroups(store.wishes, 2)}>
 								{(group) => (
 									<div class="flex flex-col gap-0.5">
 										<For each={group}>

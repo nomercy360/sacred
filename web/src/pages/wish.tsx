@@ -1,10 +1,11 @@
-import { For, Match, Show, Switch } from 'solid-js'
+import { createEffect, For, Match, onCleanup, Show, Switch } from 'solid-js'
 import { createMutation, createQuery } from '@tanstack/solid-query'
 import { copyWish, deleteWish, fetchWish, removeBookmark, saveBookmark, Wish } from '~/lib/api'
-import { useParams } from '@solidjs/router'
+import { useNavigate, useParams } from '@solidjs/router'
 import { cn, currencySymbol, getDomainName } from '~/lib/utils'
 import { queryClient } from '~/App'
-import { store } from '~/store'
+import { setStore, setWishes, store } from '~/store'
+import { useMainButton } from '~/lib/useMainButton'
 
 const ViewItem = () => {
 	const params = useParams()
@@ -13,6 +14,10 @@ const ViewItem = () => {
 		queryKey: ['item', params.id],
 		queryFn: () => fetchWish(params.id),
 	}))
+
+	const navigate = useNavigate()
+
+	const mainButton = useMainButton()
 
 	const saveToBoard = createMutation(() => ({
 		mutationFn: () => copyWish(item.data!.id),
@@ -86,6 +91,29 @@ const ViewItem = () => {
 
 		window.Telegram.WebApp.openTelegramLink(url)
 	}
+
+	const despawnWish = async () => {
+		await deleteWish(item.data!.id)
+		setStore('wishes', (old) => {
+			if (old) {
+				return old.filter((w) => w.id !== item.data!.id)
+			}
+			return old
+		})
+		navigate('/')
+	}
+
+	createEffect(() => {
+		if (item.isSuccess && item.data?.user_id === store.user?.id) {
+			mainButton.onClick(despawnWish)
+			mainButton.setVisible('Delete from board')
+		}
+	})
+
+	onCleanup(() => {
+		mainButton.hide()
+		mainButton.offClick(despawnWish)
+	})
 
 	return (
 		<div class="relative w-full flex flex-col h-screen overflow-y-scroll">

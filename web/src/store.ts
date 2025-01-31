@@ -36,7 +36,7 @@ export const setUser = (user: any) => setStore('user', user)
 
 export const setToken = (token: string) => setStore('token', token)
 
-export const setWishes = (wishlist: Wishlist) => setStore('wishes', wishlist)
+export const setWishes = (wishes: Wish[]) => setStore('wishes', wishes)
 
 export const setOnboarding = (onboarding: boolean) => setStore('onboarding', onboarding)
 

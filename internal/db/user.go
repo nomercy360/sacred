@@ -11,19 +11,19 @@ import (
 
 // User represents a user in the system
 type User struct {
-	ID           string         `db:"id"`
-	Username     string         `db:"username"`
-	LanguageCode *string        `db:"language_code"`
-	ChatID       int64          `db:"chat_id"`
-	CreatedAt    time.Time      `db:"created_at"`
-	FirstName    *string        `db:"first_name"`
-	LastName     *string        `db:"last_name"`
-	Email        *string        `db:"email"`
-	ReferralCode string         `db:"referral_code"`
-	ReferredBy   *string        `db:"referred_by"`
-	AvatarURL    *string        `db:"avatar_url"`
-	Interests    InterestsArray `db:"interests"`
-	Followers    int            `db:"followers"`
+	ID           string         `db:"id" json:"id"`
+	Username     string         `db:"username" json:"username"`
+	LanguageCode *string        `db:"language_code" json:"language_code"`
+	ChatID       int64          `db:"chat_id" json:"chat_id"`
+	CreatedAt    time.Time      `db:"created_at" json:"created_at"`
+	FirstName    *string        `db:"first_name" json:"first_name"`
+	LastName     *string        `db:"last_name" json:"last_name"`
+	Email        *string        `db:"email" json:"email"`
+	ReferralCode string         `db:"referral_code" json:"referral_code"`
+	ReferredBy   *string        `db:"referred_by" json:"referred_by"`
+	AvatarURL    *string        `db:"avatar_url" json:"avatar_url"`
+	Interests    InterestsArray `db:"interests" json:"interests"`
+	Followers    int            `db:"followers" json:"followers"`
 }
 
 type InterestsArray []Interest

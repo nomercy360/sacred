@@ -257,6 +257,7 @@ func main() {
 	g.POST("/wishes", a.AddWishHandler)
 	g.GET("/wishes/:id", a.GetWishHandler)
 	g.PUT("/user/settings", a.UpdateUserPreferences)
+	g.PUT("/user/interests", a.UpdateUserInterests)
 	g.GET("/categories", a.ListCategories)
 	g.GET("/user/wishes", a.ListUserWishes)
 	g.GET("/ideas", a.ListIdeas)

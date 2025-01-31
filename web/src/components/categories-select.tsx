@@ -30,13 +30,13 @@ export default function CategoriesSelect(props: SelectCategoriesProps) {
 
 
 	return (
-		<div class="grid grid-cols-3 gap-0.5 w-full overflow-y-scroll">
+		<div class="pb-0.5 grid grid-cols-3 gap-[2px] w-full">
 			<Show when={categories.data}>
 				<For each={categories.data}>
 					{(category) => (
 						<button
 							style={{ 'background-image': !isSelected(category.id) ? `url(${category.image_url}), url('/placeholder.jpg')` : '' }}
-							class={cn('rounded-2xl flex items-center justify-center aspect-square bg-cover bg-center', isSelected(category.id) && 'bg-primary')}
+							class={cn('rounded-3xl flex items-center justify-center aspect-square bg-cover bg-center', isSelected(category.id) && 'bg-primary')}
 							onClick={() => toggleCategory(category.id)}
 						>
 							<p class="text-white font-bold">

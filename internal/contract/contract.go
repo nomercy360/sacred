@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"regexp"
 	"sacred/internal/db"
 	"time"
 )
@@ -143,4 +144,22 @@ type WishResponse struct {
 	IsPurchased bool      `json:"is_purchased"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type UpdateUserRequest struct {
+	Interests []string `json:"interests"`
+	Email     string   `json:"email"`
+}
+
+func (u UpdateUserRequest) Validate() error {
+	if len(u.Interests) == 0 {
+		return errors.New("interests cannot be empty")
+	}
+
+	re := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	if !re.MatchString(u.Email) {
+		return errors.New("invalid email format")
+	}
+
+	return nil
 }

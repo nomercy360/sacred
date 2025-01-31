@@ -10,17 +10,6 @@ const FeedPage = () => {
 		queryFn: () => fetchFeed(),
 	}))
 
-	function shareBoardURL() {
-		const url =
-			'https://t.me/share/url?' +
-			new URLSearchParams({
-				url: 'https://t.me/sacred_wished/app?startapp=u_' + store.user?.username,
-			}).toString() +
-			`&text=Check out ${store.user?.first_name}'s wishes`
-
-		window.Telegram.WebApp.openTelegramLink(url)
-	}
-
 	return (
 		<div
 			class="relative flex flex-col items-center w-full h-screen overflow-hidden"
@@ -35,11 +24,14 @@ const FeedPage = () => {
 				<p class="text-black text-xl font-extrabold">
 					Discover
 				</p>
-				<button class="flex items-center justify-center bg-secondary rounded-full size-10">
+				<Link
+					href="/categories-edit"
+					state={{ from: '/feed' }}
+					class="flex items-center justify-center bg-secondary rounded-full size-10">
 					<span class="material-symbols-rounded text-[20px]">
 						page_info
 					</span>
-				</button>
+				</Link>
 			</div>
 			<div class="grid grid-cols-2 gap-0.5 pb-[200px] h-full w-full overflow-y-scroll">
 				<Show when={wishes.isSuccess && wishes.data?.length > 0}>

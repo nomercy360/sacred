@@ -128,7 +128,7 @@ CREATE TABLE user_bookmarks
 INSERT INTO categories (id, name, image_url)
 VALUES ('LUTdDAJBnMfFQ', 'Fashion', '/fashion.png'),
        ('r09e6L7A1Ud3G', 'Home', '/home.png'),
-       ('RITjZETZZGhoi', 'Editorial', '/editorial.png'),
+       ('RITjZETZZGhoi', 'Books', '/books.png'),
        ('AJ33P1QKDGwr3', 'Gaming', '/gaming.png'),
        ('nNO1L1kki8kmy', 'Kids', '/kids.png'),
        ('KSXV97h2xP3ID', 'Sports', '/sports.png'),
@@ -136,14 +136,11 @@ VALUES ('LUTdDAJBnMfFQ', 'Fashion', '/fashion.png'),
        ('93YlI3YrpVHtt', 'Beauty', '/beauty.png'),
        ('gRtijLKN9aLb7', 'Healthcare', '/healthcare.png'),
        ('ovz8jovLpkzSq', 'Travel', '/travel.png'),
-       ('IwDGFPZUIBRdY', 'Technology', '/technology.png'),
+       ('IwDGFPZUIBRdY', 'Tech', '/tech.png'),
        ('anV0LNdpjWd4r', 'Art & Design', '/art_design.png'),
-       ('hQn9GNkNIRyyp', 'Food & Drink', '/food_drink.png'),
-       ('z7c1IYxXkDvej', 'Books', '/books.png'),
-       ('sXXVWD9XEdwwr', 'Education', '/education.png'),
-       ('wedhnp2MVv3Qi', 'Entertainment', '/entertainment.png'),
-       ('1G4sqO5okTCQD', 'Finance', '/finance.png'),
-       ('06z08OJFuIa8c', 'Productivity', '/productivity.png');
+       ('hQn9GNkNIRyyp', 'Food', '/food.png'),
+       ('z7c1IYxXkDvej', 'Pets', '/pets.png'),
+       ('sXXVWD9XEdwwr', 'Hobbies', '/hobbies.png');
 
 
 INSERT INTO ideas (id, name, description, category_id, price, currency, image_url, url)

@@ -72,6 +72,15 @@ export const saveUserPreferences = async (preferences: any) => {
 	return { data, error }
 }
 
+export const saveUserInterests = async (categories: string[]) => {
+	const { data, error } = await apiRequest('/user/interests', {
+		method: 'PUT',
+		body: JSON.stringify(categories),
+	})
+
+	return { data, error }
+}
+
 export const fetchCategories = async () => {
 	const { data } = await apiRequest('/categories', {
 		method: 'GET',

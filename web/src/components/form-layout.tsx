@@ -13,7 +13,7 @@ type FormHeaderProps = {
 export default function FormLayout(props: FormHeaderProps) {
 	return (
 		<div
-			class="w-full flex flex-col h-screen items-center justify-start"
+			class="w-full flex flex-col h-screen items-center justify-start overflow-y-scroll"
 		>
 			<div class="flex-shrink-0 max-w-[350px] text-center py-6 flex flex-col items-center justify-start w-full">
 				<div class="flex flex-row items-center justify-center space-x-1">

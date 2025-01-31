@@ -6,10 +6,9 @@ import NavigationTabs from '~/components/navigation-tabs'
 import UserBoardPage from '~/pages/board'
 import PeoplePage from '~/pages/people'
 import FeedPage from '~/pages/feed'
-import NewItem from '~/pages/new'
 import ShareProfile from '~/pages/share'
 import CreateFromLinkPage from '~/pages/create/from-link'
-import CreateFromImagePage from '~/pages/create/from-images'
+import CategoriesEdit from '~/pages/categories-edit'
 
 export const routes: RouteDefinition[] = [
 	{
@@ -33,6 +32,10 @@ export const routes: RouteDefinition[] = [
 	{
 		path: '/setup',
 		component: SetupProfilePage,
+	},
+	{
+		path: '/categories-edit',
+		component: CategoriesEdit,
 	},
 	{
 		path: '/profiles/:id',

@@ -97,8 +97,8 @@ export const fetchUserWishes = async () => {
 	return data
 }
 
-export const fetchFeed = async () => {
-	const { data } = await apiRequest('/feed', {
+export const fetchFeed = async (search: string) => {
+	const { data } = await apiRequest('/feed' + (search ? `?search=${search}` : ''), {
 		method: 'GET',
 	})
 

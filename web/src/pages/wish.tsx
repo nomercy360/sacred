@@ -123,7 +123,7 @@ const ViewItem = () => {
 	createEffect(() => {
 		if (item.isSuccess && item.data?.user_id === store.user?.id) {
 			mainButton.onClick(despawnWish)
-			mainButton.setVisible('Delete from board')
+			mainButton.enable('Delete from board')
 		}
 	})
 

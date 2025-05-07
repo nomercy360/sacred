@@ -140,7 +140,7 @@ const ViewItem = () => {
 						class="flex items-center justify-center bg-secondary rounded-full size-10"
 						onClick={despawnWish}
 					>
-						<span class="material-symbols-rounded text-[20px]">delete</span>
+						<span class="material-symbols-rounded text-base">edit</span>
 					</button>
 				</Show>
 				<Show when={item.data?.user_id !== store.user?.id}>

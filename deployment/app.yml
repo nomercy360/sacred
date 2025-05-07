@@ -89,7 +89,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: sacred-api.mxksim.dev
+    - host: sacred-api.mxksimdev.com
       http:
         paths:
           - path: /

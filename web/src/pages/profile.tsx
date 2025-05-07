@@ -6,12 +6,12 @@ import { useParams } from '@solidjs/router'
 
 
 export function resolveImage(images: WishImage[]) {
-	const img = images.find((img) => img.position === 0)
+	const img = images.length > 0 ? images[0] : null
 	return img ? `https://assets.peatch.io/${img.url}` : '/placeholder.jpg'
 }
 
 export function resolveAspectRatio(images: WishImage[]) {
-	const img = images.find((img) => img.position === 0)
+	const img = images.length > 0 ? images[0] : null
 	return img ? `${img.width}/${img.height}` : `1/1`
 }
 

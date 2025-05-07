@@ -1,8 +1,8 @@
-import { createSignal, onCleanup, onMount } from 'solid-js'
+import { createEffect, createSignal, onCleanup, onMount } from 'solid-js'
 import { createStore } from 'solid-js/store'
 import { useNavigate } from '@solidjs/router'
 import { addToast } from '~/components/toast'
-import { useMainButton, useSecondaryButton } from '~/lib/useMainButton'
+import { useMainButton } from '~/lib/useMainButton'
 import { useBackButton } from '~/lib/useBackButton'
 import {
 	fetchAddWish,
@@ -40,10 +40,8 @@ export function useWishCreation() {
 
 	const navigate = useNavigate()
 	const mainButton = useMainButton()
-	const secondaryButton = useSecondaryButton()
 	const backButton = useBackButton()
 
-	// Helper functions
 	const updateLink = (newLink: string) => {
 		setUpdateWish({ url: newLink })
 	}
@@ -55,6 +53,40 @@ export function useWishCreation() {
 	const updateCategories = (ids: string[]) => {
 		setUpdateWish({ category_ids: ids })
 	}
+
+	createEffect(() => {
+		switch (step()) {
+			case StepNames.START_SCREEN:
+				backButton.setVisible()
+				backButton.onClick(decrementStep)
+				mainButton.toggle(!!updateWish.url?.match(/^https?:\/\//), 'Continue')
+				break
+
+			case StepNames.CHOOSE_CATEGORIES:
+				mainButton.toggle(updateWish.category_ids.length > 0, 'Continue', 'Select at least 1')
+				break
+
+			case StepNames.SELECT_IMAGES:
+				if (urlImages().length > 0) {
+					mainButton.toggle(true, 'Continue')
+				} else {
+					mainButton.enable('Continue')
+				}
+				break
+
+			case StepNames.ADD_NAME:
+				mainButton.toggle(!!updateWish.name, 'Continue', 'Add title to continue')
+				break
+
+			case StepNames.ADD_LINK:
+				mainButton.toggle(!!updateWish.url?.match(/^https?:\/\//), 'Continue')
+				break
+
+			case StepNames.CONFIRM:
+				mainButton.hide()
+				break
+		}
+	})
 
 	const createWishIfNeeded = async () => {
 		if (!createdWishId()) {
@@ -107,8 +139,10 @@ export function useWishCreation() {
 			}
 
 			if (newImages.length > 0) {
-				setUploadImages((old) => [...old, ...newImages])
-				setStep(StepNames.CHOOSE_CATEGORIES)
+				setUploadImages((old) => [...newImages, ...old])
+				if (uploadImages().length == 1) { // its the first image
+					setStep(StepNames.CHOOSE_CATEGORIES)
+				}
 			} else {
 				addToast('Failed to upload files.')
 			}
@@ -153,6 +187,9 @@ export function useWishCreation() {
 				break
 
 			case StepNames.CHOOSE_CATEGORIES:
+				if (activeFlow() === FlowNames.START_WITH_PHOTOS) {
+					setUpdateWish({ url: null })
+				}
 				const nextStep = activeFlow() === FlowNames.START_WITH_LINK ? StepNames.SELECT_IMAGES : StepNames.ADD_NAME
 				setStep(nextStep)
 				break
@@ -262,7 +299,6 @@ export function useWishCreation() {
 		})
 	}
 
-	// Header titles for each step
 	const formHeaders: Record<StepName, string | undefined> = {
 		[StepNames.START_SCREEN]: 'Add the link',
 		[StepNames.CHOOSE_CATEGORIES]: 'Choose categories',
@@ -272,7 +308,6 @@ export function useWishCreation() {
 		[StepNames.CONFIRM]: undefined,
 	}
 
-	// Return all values and functions needed by the component
 	return {
 		// State
 		updateWish,

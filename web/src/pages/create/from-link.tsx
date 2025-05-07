@@ -2,7 +2,6 @@ import { Match, onMount, Switch } from 'solid-js'
 import FormLayout from '~/components/form-layout'
 import { StepNames } from './components/types'
 import { useWishCreation } from './components/useWishCreation'
-import { useButtonStates } from './components/useButtonStates'
 import StartStep from './components/StartStep'
 import CategoriesStep from './components/CategoriesStep'
 import SelectImagesStep from './components/SelectImagesStep'
@@ -22,17 +21,10 @@ export default function CreateFromLinkPage() {
 		setupButtons,
 		handleFileChange,
 		formHeaders,
-		decrementStep,
 		setStep,
 		removeImage,
+		onContinue,
 	} = useWishCreation()
-
-	useButtonStates({
-		step,
-		updateWish,
-		urlImages,
-		decrementStep,
-	})
 
 	onMount(() => {
 		setupButtons()
@@ -84,6 +76,8 @@ export default function CreateFromLinkPage() {
 
 				<Match when={step() === StepNames.CONFIRM}>
 					<ConfirmStep
+						onFileUpload={handleFileChange}
+						onPublishClick={() => onContinue()}
 						name={updateWish.name}
 						link={updateWish.url}
 						uploadImages={uploadImages()}

@@ -8,9 +8,14 @@ interface ConfirmStepProps {
 	onDeleteImage: (id: string) => void
 	onNameClick: () => void
 	onAddLinkClick: () => void
+	onFileUpload: (e: Event) => void
+	onPublishClick: () => void
 }
 
 function linkToDomain(link: string) {
+	if (!link.startsWith('http')) {
+		return
+	}
 	const url = new URL(link)
 	return url.hostname.replace('www.', '')
 }
@@ -24,12 +29,6 @@ const ConfirmStep: Component<ConfirmStepProps> = (props) => {
 					onClick={props.onNameClick}
 				>
 					{props.name}
-					<span class="text-xs text-secondary-foreground font-normal">
-					Edit
-					<span class="material-symbols-rounded text-[8px] ml-1">
-						arrow_forward_ios
-					</span>
-				</span>
 				</button>
 				<Show when={!props.link}>
 					<button
@@ -42,7 +41,7 @@ const ConfirmStep: Component<ConfirmStepProps> = (props) => {
 						</span>
 					</button>
 				</Show>
-				<Show when={props.link}>
+				<Show when={props.link && props.link !== ''}>
 					<a
 						href={props.link!}
 						class="shrink-0 h-8 px-3 text-sm text-foreground font-semibold flex flex-row items-center rounded-2xl"
@@ -79,6 +78,36 @@ const ConfirmStep: Component<ConfirmStepProps> = (props) => {
 						</div>
 					)}
 				</For>
+			</div>
+			<div
+				class="pt-2 px-4 flex flex-col items-start justify-start h-[95px] fixed bottom-0 w-full bg-background z-50"
+			>
+				<div class="grid grid-cols-2 w-full gap-2">
+					<label
+						class="bg-primary text-primary-foreground text-sm font-medium rounded-xl h-12 px-4 w-full flex flex-row items-center justify-between"
+					>
+						<input
+							type="file"
+							class="sr-only w-full h-full"
+							placeholder="Enter image"
+							accept="image/*"
+							onChange={props.onFileUpload}
+						/>
+						Add photos
+						<span class="material-symbols-rounded text-[20px]">
+							add
+						</span>
+					</label>
+					<button
+						class="bg-primary text-primary-foreground text-sm font-medium rounded-xl h-12 px-4 w-full flex flex-row items-center justify-between"
+						onClick={() => props.onPublishClick()}
+					>
+						Publish
+						<span class="material-symbols-rounded text-[20px]">
+							arrow_forward
+						</span>
+					</button>
+				</div>
 			</div>
 		</div>
 	)

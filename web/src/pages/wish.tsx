@@ -192,7 +192,7 @@ const ViewItem = () => {
 			</div>
 			<Show when={item.isSuccess && item.data?.user_id !== store.user?.id}>
 				<div
-					class="pt-2 px-4 flex flex-col items-start justify-start border-t shadow-sm h-[95px] fixed bottom-0 w-full bg-background z-50"
+					class="pt-2 px-4 flex flex-col items-start justify-start h-[95px] fixed bottom-0 w-full bg-background z-50"
 				>
 					<div class="grid grid-cols-2 w-full gap-2">
 						<button

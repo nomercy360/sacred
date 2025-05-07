@@ -351,11 +351,11 @@ func (a *API) UploadWishPhoto(c echo.Context) error {
 func (a *API) DeleteWishPhoto(c echo.Context) error {
 	wishID := c.Param("id")
 	photoID := c.Param("photoId")
-	
+
 	if wishID == "" {
 		return terrors.BadRequest(nil, "wish ID is required")
 	}
-	
+
 	if photoID == "" {
 		return terrors.BadRequest(nil, "photo ID is required")
 	}
@@ -373,7 +373,6 @@ func (a *API) DeleteWishPhoto(c echo.Context) error {
 		return terrors.Forbidden(nil, "cannot delete photos from another user's wish")
 	}
 
-	// Verify that the photo belongs to the wish
 	photoExists := false
 	for _, img := range wish.Images {
 		if img.ID == photoID {
@@ -381,7 +380,7 @@ func (a *API) DeleteWishPhoto(c echo.Context) error {
 			break
 		}
 	}
-	
+
 	if !photoExists {
 		return terrors.NotFound(nil, "photo not found for this wish")
 	}

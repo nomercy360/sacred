@@ -10,6 +10,7 @@ import ShareProfile from '~/pages/share'
 import CreateFromLinkPage from '~/pages/create/from-link'
 import CategoriesEdit from '~/pages/categories-edit'
 import BookmarksPage from '~/pages/bookmarks'
+import ProfileEditPage from '~/pages/profile-edit'
 
 export const routes: RouteDefinition[] = [
 	{
@@ -53,6 +54,10 @@ export const routes: RouteDefinition[] = [
 	{
 		path: '/share',
 		component: ShareProfile,
+	},
+	{
+		path: '/profile/edit',
+		component: ProfileEditPage,
 	},
 	{
 		'path': '/wishes/:id',

@@ -15,19 +15,17 @@ type storager interface {
 	GetUserByChatID(chatID int64) (db.User, error)
 	GetUserByID(id string) (db.User, error)
 	CreateUser(ctx context.Context, user db.User) error
-	UpdateWish(ctx context.Context, uid string, wish db.Wish) (db.Wish, error)
+	UpdateWish(ctx context.Context, wish db.Wish, categories []string) (db.Wish, error)
 	CreateWish(ctx context.Context, wish db.Wish, categories []string) error
 	CreateWishlist(ctx context.Context, list db.Wishlist) (db.Wishlist, error)
 	GetWishByID(ctx context.Context, uid, id string) (db.Wish, error)
 	GetWishlistByID(ctx context.Context, id string) (db.Wishlist, error)
 	UpdateUser(ctx context.Context, user db.User, interests []string) error
 	ListCategories(ctx context.Context) ([]db.Category, error)
-	ListIdeas(ctx context.Context, userID string) ([]db.Idea, error)
 	ListUsers(ctx context.Context, uid string) ([]db.User, error)
 	GetWishesByUserID(ctx context.Context, userID string) ([]db.Wish, error)
 	FollowUser(ctx context.Context, uid, followID string) error
 	UnfollowUser(ctx context.Context, uid, UnfollowID string) error
-	GetIdeaByID(ctx context.Context, id string) (db.Idea, error)
 	CreateWishImage(ctx context.Context, image db.WishImage) (db.WishImage, error)
 	SaveWishToBookmarks(ctx context.Context, uid, wishID string) error
 	RemoveWishFromBookmarks(ctx context.Context, uid, wishID string) error

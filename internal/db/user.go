@@ -16,8 +16,7 @@ type User struct {
 	LanguageCode *string        `db:"language_code" json:"language_code"`
 	ChatID       int64          `db:"chat_id" json:"chat_id"`
 	CreatedAt    time.Time      `db:"created_at" json:"created_at"`
-	FirstName    *string        `db:"first_name" json:"first_name"`
-	LastName     *string        `db:"last_name" json:"last_name"`
+	Name         *string        `db:"name" json:"name"`
 	Email        *string        `db:"email" json:"email"`
 	ReferralCode string         `db:"referral_code" json:"referral_code"`
 	ReferredBy   *string        `db:"referred_by" json:"referred_by"`
@@ -99,8 +98,8 @@ func IsForeignKeyViolationError(err error) bool {
 
 func (s *storage) CreateUser(ctx context.Context, user User) error {
 	query := `
-		INSERT INTO users (id, chat_id, username, first_name, last_name, language_code, email, referral_code, referred_by, avatar_url) 
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		INSERT INTO users (id, chat_id, username, name, language_code, email, referral_code, referred_by, avatar_url) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	_, err := s.db.ExecContext(
 		ctx,
@@ -108,8 +107,7 @@ func (s *storage) CreateUser(ctx context.Context, user User) error {
 		user.ID,
 		user.ChatID,
 		user.Username,
-		user.FirstName,
-		user.LastName,
+		user.Name,
 		user.LanguageCode,
 		user.Email,
 		user.ReferralCode,
@@ -129,8 +127,7 @@ func (s *storage) getUserBy(query string, arg interface{}) (User, error) {
 		&user.LanguageCode,
 		&user.ChatID,
 		&user.CreatedAt,
-		&user.FirstName,
-		&user.LastName,
+		&user.Name,
 		&user.Email,
 		&user.ReferralCode,
 		&user.ReferredBy,
@@ -153,8 +150,7 @@ func (s *storage) GetUserByChatID(chatID int64) (User, error) {
 		    u.language_code,
 		    u.chat_id, 
 		    u.created_at, 
-		    u.first_name,
-		    u.last_name, 
+		    u.name,
 		    u.email,
 		    u.referral_code, 
 		    u.referred_by,
@@ -177,8 +173,7 @@ func (s *storage) GetUserByID(id string) (User, error) {
 		    u.language_code,
 		    u.chat_id, 
 		    u.created_at, 
-		    u.first_name,
-		    u.last_name,
+		    u.name,
 		    u.email,
 		    u.referral_code, 
 		    u.referred_by,
@@ -201,8 +196,7 @@ func (s *storage) UpdateUser(ctx context.Context, user User, interests []string)
 	query := `
 		UPDATE users
 		SET username = ?,
-			first_name = ?,
-			last_name = ?,
+			name = ?,
 			language_code = ?,
 			email = ?
 		WHERE id = ?`
@@ -211,8 +205,7 @@ func (s *storage) UpdateUser(ctx context.Context, user User, interests []string)
 		ctx,
 		query,
 		user.Username,
-		user.FirstName,
-		user.LastName,
+		user.Name,
 		user.LanguageCode,
 		user.Email,
 		user.ID,
@@ -252,8 +245,7 @@ func (s *storage) ListUsers(ctx context.Context, uid string) ([]User, error) {
 		    u.language_code,
 		    u.chat_id, 
 		    u.created_at, 
-		    u.first_name,
-		    u.last_name, 
+		    u.name,
 		    u.email,
 		    u.referral_code, 
 		    u.referred_by,
@@ -282,8 +274,7 @@ func (s *storage) ListUsers(ctx context.Context, uid string) ([]User, error) {
 			&user.LanguageCode,
 			&user.ChatID,
 			&user.CreatedAt,
-			&user.FirstName,
-			&user.LastName,
+			&user.Name,
 			&user.Email,
 			&user.ReferralCode,
 			&user.ReferredBy,

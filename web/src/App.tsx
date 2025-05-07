@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
 import Toast from '~/components/toast'
 import { API_BASE_URL } from '~/lib/api'
 import { setOnboarding, setToken, setUser, setWishes, store } from '~/store'
-import { Toaster } from '~/components/ui/toast'
 
 
 export const queryClient = new QueryClient({
@@ -82,7 +81,6 @@ export default function App(props: any) {
 			<QueryClientProvider client={queryClient}>
 				<Switch>
 					<Match when={isAuthenticated()}>
-						<Toaster />
 						{props.children}
 					</Match>
 					<Match when={!isAuthenticated() && isLoading()}>

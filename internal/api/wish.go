@@ -18,7 +18,6 @@ import (
 	"sacred/internal/db"
 	"sacred/internal/nanoid"
 	"sacred/internal/terrors"
-	"strings"
 	"time"
 )
 
@@ -59,13 +58,32 @@ func (a *API) handlePhotoUpload(imgURL string) (int, int, string, error) {
 		return 0, 0, "", terrors.InternalServer(err, "Error uploading image to S3")
 	}
 
-	imgURL = fmt.Sprintf("%s/%s", a.cfg.AssetsURL, s3Path)
-
-	return width, height, imgURL, nil
+	return width, height, s3Path, nil
 }
 
-func (a *API) AddWishHandler(c echo.Context) error {
-	var req contract.CreateWishRequest
+func (a *API) CreateWishHandler(c echo.Context) error {
+	userID := getUserID(c)
+
+	item := db.Wish{
+		ID:     nanoid.Must(),
+		UserID: userID,
+	}
+
+	err := a.storage.CreateWish(c.Request().Context(), item, []string{})
+	if err != nil {
+		return terrors.InternalServer(err, "cannot create wishlist item")
+	}
+
+	res, err := a.storage.GetWishByID(c.Request().Context(), userID, item.ID)
+	if err != nil {
+		return terrors.InternalServer(err, "cannot get wishlist item")
+	}
+
+	return c.JSON(http.StatusCreated, contract.CreateWishResponse{ID: res.ID, UserID: res.UserID})
+}
+
+func (a *API) UpdateWishHandler(c echo.Context) error {
+	var req contract.UpdateWishRequest
 	if err := c.Bind(&req); err != nil {
 		return terrors.BadRequest(err, "failed to bind request")
 	}
@@ -75,60 +93,31 @@ func (a *API) AddWishHandler(c echo.Context) error {
 	}
 
 	userID := getUserID(c)
+	wishID := c.Param("id")
+	if wishID == "" {
+		return terrors.BadRequest(nil, "wish id cannot be empty")
+	}
 
 	item := db.Wish{
-		ID:       nanoid.Must(),
+		ID:       wishID,
 		UserID:   userID,
 		URL:      req.URL,
 		Name:     req.Name,
 		Price:    req.Price,
 		Currency: req.Currency,
 		Notes:    req.Notes,
-		IsPublic: req.IsPublic,
 	}
 
 	if item.Price == nil {
 		item.Currency = nil
 	}
 
-	err := a.storage.CreateWish(c.Request().Context(), item, req.CategoryIDs)
+	res, err := a.storage.UpdateWish(c.Request().Context(), item, req.CategoryIDs)
 	if err != nil {
 		return terrors.InternalServer(err, "cannot create wishlist item")
 	}
 
-	for idx, img := range req.Images {
-		var width, height, size int
-		var imgURL string
-		// if image already uploaded to S3 no need to upload it again, check starts with a.cfg.AssetsURL
-		if !strings.HasPrefix(img.URL, a.cfg.AssetsURL) {
-			width, height, imgURL, err = a.handlePhotoUpload(img.URL)
-			if err != nil {
-				return err
-			}
-		} else {
-			imgURL = img.URL
-			width = img.Width
-			height = img.Height
-			size = img.Size
-		}
-
-		wishImg := db.WishImage{
-			ID:        nanoid.Must(),
-			URL:       imgURL,
-			Width:     width,
-			Height:    height,
-			SizeBytes: size,
-			WishID:    item.ID,
-			Position:  idx + 1,
-		}
-
-		// Save the image to the database
-		if _, err := a.storage.CreateWishImage(c.Request().Context(), wishImg); err != nil {
-			return terrors.InternalServer(err, "Error saving image to database")
-		}
-	}
-
-	res, err := a.storage.GetWishByID(c.Request().Context(), userID, item.ID)
+	res, err = a.storage.GetWishByID(c.Request().Context(), userID, item.ID)
 	if err != nil {
 		return terrors.InternalServer(err, "cannot get wishlist item")
 	}
@@ -172,15 +161,6 @@ func (a *API) CopyWishHandler(c echo.Context) error {
 		return terrors.InternalServer(err, "cannot fetch source wish")
 	}
 
-	// user can not copy their own wish
-	if sourceWish.UserID == targetUserID {
-		return terrors.BadRequest(nil, "cannot copy own wish")
-	}
-
-	if sourceWish.CopiedWishID != nil {
-		return terrors.BadRequest(nil, "cannot copy copied wish")
-	}
-
 	var categoryIDs []string
 	for _, cat := range sourceWish.Categories {
 		categoryIDs = append(categoryIDs, cat.ID)
@@ -194,9 +174,8 @@ func (a *API) CopyWishHandler(c echo.Context) error {
 		Price:       sourceWish.Price,
 		Currency:    sourceWish.Currency,
 		Notes:       sourceWish.Notes,
-		IsPublic:    sourceWish.IsPublic,
 		SourceID:    &sourceWish.ID,
-		SourceType:  &db.WishSourceCopy,
+		PublishedAt: sourceWish.PublishedAt,
 		IsFulfilled: false,
 	}
 
@@ -209,13 +188,12 @@ func (a *API) CopyWishHandler(c echo.Context) error {
 
 	for _, img := range sourceWish.Images {
 		newImage := db.WishImage{
-			ID:        nanoid.Must(),
-			WishID:    newWish.ID,
-			URL:       img.URL,
-			Width:     img.Width,
-			Height:    img.Height,
-			SizeBytes: img.SizeBytes,
-			Position:  img.Position,
+			ID:       nanoid.Must(),
+			WishID:   newWish.ID,
+			URL:      img.URL,
+			Width:    img.Width,
+			Height:   img.Height,
+			Position: img.Position,
 		}
 
 		if _, err := a.storage.CreateWishImage(c.Request().Context(), newImage); err != nil {
@@ -223,7 +201,6 @@ func (a *API) CopyWishHandler(c echo.Context) error {
 		}
 	}
 
-	// Fetch the newly created wish to return
 	copiedWish, err := a.storage.GetWishByID(c.Request().Context(), targetUserID, newWish.ID)
 	if err != nil {
 		return terrors.InternalServer(err, "cannot fetch copied wish")
@@ -264,4 +241,109 @@ func (a *API) GetWishesFeed(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, wishes)
+}
+
+func (a *API) UploadWishPhoto(c echo.Context) error {
+	wishID := c.Param("id")
+	if wishID == "" {
+		return terrors.BadRequest(nil, "wish ID is required")
+	}
+
+	userID := getUserID(c)
+
+	wish, err := a.storage.GetWishByID(c.Request().Context(), userID, wishID)
+	if err != nil && errors.Is(err, db.ErrNotFound) {
+		return terrors.NotFound(err, "wish not found")
+	} else if err != nil {
+		return terrors.InternalServer(err, "cannot get wish")
+	}
+
+	if wish.UserID != userID {
+		return terrors.Forbidden(nil, "cannot upload photos to another user's wish")
+	}
+
+	file, fileHeader, err := c.Request().FormFile("photo")
+	if err == nil {
+
+		defer file.Close()
+
+		buffer := new(bytes.Buffer)
+		if _, err := io.Copy(buffer, file); err != nil {
+			return terrors.InternalServer(err, "error reading uploaded file")
+		}
+		fileData := buffer.Bytes()
+
+		img, _, err := image.Decode(bytes.NewReader(fileData))
+		if err != nil {
+			return terrors.BadRequest(err, "invalid image format")
+		}
+
+		width := img.Bounds().Dx()
+		height := img.Bounds().Dy()
+
+		fileExt := filepath.Ext(fileHeader.Filename)
+		if fileExt == "" {
+			fileExt = ".jpg"
+		}
+		fileName := fmt.Sprintf("wishes/%s-%d%s", wishID, time.Now().Unix(), fileExt)
+
+		s3Path, err := a.s3.UploadFile(fileData, fileName)
+		if err != nil {
+			return terrors.InternalServer(err, "error uploading image to S3")
+		}
+
+		imageID := nanoid.Must()
+		newImage := db.WishImage{
+			ID:       imageID,
+			WishID:   wishID,
+			URL:      s3Path,
+			Width:    width,
+			Height:   height,
+			Position: len(wish.Images),
+		}
+
+		savedImage, err := a.storage.CreateWishImage(c.Request().Context(), newImage)
+		if err != nil {
+			return terrors.InternalServer(err, "cannot save image to database")
+		}
+
+		return c.JSON(http.StatusCreated, savedImage)
+	}
+
+	var req struct {
+		ImageURLs []string `json:"image_urls"`
+	}
+
+	if err := c.Bind(&req); err != nil || len(req.ImageURLs) == 0 {
+		return terrors.BadRequest(err, "invalid request format or no image URLs provided")
+	}
+
+	results := make([]db.WishImage, 0, len(req.ImageURLs))
+	basePosition := len(wish.Images)
+
+	for i, imgURL := range req.ImageURLs {
+		width, height, path, err := a.handlePhotoUpload(imgURL)
+		if err != nil {
+			return err
+		}
+
+		imageID := nanoid.Must()
+		newImage := db.WishImage{
+			ID:       imageID,
+			WishID:   wishID,
+			URL:      path,
+			Width:    width,
+			Height:   height,
+			Position: basePosition + i,
+		}
+
+		savedImage, err := a.storage.CreateWishImage(c.Request().Context(), newImage)
+		if err != nil {
+			return terrors.InternalServer(err, "cannot save image to database")
+		}
+
+		results = append(results, savedImage)
+	}
+
+	return c.JSON(http.StatusCreated, results)
 }

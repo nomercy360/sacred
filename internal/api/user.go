@@ -87,8 +87,7 @@ func (a *API) GetUserProfile(c echo.Context) error {
 
 	resp := contract.UserProfileResponse{
 		ID:         user.ID,
-		FirstName:  user.FirstName,
-		LastName:   user.LastName,
+		Name:       user.Name,
 		Username:   user.Username,
 		CreatedAt:  user.CreatedAt,
 		Interests:  user.Interests,
@@ -117,8 +116,7 @@ func (a *API) ListProfiles(c echo.Context) error {
 
 		resp = append(resp, contract.UserProfileResponse{
 			ID:         user.ID,
-			FirstName:  user.FirstName,
-			LastName:   user.LastName,
+			Name:       user.Name,
 			Username:   user.Username,
 			CreatedAt:  user.CreatedAt,
 			Interests:  user.Interests,

@@ -1,5 +1,5 @@
 import { store } from '~/store'
-import { showToast } from '~/components/ui/toast'
+import { addToast } from '~/components/toast'
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string
 
@@ -19,7 +19,7 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 			try {
 				data = await response.json()
 			} catch {
-				showToast({ title: 'Failed to get response from server', variant: 'error', duration: 2500 })
+				addToast('Failed to get response from server')
 				return { error: 'Failed to get response from server', data: null }
 			}
 		}
@@ -32,14 +32,14 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 						? data.error
 						: 'An error occurred'
 
-			showToast({ title: errorMessage, variant: 'error', duration: 2500 })
+			addToast(errorMessage)
 			return { error: errorMessage, data: null }
 		}
 
 		return { data, error: null }
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
-		showToast({ title: errorMessage, variant: 'error', duration: 2500 })
+		addToast(errorMessage)
 		return { error: errorMessage, data: null }
 	}
 }
@@ -121,22 +121,26 @@ export const fetchProfiles = async () => {
 	return data
 }
 
-export type NewItemRequest = {
+export type UpdateWishRequest = {
 	name: string | null
 	notes: string | null
 	url: string | null
-	images: { url: string, width: number, height: number, size: number }[]
 	price: number | null
 	currency: string | null
-	is_public: boolean
 	category_ids: string[]
 }
 
-export const fetchAddWish = async (item: NewItemRequest) => {
-	const { data, error } = await apiRequest('/wishes', {
-		method: 'POST',
-		body: JSON.stringify(item),
+export const fetchUpdateWish = async (id: string, body: UpdateWishRequest) => {
+	const { data, error } = await apiRequest('/wishes/' + id, {
+		method: 'PUT',
+		body: JSON.stringify(body),
 	})
+
+	return { data, error }
+}
+
+export const fetchAddWish = async () => {
+	const { data, error } = await apiRequest('/wishes', { method: 'POST' })
 
 	return { data, error }
 }
@@ -146,7 +150,6 @@ export type WishImage = {
 	url: string
 	width: number
 	height: number
-	size: number
 	position: number
 }
 
@@ -165,7 +168,6 @@ export type Wish = {
 	is_reserved: boolean
 	reserved_by: string | null
 	source_id: string | null
-	source_type: string | null
 	categories: Array<{
 		id: string
 		name: string
@@ -177,8 +179,7 @@ export type Wish = {
 
 export type UserProfile = {
 	id: string
-	first_name: string
-	last_name: string
+	name: string
 	username: string
 	created_at: string
 	avatar_url: string
@@ -265,4 +266,33 @@ export const removeBookmark = async (id: string) => {
 	}
 
 	return data
+}
+
+export const uploadWishPhoto = async (wishId: string, file: File) => {
+	const formData = new FormData()
+	formData.append('photo', file)
+
+	const response = await fetch(`${API_BASE_URL}/v1/wishes/${wishId}/photos`, {
+		method: 'POST',
+		body: formData,
+		headers: {
+			Authorization: `Bearer ${store.token}`,
+		},
+	})
+
+	const data = await response.json()
+	return { data, error: null }
+}
+
+export const uploadWishPhotosByUrls = async (wishId: string, imageUrls: string[]) => {
+	const { data, error } = await apiRequest(`/wishes/${wishId}/photos`, {
+		method: 'POST',
+		body: JSON.stringify({ image_urls: imageUrls }),
+	})
+
+	if (error) {
+		throw new Error(error)
+	}
+
+	return { data, error: null }
 }

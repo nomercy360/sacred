@@ -56,8 +56,8 @@ export default function WishlistPage() {
 										images={user.wishlist_items.map((wish) => wish.images[0]?.url)}
 									>
 										<div class="flex flex-col items-center justify-center gap-0.5">
-											<img src={user.avatar_url} alt={user.first_name} class="size-9 rounded-full" />
-											<p class="mt-2 text-xl font-bold">{user.first_name}{' '}{user.last_name}</p>
+											<img src={user.avatar_url} alt={user.name} class="size-9 rounded-full" />
+											<p class="mt-2 text-xl font-bold">{user.name}</p>
 											<p class="text-sm font-normal">
 												{user.followers} followers
 											</p>

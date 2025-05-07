@@ -4,20 +4,15 @@ import { createEffect, createSignal, For, Match, onCleanup, onMount, Show, Switc
 import { useMainButton } from '~/lib/useMainButton'
 import { useBackButton } from '~/lib/useBackButton'
 import CategoriesSelect from '~/components/categories-select'
-import { fetchAddWish, fetchPresignedUrl, NewItemRequest, uploadToS3 } from '~/lib/api'
-import { currencySymbol } from '~/lib/utils'
-import { queryClient } from '~/App'
-import { useNavigate } from '@solidjs/router'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import {
-	NumberField, NumberFieldDecrementTrigger,
-	NumberFieldGroup,
-	NumberFieldIncrementTrigger,
-	NumberFieldInput,
-} from '~/components/ui/number-field'
+	fetchAddWish, fetchUpdateWish, UpdateWishRequest,
+	uploadWishPhoto, uploadWishPhotosByUrls, WishImage,
+} from '~/lib/api'
+import { currencySymbol } from '~/lib/utils'
+import { useNavigate } from '@solidjs/router'
 import { createStore } from 'solid-js/store'
-import { Link } from '~/components/link'
 import { setStore } from '~/store'
+import { addToast } from '~/components/toast'
 
 type MetadataResponse = {
 	image_urls: string[]
@@ -46,16 +41,10 @@ const FlowNames = {
 type FlowName = typeof FlowNames[keyof typeof FlowNames];
 
 export default function CreateFromLinkPage() {
-	const [createWishStore, setCreateWishStore] = createStore<NewItemRequest>({
-		name: '',
-		notes: null,
-		url: null,
-		images: [],
-		price: null,
-		currency: 'USD',
-		is_public: true,
-		category_ids: [],
-	})
+	const [updateWish, setUpdateWish] = createStore<UpdateWishRequest>({ category_ids: [] } as any)
+
+	const [urlImages, setUrlImages] = createSignal<string[]>([])
+	const [uploadImages, setUploadImages] = createSignal<WishImage[]>([])
 
 	const navigate = useNavigate()
 
@@ -65,11 +54,22 @@ export default function CreateFromLinkPage() {
 
 	const [activeFlow, setActiveFlow] = createSignal<FlowName>(FlowNames.START_WITH_LINK)
 	const [step, setStep] = createSignal<StepName>(StepNames.ADD_LINK)
-	const [previousStep, setPreviousStep] = createSignal<StepName | null>(null)
 	const [metaWithImages, setMetaWithImages] = createSignal<MetadataResponse | null>(null)
+	const [createdWishId, setCreatedWishId] = createSignal<string | null>(null)
 
 	function updateLink(newLink: string) {
-		setCreateWishStore({ url: newLink })
+		setUpdateWish({ url: newLink })
+	}
+
+	async function createWishIfNeeded() {
+		if (!createdWishId()) {
+			const { data, error } = await fetchAddWish()
+			if (error) {
+				addToast('Failed to create wish. Please try again.')
+				return
+			}
+			setCreatedWishId(data.id)
+		}
 	}
 
 	const handleFileChange = async (event: any) => {
@@ -78,62 +78,68 @@ export default function CreateFromLinkPage() {
 		if (files && files.length > 0) {
 			mainButton.showProgress(false)
 			const maxSize = 1024 * 1024 * 7 // 7MB
-			const newImages = [] as { url: string, width: number, height: number, size: number }[]
+			const validFiles = [] as File[]
 
 			for (const file of files) {
 				if (file.size > maxSize) {
-					window.Telegram.WebApp.showAlert(
+					addToast(
 						`File ${file.name} is too large. Try to select a smaller file.`,
 					)
 					continue
 				}
-
-				const reader = new FileReader()
-				const filePromise = new Promise<void>((resolve, reject) => {
-					reader.onload = () => {
-						const img = new Image()
-						img.onload = async () => {
-							const width = img.width
-							const height = img.height
-
-							try {
-								const { data, error } = await fetchPresignedUrl(file.name)
-								if (error) {
-									console.error(`Error fetching presigned URL for ${file.name}:`, error)
-									reject(error)
-									return
-								}
-
-								await uploadToS3(data.url, file)
-
-								newImages.push({
-									url: data.asset_url,
-									width,
-									height,
-									size: file.size,
-								})
-
-								resolve()
-							} catch (err) {
-								console.error(`Error uploading ${file.name}:`, err)
-								reject(err)
-							}
-						}
-						img.src = reader.result as string
-					}
-					reader.readAsDataURL(file)
-				})
-
-				await filePromise.catch((error) => console.error(`Error processing file ${file.name}:`, error))
+				validFiles.push(file)
 			}
 
-			// Update state with all valid images
-			if (newImages.length > 0) {
-				setCreateWishStore('images', (prev: any) => [...prev, ...newImages])
+			if (validFiles.length === 0) {
+				addToast('No valid files were selected.')
 				mainButton.hideProgress()
-				setStep(StepNames.CHOOSE_CATEGORIES)
-			} else {
-				window.Telegram.WebApp.showAlert('No valid files were selected.')
+				return
+			}
+
+			try {
+				await createWishIfNeeded()
+
+				const wishId = createdWishId()!
+				const newImages = [] as WishImage[]
+
+				for (const file of validFiles) {
+					const reader = new FileReader()
+					const filePromise = new Promise<void>((resolve, reject) => {
+						reader.onload = () => {
+							const img = new Image()
+							img.onload = async () => {
+								try {
+									const { data, error } = await uploadWishPhoto(wishId, file)
+									if (error) {
+										console.error(`Error uploading photo for ${file.name}:`, error)
+										reject(error)
+										return
+									}
+
+									newImages.push(data)
+
+									resolve()
+								} catch (err) {
+									console.error(`Error uploading ${file.name}:`, err)
+									reject(err)
+								}
+							}
+							img.src = reader.result as string
+						}
+						reader.readAsDataURL(file)
+					})
+
+					await filePromise.catch((error) => console.error(`Error processing file ${file.name}:`, error))
+				}
+
+				if (newImages.length > 0) {
+					setUploadImages((old) => [...old, ...newImages])
+					setStep(StepNames.CHOOSE_CATEGORIES)
+				} else {
+					addToast('Failed to upload files.')
+				}
+			} finally {
+				mainButton.hideProgress()
 			}
 		}
 	}
@@ -143,10 +149,11 @@ export default function CreateFromLinkPage() {
 			case StepNames.ADD_LINK:
 				setStep(StepNames.CHOOSE_CATEGORIES)
 				setMetaWithImages(null)
-				fetchMetadata(createWishStore.url!).then((data) => {
+				await createWishIfNeeded()
+				fetchMetadata(updateWish.url!).then((data) => {
 					setMetaWithImages(data)
 					const title = data.metadata['og:title'] || data.metadata['title']
-					if (title) setCreateWishStore({ name: title })
+					if (title) setUpdateWish({ name: title })
 				})
 				break
 
@@ -156,7 +163,19 @@ export default function CreateFromLinkPage() {
 				break
 
 			case StepNames.SELECT_IMAGES:
-				if (createWishStore.name) {
+				window.Telegram.WebApp.MainButton.showProgress(true)
+				if (urlImages().length > 0) {
+					const { data, error } = await uploadWishPhotosByUrls(createdWishId()!, urlImages())
+
+					if (error) {
+						addToast(`Failed to upload images: ${error}`)
+						return
+					}
+
+					setUploadImages((old) => [...old, ...data])
+				}
+				window.Telegram.WebApp.MainButton.hideProgress()
+				if (updateWish.name) {
 					setStep(StepNames.CONFIRM)
 				} else {
 					setStep(StepNames.ADD_NAME)
@@ -175,15 +194,18 @@ export default function CreateFromLinkPage() {
 				try {
 					window.Telegram.WebApp.MainButton.showProgress(false)
 
-					const { data, error } = await fetchAddWish(createWishStore)
-					if (!error) {
-						setStore('wishes', (old) => {
-							if (old) {
-								return [...old, data]
-							}
-							return old
-						})
+					if (createdWishId()) {
+						const { data, error } = await fetchUpdateWish(createdWishId()!, updateWish)
+
+						if (error) {
+							addToast(`Failed to update wish: ${error}`)
+							return
+						}
+
+						setStore('wishes', (old) => [...old, data])
 						navigate('/')
+					} else {
+						addToast('Something went wrong. Please try again.')
 					}
 				} finally {
 					window.Telegram.WebApp.MainButton.hideProgress()
@@ -225,19 +247,19 @@ export default function CreateFromLinkPage() {
 			case StepNames.ADD_LINK:
 				backButton.setVisible()
 				backButton.onClick(decrementStep)
-				mainButton.toggle(!!createWishStore.url?.match(/^https?:\/\//), 'Continue')
+				mainButton.toggle(!!updateWish.url?.match(/^https?:\/\//), 'Continue')
 				break
 
 			case StepNames.CHOOSE_CATEGORIES:
-				mainButton.toggle(createWishStore.category_ids.length > 0, 'Continue', 'Select at least 1')
+				mainButton.toggle(updateWish.category_ids.length > 0, 'Continue', 'Select at least 1')
 				break
 
 			case StepNames.SELECT_IMAGES:
-				mainButton.toggle(createWishStore.images.length > 0, 'Continue', 'Select at least 1')
+				mainButton.toggle(urlImages().length > 0, 'Continue', 'Select at least 1')
 				break
 
 			case StepNames.ADD_NAME:
-				mainButton.toggle(!!createWishStore.name, 'Continue', 'Add title to continue')
+				mainButton.toggle(!!updateWish.name, 'Continue', 'Add title to continue')
 				break
 
 			case StepNames.ADD_PRICE:
@@ -276,7 +298,7 @@ export default function CreateFromLinkPage() {
 	}
 
 	const fetchMetadata = async (url: string): Promise<MetadataResponse> => {
-		const res = await fetch('https://ecom-scraper-api.mxksim.dev/extract-content', {
+		const res = await fetch('http://127.0.0.1:8081/extract-content', {
 			method: 'POST',
 			body: JSON.stringify({ url }),
 			headers: {
@@ -311,16 +333,16 @@ export default function CreateFromLinkPage() {
 					</label>
 					<FormTextArea
 						placeholder="https://nike.com/product/nike-air-max-90"
-						value={createWishStore.url || ''}
-						onInput={(e) => setCreateWishStore({ url: e.currentTarget.value })}
+						value={updateWish.url || ''}
+						onInput={(e) => setUpdateWish({ url: e.currentTarget.value })}
 						autofocus={true}
 					/>
 				</Match>
 
 				<Match when={step() === StepNames.CHOOSE_CATEGORIES}>
 					<CategoriesSelect
-						selectedCategories={createWishStore.category_ids}
-						setSelectedCategories={(ids) => setCreateWishStore({ category_ids: ids })}
+						selectedCategories={updateWish.category_ids}
+						setSelectedCategories={(ids) => setUpdateWish({ category_ids: ids })}
 					/>
 				</Match>
 				<Match when={step() === StepNames.SELECT_IMAGES}>
@@ -331,7 +353,19 @@ export default function CreateFromLinkPage() {
 									<div class="flex flex-col gap-0.5">
 										<For each={group}>
 											{(url) => (
-												<label class="relative rounded-2xl bg-secondary aspect-[3/4]">
+												<button
+													class="relative rounded-2xl bg-secondary aspect-[3/4]"
+													onClick={(e) => {
+														e.preventDefault()
+														e.stopPropagation()
+														if (urlImages().find((i: string) => i === url)) {
+															setUrlImages((old) => old.filter((i: string) => i !== url))
+														} else {
+															setUrlImages((old) => [...old, url])
+														}
+														window.Telegram.WebApp.HapticFeedback.selectionChanged()
+													}}
+												>
 													<img
 														src={url}
 														alt=""
@@ -342,34 +376,16 @@ export default function CreateFromLinkPage() {
 															img.parentElement!.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`
 														}}
 													/>
-													<Show when={createWishStore.images.find((i: any) => i.url === url)}>
+													<Show when={urlImages().find((i: string) => i === url)}>
 														<div
 															class="absolute inset-0 bg-black bg-opacity-20 flex items-start justify-end rounded-2xl p-3">
 															<span
 																class="text-xs font-medium bg-primary text-primary-foreground rounded-full size-6 flex items-center justify-center">
-																	{createWishStore.images.findIndex((i: any) => i.url === url) + 1}
+																	{urlImages().findIndex((i: string) => i === url) + 1}
 															</span>
 														</div>
 													</Show>
-													<input
-														type="checkbox"
-														class="absolute size-fit opacity-0 cursor-pointer z-50"
-														checked={!!createWishStore.images.find((i: any) => i.url === url)}
-														onChange={(e) => {
-															if (e.currentTarget.checked) {
-																setCreateWishStore('images', [...createWishStore.images, {
-																	url,
-																	width: 0,
-																	height: 0,
-																	size: 0,
-																}])
-															} else {
-																setCreateWishStore('images', createWishStore.images.filter((i: any) => i.url !== url))
-															}
-															window.Telegram.WebApp.HapticFeedback.selectionChanged()
-														}}
-													/>
-												</label>
+												</button>
 											)}
 										</For>
 									</div>
@@ -381,57 +397,28 @@ export default function CreateFromLinkPage() {
 				<Match when={step() === StepNames.ADD_NAME}>
 					<FormTextArea
 						placeholder="start typing"
-						value={createWishStore.name || ''}
-						onInput={(e) => setCreateWishStore({ name: e.currentTarget.value })}
+						value={updateWish.name || ''}
+						onInput={(e) => setUpdateWish({ name: e.currentTarget.value })}
 						autofocus={true}
 					/>
-				</Match>
-				<Match when={step() === StepNames.ADD_PRICE}>
-					<Select
-						value={createWishStore.currency}
-						onChange={(e) => setCreateWishStore({ currency: e })}
-						options={['USD', 'EUR', 'RUB', 'THB']}
-						itemComponent={(props) => <SelectItem item={props.item}>{props.item.rawValue}</SelectItem>}
-					>
-						<SelectTrigger
-							aria-label="Currency"
-							class="size-12 rounded-full bg-secondary text-xs font-medium absolute right-4 top-4"
-						>
-							<SelectValue<string>>{(state) => state.selectedOption()}</SelectValue>
-						</SelectTrigger>
-						<SelectContent />
-					</Select>
-					<NumberField
-						class="mt-12 flex w-36 flex-col gap-2"
-						onRawValueChange={(value) => setCreateWishStore({ price: value })}
-						maxValue={1000000}
-						minValue={0}
-						step={100}
-					>
-						<NumberFieldGroup>
-							<NumberFieldInput />
-							<NumberFieldIncrementTrigger />
-							<NumberFieldDecrementTrigger />
-						</NumberFieldGroup>
-					</NumberField>
 				</Match>
 				<Match when={step() === StepNames.CONFIRM}>
 					<div class="overflow-y-scroll w-full flex items-center justify-start flex-col">
 						<button class="mx-10 mb-2 text-xl font-extrabold"
 										onClick={() => setStep(StepNames.ADD_NAME)}
 						>
-							{createWishStore.name}
+							{updateWish.name}
 						</button>
 						<button class="mx-10 text-sm text-muted-foreground"
 										onClick={() => setStep(StepNames.ADD_PRICE)}>
-							{createWishStore.price && createWishStore.currency ? formatPrice(createWishStore.price, createWishStore.currency) : 'Add price'}
+							{updateWish.price && updateWish.currency ? formatPrice(updateWish.price, updateWish.currency) : 'Add price'}
 						</button>
 						<div class="mt-7 flex flex-col space-y-0.5 w-full items-center">
-							<For each={createWishStore.images}>
+							<For each={uploadImages()}>
 								{(img) => (
 									<div class="relative rounded-2xl bg-secondary w-full aspect-[3/4]">
 										<img
-											src={img.url}
+											src={`https://assets.peatch.io/${img.url}`}
 											alt=""
 											loading="lazy"
 											class="w-full object-contain rounded-2xl aspect-auto shrink-0 pointer-events-none select-none"

@@ -43,14 +43,13 @@ func (a *API) AuthTelegram(c echo.Context) error {
 			username = "user_" + fmt.Sprintf("%d", data.User.ID)
 		}
 
-		var first, last *string
-
+		var name *string
 		if data.User.FirstName != "" {
-			first = &data.User.FirstName
-		}
-
-		if data.User.LastName != "" {
-			last = &data.User.LastName
+			name = &data.User.FirstName
+			if data.User.LastName != "" {
+				nameWithLast := fmt.Sprintf("%s %s", data.User.FirstName, data.User.LastName)
+				name = &nameWithLast
+			}
 		}
 
 		lang := "ru"
@@ -76,8 +75,7 @@ func (a *API) AuthTelegram(c echo.Context) error {
 			Username:     username,
 			ChatID:       data.User.ID,
 			ReferralCode: nanoid.Must(),
-			FirstName:    first,
-			LastName:     last,
+			Name:         name,
 			LanguageCode: &lang,
 			AvatarURL:    &imgUrl,
 		}
@@ -102,8 +100,7 @@ func (a *API) AuthTelegram(c echo.Context) error {
 
 	uresp := contract.UserResponse{
 		ID:           user.ID,
-		FirstName:    user.FirstName,
-		LastName:     user.LastName,
+		Name:         user.Name,
 		Username:     user.Username,
 		ChatID:       user.ChatID,
 		LanguageCode: user.LanguageCode,

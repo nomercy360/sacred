@@ -3,8 +3,7 @@ import { Wish, Wishlist } from '~/lib/api'
 
 type User = {
 	id: string
-	first_name: string
-	last_name: string
+	name: string
 	username: string
 	avatar_url: string
 	chat_id: number

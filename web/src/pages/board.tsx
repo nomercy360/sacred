@@ -14,13 +14,13 @@ export default function UserBoardPage() {
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
 			<div
 				class="bg-background h-20 fixed flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5">
-				<Link class="flex flex-row space-x-2 items-center justify-start" href="/settings">
+				<Link class="flex flex-row space-x-2 items-center justify-start" href="/profile/edit">
 					<img
 						src={store.user?.avatar_url}
-						alt={store.user?.first_name}
+						alt={store.user?.name}
 						class="size-9 rounded-full"
 					/>
-					<span class="text-nowrap text-xl font-extrabold">{store.user?.first_name} {store.user?.last_name}</span>
+					<span class="text-nowrap text-xl font-extrabold">{store.user?.name}</span>
 				</Link>
 				<div class="flex flex-row items-center space-x-3">
 					<Link

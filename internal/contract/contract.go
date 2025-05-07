@@ -15,8 +15,7 @@ type Error struct {
 
 type UserResponse struct {
 	ID           string        `json:"id"`
-	FirstName    *string       `json:"first_name"`
-	LastName     *string       `json:"last_name"`
+	Name         *string       `json:"name"`
 	Username     string        `json:"username"`
 	ChatID       int64         `json:"chat_id"`
 	LanguageCode *string       `json:"language_code"`
@@ -30,8 +29,7 @@ type UserResponse struct {
 
 type UserProfileResponse struct {
 	ID         string        `json:"id"`
-	FirstName  *string       `json:"first_name"`
-	LastName   *string       `json:"last_name"`
+	Name       *string       `json:"name"`
 	Username   string        `json:"username"`
 	CreatedAt  time.Time     `json:"created_at"`
 	AvatarURL  *string       `json:"avatar_url"`
@@ -46,25 +44,23 @@ type AuthResponse struct {
 	Wishes []db.Wish    `json:"wishes"`
 }
 
-type CreateImage struct {
-	URL    string `json:"url"`
-	Width  int    `json:"width"`
-	Height int    `json:"height"`
-	Size   int    `json:"size"`
-}
-type CreateWishRequest struct {
-	URL         *string       `json:"url"`
-	Name        *string       `json:"name"`
-	Price       *float64      `json:"price"`
-	Currency    *string       `json:"currency"`
-	Images      []CreateImage `json:"images"`
-	Notes       *string       `json:"notes"`
-	IsPublic    bool          `json:"is_public"`
-	CategoryIDs []string      `json:"category_ids"`
+type UpdateWishRequest struct {
+	URL         *string  `json:"url"`
+	Name        *string  `json:"name"`
+	Price       *float64 `json:"price"`
+	Currency    *string  `json:"currency"`
+	Notes       *string  `json:"notes"`
+	IsPublic    bool     `json:"is_public"`
+	CategoryIDs []string `json:"category_ids"`
 }
 
 type FollowUserRequest struct {
 	FollowingID string `json:"following_id"`
+}
+
+type CreateWishResponse struct {
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
 }
 
 func (r *FollowUserRequest) Validate() error {
@@ -82,7 +78,7 @@ var validCurrencies = map[string]struct{}{
 	"THB": {},
 }
 
-func (r *CreateWishRequest) Validate() error {
+func (r *UpdateWishRequest) Validate() error {
 	if r.URL != nil {
 		parsed, err := url.Parse(*r.URL)
 		if err != nil {
@@ -96,21 +92,6 @@ func (r *CreateWishRequest) Validate() error {
 
 	if r.Price != nil && *r.Price < 0 {
 		return errors.New("price cannot be negative")
-	}
-
-	if len(r.Images) > 5 {
-		return errors.New("image_urls cannot be longer than 5")
-	} else if len(r.Images) > 0 {
-		for _, imgURL := range r.Images {
-			parsed, err := url.Parse(imgURL.URL)
-			if err != nil {
-				return err
-			}
-
-			if parsed.Scheme == "" || parsed.Host == "" {
-				return errors.New("invalid image URL")
-			}
-		}
 	}
 
 	if len(r.CategoryIDs) == 0 {
@@ -132,18 +113,6 @@ func (r *CreateWishRequest) Validate() error {
 	}
 
 	return nil
-}
-
-type WishResponse struct {
-	ID          string    `json:"id"`
-	UserID      string    `json:"user_id"`
-	Title       *string   `json:"title"`
-	URL         string    `json:"url"`
-	Price       *float64  `json:"price"`
-	Notes       *string   `json:"notes"`
-	IsPurchased bool      `json:"is_purchased"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type UpdateUserRequest struct {

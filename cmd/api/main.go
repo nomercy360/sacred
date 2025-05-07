@@ -254,17 +254,16 @@ func main() {
 
 	g.Use(echojwt.WithConfig(authCfg))
 
-	g.POST("/wishes", a.AddWishHandler)
+	g.PUT("/wishes/:id", a.UpdateWishHandler)
+	g.POST("/wishes", a.CreateWishHandler)
 	g.GET("/wishes/:id", a.GetWishHandler)
 	g.PUT("/user/settings", a.UpdateUserPreferences)
 	g.PUT("/user/interests", a.UpdateUserInterests)
 	g.GET("/categories", a.ListCategories)
 	g.GET("/user/wishes", a.ListUserWishes)
-	g.GET("/ideas", a.ListIdeas)
 	g.GET("/feed", a.GetWishesFeed)
 	g.GET("/profiles", a.ListProfiles)
 	g.GET("/profiles/:id", a.GetUserProfile)
-	g.POST("/presigned-url", a.GetPresignedURL)
 	g.POST("/users/follow", a.FollowUser)
 	g.POST("/users/unfollow", a.UnfollowUser)
 	g.POST("/wishes/:id/bookmark", a.SaveWishToBookmarks)
@@ -272,6 +271,7 @@ func main() {
 	g.GET("/bookmarks", a.ListBookmarkedWishes)
 	g.POST("/wishes/:id/copy", a.CopyWishHandler)
 	g.DELETE("/wishes/:id", a.DeleteWishHandler)
+	g.POST("/wishes/:id/photos", a.UploadWishPhoto)
 
 	done := make(chan bool, 1)
 

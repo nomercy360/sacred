@@ -11,7 +11,7 @@ const ShareProfile = () => {
 			new URLSearchParams({
 				url: 'https://t.me/sacred_wished/app?startapp=u_' + store.user?.username,
 			}).toString() +
-			`&text=Check out ${store.user?.first_name}'s wishes`
+			`&text=Check out ${store.user?.name}'s wishes`
 
 		window.Telegram.WebApp.openTelegramLink(url)
 	}

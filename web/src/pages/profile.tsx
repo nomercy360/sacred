@@ -1,20 +1,17 @@
-import { fetchProfiles, fetchUserProfile, fetchUserWishes, UserProfile, Wish, WishImage } from '~/lib/api'
-import { Match, Switch, Show, For } from 'solid-js'
-import { ImageButton } from '~/components/image-button'
-import { createQuery } from '@tanstack/solid-query'
-import { currencySymbol } from '~/lib/utils'
+import { fetchUserProfile, UserProfile, Wish, WishImage } from '~/lib/api'
+import { For, Match, Show, Switch } from 'solid-js'
+import { useQuery } from '@tanstack/solid-query'
 import { Link } from '~/components/link'
-import { store } from '~/store'
 import { useParams } from '@solidjs/router'
 
 
 export function resolveImage(images: WishImage[]) {
-	const img = images.find((img) => img.position === 1)
-	return img ? img.url : '/placeholder.jpg'
+	const img = images.find((img) => img.position === 0)
+	return img ? `https://assets.peatch.io/${img.url}` : '/placeholder.jpg'
 }
 
 export function resolveAspectRatio(images: WishImage[]) {
-	const img = images.find((img) => img.position === 1)
+	const img = images.find((img) => img.position === 0)
 	return img ? `${img.width}/${img.height}` : `1/1`
 }
 
@@ -27,7 +24,7 @@ export function splitIntoGroups(array: Wish[] | undefined, groupCount: number) {
 
 export default function UserProfilePage() {
 	const params = useParams()
-	const wishes = createQuery<UserProfile>(() => ({
+	const user = useQuery<UserProfile>(() => ({
 		queryKey: ['profile', params.id],
 		queryFn: () => fetchUserProfile(params.id),
 	}))
@@ -39,8 +36,8 @@ export default function UserProfilePage() {
 					<span class="material-symbols-rounded text-[20px]">page_info</span>
 				</button>
 				<p class="text-black text-2xl font-extrabold">
-					<Show when={!wishes.isLoading} fallback={<span>Loading...</span>}>
-						{wishes.data?.first_name} {wishes.data?.last_name}
+					<Show when={!user.isLoading} fallback={<span>Loading...</span>}>
+						{user.data?.name}
 					</Show>
 				</p>
 				<button class="flex items-center justify-center bg-secondary rounded-full size-10">
@@ -50,24 +47,24 @@ export default function UserProfilePage() {
 
 			<div class="text-center pb-[200px] flex-1 overflow-y-auto w-full">
 				<Switch>
-					<Match when={wishes.isLoading}>
+					<Match when={user.isLoading}>
 						<p class="mt-4">Loading your wishlist...</p>
 					</Match>
 
-					<Match when={wishes.error}>
+					<Match when={user.error}>
 						<div class="mt-4">
 							<p class="text-red-500">Failed to load wishlist.</p>
 							<button
 								class="mt-2 px-4 py-2 bg-primary text-white rounded-2xl"
-								onClick={() => wishes.refetch()}
+								onClick={() => user.refetch()}
 							>
 								Retry
 							</button>
 						</div>
 					</Match>
-					<Match when={!wishes.isLoading && wishes.data?.wishlist_items.length}>
+					<Match when={!user.isLoading && user.data?.wishlist_items.length}>
 						<div class="grid grid-cols-2 gap-0.5">
-							<For each={splitIntoGroups(wishes.data?.wishlist_items, 2)}>
+							<For each={splitIntoGroups(user.data?.wishlist_items, 2)}>
 								{(group) => (
 									<div class="flex flex-col gap-0.5">
 										<For each={group}>

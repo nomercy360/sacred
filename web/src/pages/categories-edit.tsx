@@ -1,12 +1,8 @@
-import { createEffect, createSignal, Match, onCleanup, onMount, Switch } from 'solid-js'
-import { saveUserInterests, saveUserPreferences } from '~/lib/api'
-import { showToast } from '~/components/ui/toast'
+import { createEffect, createSignal, onCleanup, onMount } from 'solid-js'
+import { saveUserInterests } from '~/lib/api'
 import { useNavigate } from '@solidjs/router'
 import { setUser, store } from '~/store'
 import { useMainButton } from '~/lib/useMainButton'
-import { useBackButton } from '~/lib/useBackButton'
-import FormLayout from '~/components/form-layout'
-import FormInput from '~/components/form-input'
 import CategoriesSelect from '~/components/categories-select'
 
 export default function CategoriesEdit() {

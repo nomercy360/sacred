@@ -31,7 +31,7 @@ const ViewItem = () => {
 			})
 			setStore('wishes', (old) => {
 				if (old) {
-					return [...old, data]
+					return [data, ...old]
 				}
 				return old
 			})
@@ -135,16 +135,26 @@ const ViewItem = () => {
 	return (
 		<div class="relative w-full flex flex-col h-screen overflow-y-scroll">
 			<div class="mb-2 mt-5 px-5 flex flex-row items-center justify-between">
-				<button
-					class="shrink-0 flex items-center justify-center bg-secondary rounded-full size-10"
-				>
-					<span class="material-symbols-rounded text-[20px]">report</span>
-				</button>
+				<Show when={item.data?.user_id === store.user?.id}>
+					<button
+						class="flex items-center justify-center bg-secondary rounded-full size-10"
+						onClick={despawnWish}
+					>
+						<span class="material-symbols-rounded text-[20px]">delete</span>
+					</button>
+				</Show>
+				<Show when={item.data?.user_id !== store.user?.id}>
+					<button
+						class="shrink-0 flex items-center justify-center bg-secondary rounded-full size-10"
+					>
+						<span class="material-symbols-rounded text-base">report</span>
+					</button>
+				</Show>
 				<button
 					class="shrink-0 flex items-center justify-center bg-secondary rounded-full size-10"
 					onClick={shareWishURL}
 				>
-					<span class="material-symbols-rounded text-[20px]">arrow_outward</span>
+					<span class="material-symbols-rounded text-base">arrow_outward</span>
 				</button>
 			</div>
 			<div class="flex flex-col items-center text-center px-8">
@@ -171,7 +181,7 @@ const ViewItem = () => {
 					<For each={item.data?.images}>
 						{(image) => (
 							<img
-								src={image.url}
+								src={`https://assets.peatch.io/${image.url}`}
 								alt={item.data?.name}
 								class="w-full rounded-[25px] border-[0.5px] border-border/60"
 								style={{ 'aspect-ratio': `${image.width}/${image.height}` }}

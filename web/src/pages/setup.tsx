@@ -1,6 +1,5 @@
 import { createEffect, createSignal, Match, onCleanup, onMount, Switch } from 'solid-js'
 import { saveUserPreferences } from '~/lib/api'
-import { showToast } from '~/components/ui/toast'
 import { useNavigate } from '@solidjs/router'
 import { setUser } from '~/store'
 import { useMainButton } from '~/lib/useMainButton'
@@ -8,6 +7,7 @@ import { useBackButton } from '~/lib/useBackButton'
 import FormLayout from '~/components/form-layout'
 import FormInput from '~/components/form-input'
 import CategoriesSelect from '~/components/categories-select'
+import { addToast } from '~/components/toast'
 
 export default function SetupProfilePage() {
 	const [selectedCategories, setSelectedCategories] = createSignal<string[]>([])
@@ -37,7 +37,7 @@ export default function SetupProfilePage() {
 					interests: selectedCategories(),
 				})
 				if (error) {
-					showToast({ title: error, variant: 'error' })
+					addToast(error)
 				} else {
 					setUser(data)
 					navigate('/')

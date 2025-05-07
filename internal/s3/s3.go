@@ -3,13 +3,11 @@ package s3
 import (
 	"bytes"
 	"context"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
-	"strings"
-	"time"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"strings"
 )
 
 type Client struct {
@@ -41,23 +39,6 @@ func NewS3Client(accessKeyId, accessKeySecret, endpoint, bucket string) (*Client
 		Bucket:   bucket,
 		S3Client: client,
 	}, nil
-}
-
-func (s *Client) GetPresignedURL(objectKey string, duration time.Duration) (string, error) {
-	signer := s3.NewPresignClient(s.S3Client)
-
-	request, err := signer.PresignPutObject(context.TODO(), &s3.PutObjectInput{
-		Bucket: aws.String(s.Bucket),
-		Key:    aws.String(objectKey),
-	}, func(opts *s3.PresignOptions) {
-		opts.Expires = duration
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	return request.URL, err
 }
 
 func resolveContentType(fileName string) string {

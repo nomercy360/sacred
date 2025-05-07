@@ -8,19 +8,19 @@ import { addToast } from '~/components/toast'
  * @returns Array of valid files
  */
 export function validateFiles(files: FileList, maxSize: number = 1024 * 1024 * 7): File[] {
-  const validFiles: File[] = []
+	const validFiles: File[] = []
 
-  for (const file of files) {
-    if (file.size > maxSize) {
-      addToast(
-        `File ${file.name} is too large. Try to select a smaller file.`,
-      )
-      continue
-    }
-    validFiles.push(file)
-  }
+	for (const file of files) {
+		if (file.size > maxSize) {
+			addToast(
+				`File ${file.name} is too large. Try to select a smaller file.`,
+			)
+			continue
+		}
+		validFiles.push(file)
+	}
 
-  return validFiles
+	return validFiles
 }
 
 /**
@@ -29,8 +29,8 @@ export function validateFiles(files: FileList, maxSize: number = 1024 * 1024 * 7
  * @returns Array of two arrays containing the split images
  */
 export function splitImages(images: string[]): string[][] {
-  const middle = Math.ceil(images.length / 2)
-  return [images.slice(0, middle), images.slice(middle)]
+	const middle = Math.ceil(images.length / 2)
+	return [images.slice(0, middle), images.slice(middle)]
 }
 
 /**
@@ -39,15 +39,15 @@ export function splitImages(images: string[]): string[][] {
  * @returns Promise resolving to metadata response
  */
 export async function fetchMetadata(url: string) {
-  const res = await fetch('http://127.0.0.1:8081/extract-content', {
-    method: 'POST',
-    body: JSON.stringify({ url }),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
+	const res = await fetch(import.meta.env.VITE_SCRAPER_URL + '/extract-content', {
+		method: 'POST',
+		body: JSON.stringify({ url }),
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	})
 
-  return res.json()
+	return res.json()
 }
 
 /**
@@ -57,25 +57,25 @@ export async function fetchMetadata(url: string) {
  * @returns Promise resolving when upload is complete
  */
 export function processImageFile(file: File, uploadCallback: (file: File) => Promise<WishImage | null>): Promise<WishImage | null> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    
-    reader.onload = () => {
-      const img = new Image()
-      
-      img.onload = async () => {
-        try {
-          const result = await uploadCallback(file)
-          resolve(result)
-        } catch (err) {
-          console.error(`Error uploading ${file.name}:`, err)
-          reject(err)
-        }
-      }
-      
-      img.src = reader.result as string
-    }
-    
-    reader.readAsDataURL(file)
-  })
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader()
+
+		reader.onload = () => {
+			const img = new Image()
+
+			img.onload = async () => {
+				try {
+					const result = await uploadCallback(file)
+					resolve(result)
+				} catch (err) {
+					console.error(`Error uploading ${file.name}:`, err)
+					reject(err)
+				}
+			}
+
+			img.src = reader.result as string
+		}
+
+		reader.readAsDataURL(file)
+	})
 }

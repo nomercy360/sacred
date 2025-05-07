@@ -347,3 +347,49 @@ func (a *API) UploadWishPhoto(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, results)
 }
+
+func (a *API) DeleteWishPhoto(c echo.Context) error {
+	wishID := c.Param("id")
+	photoID := c.Param("photoId")
+	
+	if wishID == "" {
+		return terrors.BadRequest(nil, "wish ID is required")
+	}
+	
+	if photoID == "" {
+		return terrors.BadRequest(nil, "photo ID is required")
+	}
+
+	userID := getUserID(c)
+
+	wish, err := a.storage.GetWishByID(c.Request().Context(), userID, wishID)
+	if err != nil && errors.Is(err, db.ErrNotFound) {
+		return terrors.NotFound(err, "wish not found")
+	} else if err != nil {
+		return terrors.InternalServer(err, "cannot get wish")
+	}
+
+	if wish.UserID != userID {
+		return terrors.Forbidden(nil, "cannot delete photos from another user's wish")
+	}
+
+	// Verify that the photo belongs to the wish
+	photoExists := false
+	for _, img := range wish.Images {
+		if img.ID == photoID {
+			photoExists = true
+			break
+		}
+	}
+	
+	if !photoExists {
+		return terrors.NotFound(nil, "photo not found for this wish")
+	}
+
+	err = a.storage.DeleteWishPhoto(c.Request().Context(), wishID, photoID)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to delete photo")
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}

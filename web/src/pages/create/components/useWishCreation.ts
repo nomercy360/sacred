@@ -2,7 +2,7 @@ import { createSignal, onCleanup, onMount } from 'solid-js'
 import { createStore } from 'solid-js/store'
 import { useNavigate } from '@solidjs/router'
 import { addToast } from '~/components/toast'
-import { useMainButton } from '~/lib/useMainButton'
+import { useMainButton, useSecondaryButton } from '~/lib/useMainButton'
 import { useBackButton } from '~/lib/useBackButton'
 import {
 	fetchAddWish,
@@ -10,7 +10,7 @@ import {
 	uploadWishPhoto,
 	uploadWishPhotosByUrls,
 	UpdateWishRequest,
-	WishImage,
+	WishImage, deleteWishPhoto,
 } from '~/lib/api'
 import { setStore } from '~/store'
 import {
@@ -34,12 +34,13 @@ export function useWishCreation() {
 	const [urlImages, setUrlImages] = createSignal<string[]>([])
 	const [uploadImages, setUploadImages] = createSignal<WishImage[]>([])
 	const [activeFlow, setActiveFlow] = createSignal<FlowName>(FlowNames.START_WITH_LINK)
-	const [step, setStep] = createSignal<StepName>(StepNames.ADD_LINK)
+	const [step, setStep] = createSignal<StepName>(StepNames.START_SCREEN)
 	const [metaWithImages, setMetaWithImages] = createSignal<MetadataResponse | null>(null)
 	const [createdWishId, setCreatedWishId] = createSignal<string | null>(null)
 
 	const navigate = useNavigate()
 	const mainButton = useMainButton()
+	const secondaryButton = useSecondaryButton()
 	const backButton = useBackButton()
 
 	// Helper functions
@@ -116,17 +117,39 @@ export function useWishCreation() {
 		}
 	}
 
+	async function removeImage(id: string) {
+		if (!createdWishId()) return
+		await deleteWishPhoto(createdWishId()!, id)
+		setUploadImages((old) => old.filter((img) => img.id !== id))
+	}
+
 	// Navigation and step flow
 	const onContinue = async () => {
 		switch (step()) {
-			case StepNames.ADD_LINK:
+			case StepNames.START_SCREEN:
 				setStep(StepNames.CHOOSE_CATEGORIES)
 				setMetaWithImages(null)
 				await createWishIfNeeded()
-				const data = await fetchMetadata(updateWish.url!)
-				setMetaWithImages(data)
-				const title = data.metadata['og:title'] || data.metadata['title']
-				if (title) setUpdateWish({ name: title })
+
+				try {
+					const data = await fetchMetadata(updateWish.url!)
+
+					if (!data.image_urls || data.image_urls.length === 0) {
+						addToast('No images found from the provided link')
+						setMetaWithImages({
+							...data,
+							image_urls: [],
+						})
+					} else {
+						setMetaWithImages(data)
+					}
+
+					const title = data.metadata['og:title'] || data.metadata['title']
+					if (title) setUpdateWish({ name: title })
+				} catch (error) {
+					console.error('Error fetching metadata:', error)
+					addToast('Failed to extract content from the link')
+				}
 				break
 
 			case StepNames.CHOOSE_CATEGORIES:
@@ -136,17 +159,29 @@ export function useWishCreation() {
 
 			case StepNames.SELECT_IMAGES:
 				window.Telegram.WebApp.MainButton.showProgress(true)
-				if (urlImages().length > 0) {
-					const { data, error } = await uploadWishPhotosByUrls(createdWishId()!, urlImages())
 
-					if (error) {
-						addToast(`Failed to upload images: ${error}`)
-						return
+				try {
+					if (urlImages().length > 0) {
+						const { data, error } = await uploadWishPhotosByUrls(createdWishId()!, urlImages())
+
+						if (error) {
+							addToast(`Failed to upload images: ${error}`)
+							return
+						}
+
+						setUploadImages((old) => [...old, ...data])
+					} else {
+						// If no images selected, just proceed to next step
+						// User might have received the "No images found" message
 					}
-
-					setUploadImages((old) => [...old, ...data])
+				} catch (error) {
+					console.error('Error uploading images:', error)
+					addToast('Failed to upload images')
+					return
+				} finally {
+					window.Telegram.WebApp.MainButton.hideProgress()
 				}
-				window.Telegram.WebApp.MainButton.hideProgress()
+
 				if (updateWish.name) {
 					setStep(StepNames.CONFIRM)
 				} else {
@@ -158,7 +193,7 @@ export function useWishCreation() {
 				setStep(StepNames.CONFIRM)
 				break
 
-			case StepNames.ADD_PRICE:
+			case StepNames.ADD_LINK:
 				setStep(StepNames.CONFIRM)
 				break
 
@@ -174,7 +209,7 @@ export function useWishCreation() {
 							return
 						}
 
-						setStore('wishes', (old) => [...old, data])
+						setStore('wishes', (old) => [data, ...old])
 						navigate('/')
 					} else {
 						addToast('Something went wrong. Please try again.')
@@ -188,12 +223,12 @@ export function useWishCreation() {
 
 	const decrementStep = () => {
 		switch (step()) {
-			case StepNames.ADD_LINK:
+			case StepNames.START_SCREEN:
 				navigate('/')
 				break
 
 			case StepNames.CHOOSE_CATEGORIES:
-				setStep(StepNames.ADD_LINK)
+				setStep(StepNames.START_SCREEN)
 				break
 
 			case StepNames.SELECT_IMAGES:
@@ -204,12 +239,12 @@ export function useWishCreation() {
 				setStep(StepNames.CONFIRM)
 				break
 
-			case StepNames.ADD_PRICE:
+			case StepNames.ADD_LINK:
 				setStep(StepNames.CONFIRM)
 				break
 
 			case StepNames.CONFIRM:
-				setStep(StepNames.ADD_PRICE)
+				setStep(StepNames.ADD_LINK)
 				break
 		}
 	}
@@ -229,11 +264,11 @@ export function useWishCreation() {
 
 	// Header titles for each step
 	const formHeaders: Record<StepName, string | undefined> = {
-		[StepNames.ADD_LINK]: 'Add the link',
+		[StepNames.START_SCREEN]: 'Add the link',
 		[StepNames.CHOOSE_CATEGORIES]: 'Choose categories',
 		[StepNames.SELECT_IMAGES]: 'Select images',
 		[StepNames.ADD_NAME]: 'Give name to the wish',
-		[StepNames.ADD_PRICE]: 'Add price',
+		[StepNames.ADD_LINK]: 'Add link',
 		[StepNames.CONFIRM]: undefined,
 	}
 
@@ -261,7 +296,7 @@ export function useWishCreation() {
 		setupButtons,
 		onContinue,
 		decrementStep,
-
+		removeImage,
 		// UI helpers
 		formHeaders,
 	}

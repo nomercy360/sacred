@@ -118,6 +118,8 @@ func (r *UpdateWishRequest) Validate() error {
 type UpdateUserRequest struct {
 	Interests []string `json:"interests"`
 	Email     string   `json:"email"`
+	Name      *string  `json:"name"`
+	Username  *string  `json:"username"`
 }
 
 func (u UpdateUserRequest) Validate() error {
@@ -128,6 +130,14 @@ func (u UpdateUserRequest) Validate() error {
 	re := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 	if !re.MatchString(u.Email) {
 		return errors.New("invalid email format")
+	}
+
+	if u.Name != nil && len(*u.Name) > 100 && len(*u.Name) < 1 {
+		return errors.New("name cannot be longer than 100 characters")
+	}
+
+	if u.Username != nil && len(*u.Username) > 100 && len(*u.Username) < 1 {
+		return errors.New("username cannot be longer than 100 characters")
 	}
 
 	return nil

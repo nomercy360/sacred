@@ -1,5 +1,4 @@
 import { store } from '~/store'
-import { addToast } from '~/components/toast'
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string
 
@@ -19,7 +18,6 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 			try {
 				data = await response.json()
 			} catch {
-				addToast('Failed to get response from server')
 				return { error: 'Failed to get response from server', data: null }
 			}
 		}
@@ -31,15 +29,12 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 					: typeof data?.error === 'string'
 						? data.error
 						: 'An error occurred'
-
-			addToast(errorMessage)
 			return { error: errorMessage, data: null }
 		}
 
 		return { data, error: null }
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
-		addToast(errorMessage)
 		return { error: errorMessage, data: null }
 	}
 }
@@ -288,6 +283,18 @@ export const uploadWishPhotosByUrls = async (wishId: string, imageUrls: string[]
 	const { data, error } = await apiRequest(`/wishes/${wishId}/photos`, {
 		method: 'POST',
 		body: JSON.stringify({ image_urls: imageUrls }),
+	})
+
+	if (error) {
+		throw new Error(error)
+	}
+
+	return { data, error: null }
+}
+
+export const deleteWishPhoto = async (wishId: string, photoId: string) => {
+	const { data, error } = await apiRequest(`/wishes/${wishId}/photos/${photoId}`, {
+		method: 'DELETE',
 	})
 
 	if (error) {

@@ -1,4 +1,4 @@
-import { createSignal, onMount } from 'solid-js'
+import { createSignal, onCleanup, onMount } from 'solid-js'
 import { fetchPresignedUrl, saveUserPreferences, uploadToS3 } from '~/lib/api'
 import { useNavigate } from '@solidjs/router'
 import { setUser, store } from '~/store'
@@ -18,30 +18,6 @@ export default function ProfileEditPage() {
 
 	function isEmailValid(email: string) {
 		return /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(email)
-	}
-
-	async function uploadAvatar(file: File) {
-		try {
-			setIsUploading(true)
-			const { data: presignedData } = await fetchPresignedUrl(file.name)
-			if (!presignedData) {
-				addToast('Failed to get upload URL')
-				return null
-			}
-
-			const uploadResult = await uploadToS3(presignedData.url, file)
-			if (!uploadResult.ok) {
-				addToast('Failed to upload image')
-				return null
-			}
-
-			return presignedData.path
-		} catch (error) {
-			addToast('Error uploading image')
-			return null
-		} finally {
-			setIsUploading(false)
-		}
 	}
 
 	const handleImageChange = (event: Event) => {
@@ -66,18 +42,11 @@ export default function ProfileEditPage() {
 		try {
 			let avatarUrl = store.user?.avatar_url
 
-			if (avatarFile()) {
-				const uploadedPath = await uploadAvatar(avatarFile()!)
-				if (uploadedPath) {
-					avatarUrl = uploadedPath
-				}
-			}
-
 			const { data, error } = await saveUserPreferences({
 				name: name(),
 				username: username(),
 				email: email(),
-				avatar_url: avatarUrl,
+				interests: store.user?.interests.map((i) => i.id),
 			})
 
 			if (error) {
@@ -96,6 +65,11 @@ export default function ProfileEditPage() {
 	onMount(() => {
 		mainButton.onClick(handleSave)
 		mainButton.enable('Save')
+	})
+
+	onCleanup(() => {
+		mainButton.offClick(handleSave)
+		mainButton.hide()
 	})
 
 	return (
@@ -131,8 +105,8 @@ export default function ProfileEditPage() {
 				</div>
 
 				<div class="flex flex-col w-full space-y-1.5">
-					<label class="text-xs font-medium text-secondary-foreground">Board link</label>
-					<div class="bg-secondary flex items-center rounded-xl h-12 px-3 py-2">
+					<label class="font-medium text-xs text-secondary-foreground">Board link</label>
+					<div class="font-semibold text-sm bg-secondary flex items-center rounded-xl h-12 px-3 py-2">
 						<span class="text-muted-foreground">wshd.xyz/</span>
 						<input
 							value={username()}
@@ -143,7 +117,7 @@ export default function ProfileEditPage() {
 				</div>
 
 				<div class="flex flex-col w-full space-y-1.5">
-					<label class="text-xs font-medium text-secondary-foreground">
+					<label class="font-medium text-xs text-secondary-foreground">
 						E-mail (not visible to anyone)
 					</label>
 					<input

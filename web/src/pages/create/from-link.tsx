@@ -3,11 +3,12 @@ import FormLayout from '~/components/form-layout'
 import { StepNames } from './components/types'
 import { useWishCreation } from './components/useWishCreation'
 import { useButtonStates } from './components/useButtonStates'
-import AddLinkStep from './components/AddLinkStep'
+import StartStep from './components/StartStep'
 import CategoriesStep from './components/CategoriesStep'
 import SelectImagesStep from './components/SelectImagesStep'
 import AddNameStep from './components/AddNameStep'
 import ConfirmStep from './components/ConfirmStep'
+import AddLinkStep from '~/pages/create/components/AddLinkStep'
 
 export default function CreateFromLinkPage() {
 	const {
@@ -22,6 +23,8 @@ export default function CreateFromLinkPage() {
 		handleFileChange,
 		formHeaders,
 		decrementStep,
+		setStep,
+		removeImage,
 	} = useWishCreation()
 
 	useButtonStates({
@@ -42,16 +45,14 @@ export default function CreateFromLinkPage() {
 			maxSteps={6}
 		>
 			<Switch>
-				{/* Link Input Step */}
-				<Match when={step() === StepNames.ADD_LINK}>
-					<AddLinkStep
+				<Match when={step() === StepNames.START_SCREEN}>
+					<StartStep
 						url={updateWish.url}
 						onUrlChange={(url) => setUpdateWish({ url })}
 						onFileUpload={handleFileChange}
 					/>
 				</Match>
 
-				{/* Categories Selection Step */}
 				<Match when={step() === StepNames.CHOOSE_CATEGORIES}>
 					<CategoriesStep
 						selectedCategories={updateWish.category_ids}
@@ -59,7 +60,6 @@ export default function CreateFromLinkPage() {
 					/>
 				</Match>
 
-				{/* Image Selection Step */}
 				<Match when={step() === StepNames.SELECT_IMAGES}>
 					<SelectImagesStep
 						metaWithImages={metaWithImages()}
@@ -68,7 +68,6 @@ export default function CreateFromLinkPage() {
 					/>
 				</Match>
 
-				{/* Name Input Step */}
 				<Match when={step() === StepNames.ADD_NAME}>
 					<AddNameStep
 						name={updateWish.name}
@@ -76,15 +75,21 @@ export default function CreateFromLinkPage() {
 					/>
 				</Match>
 
-				{/* Confirmation Step */}
+				<Match when={step() === StepNames.ADD_LINK}>
+					<AddLinkStep
+						link={updateWish.url}
+						onLinkChange={(url) => setUpdateWish({ url })}
+					/>
+				</Match>
+
 				<Match when={step() === StepNames.CONFIRM}>
 					<ConfirmStep
 						name={updateWish.name}
-						price={updateWish.price}
-						currency={updateWish.currency}
+						link={updateWish.url}
 						uploadImages={uploadImages()}
-						onNameClick={() => step() === StepNames.ADD_NAME}
-						onPriceClick={() => step() === StepNames.ADD_PRICE}
+						onNameClick={() => setStep(StepNames.ADD_NAME)}
+						onAddLinkClick={() => setStep(StepNames.ADD_LINK)}
+						onDeleteImage={(id) => removeImage(id)}
 					/>
 				</Match>
 			</Switch>

@@ -28,6 +28,14 @@ func (a *API) UpdateUserPreferences(c echo.Context) error {
 
 	user.Email = &req.Email
 
+	if req.Name != nil {
+		user.Name = req.Name
+	}
+
+	if req.Username != nil {
+		user.Username = *req.Username
+	}
+
 	if err := a.storage.UpdateUser(c.Request().Context(), user, req.Interests); err != nil {
 		return terrors.InternalServer(err, "cannot update user")
 	}

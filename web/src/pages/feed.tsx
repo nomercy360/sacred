@@ -1,4 +1,4 @@
-import { createQuery } from '@tanstack/solid-query'
+import { createQuery, useQuery } from '@tanstack/solid-query'
 import { fetchFeed, Wish } from '~/lib/api'
 import { Link } from '~/components/link'
 import { WishesGrid } from '~/pages/bookmarks'
@@ -10,7 +10,7 @@ const FeedPage = () => {
 	const [searchMode, setSearchMode] = createSignal(true)
 	const [searchInput, setSearchInput] = createSignal<HTMLInputElement | null>(null)
 
-	const wishes = createQuery<Wish[]>(() => ({
+	const wishes = useQuery<Wish[]>(() => ({
 		queryKey: ['feed', search()],
 		queryFn: () => fetchFeed(search()),
 	}))

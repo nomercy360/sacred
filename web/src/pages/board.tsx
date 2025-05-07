@@ -11,9 +11,9 @@ export default function UserBoardPage() {
 	}
 
 	return (
-		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
+		<div class="relative flex flex-col items-center w-full h-screen overflow-y-auto pb-20">
 			<div
-				class="bg-background h-20 fixed flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5">
+				class="bg-background h-20 flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5">
 				<Link class="flex flex-row space-x-2 items-center justify-start" href="/profile/edit">
 					<img
 						src={store.user?.avatar_url}
@@ -35,7 +35,7 @@ export default function UserBoardPage() {
 				</div>
 			</div>
 
-			<div class="overflow-y-scroll text-center flex-1 w-full pt-20 pb-20">
+			<div class="text-center flex-1 w-full pb-20">
 				<Switch>
 					<Match when={!store.wishes.length}>
 						<div

@@ -272,6 +272,7 @@ func main() {
 	g.POST("/wishes/:id/copy", a.CopyWishHandler)
 	g.DELETE("/wishes/:id", a.DeleteWishHandler)
 	g.POST("/wishes/:id/photos", a.UploadWishPhoto)
+	g.DELETE("/wishes/:id/photos/:photoId", a.DeleteWishPhoto)
 
 	done := make(chan bool, 1)
 

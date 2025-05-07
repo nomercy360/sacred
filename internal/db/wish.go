@@ -424,3 +424,9 @@ func (s *storage) DeleteWish(ctx context.Context, uid, id string) error {
 
 	return tx.Commit()
 }
+
+func (s *storage) DeleteWishPhoto(ctx context.Context, wishID, photoID string) error {
+	query := `DELETE FROM wish_images WHERE id = ? AND wish_id = ?`
+	_, err := s.db.ExecContext(ctx, query, photoID, wishID)
+	return err
+}

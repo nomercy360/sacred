@@ -14,7 +14,6 @@ export default function WishEditPage() {
   const navigate = useNavigate()
   const mainButton = useMainButton()
 
-  // Запрос данных о желании
   const item = useQuery<Wish>(() => ({
     queryKey: ['item', params.id],
     queryFn: () => fetchWish(params.id),
@@ -36,24 +35,20 @@ export default function WishEditPage() {
       return fetchUpdateWish(params.id, requestData)
     },
     onSuccess: () => {
-      // Инвалидация запроса, чтобы обновить данные
       queryClient.invalidateQueries({ queryKey: ['item', params.id] })
-      // Возвращаемся на страницу желания
       navigate('/')
     }
   }))
 
-  // Заполняем поля из полученных данных
+  
   createEffect(() => {
     if (item.data) {
       setWishName(item.data.name || '')
       setWishLink(item.data.url || '')
-
-      console.log("AAAAAAA", item.data)
     }
   })
 
-  // Функция для сохранения изменений
+
   const saveWish = async () => {
     mainButton.showProgress(true)
     try {
@@ -65,9 +60,8 @@ export default function WishEditPage() {
     }
   }
 
-  // Управление главной кнопкой Telegram
+
   createEffect(() => {
-    // Сначала удаляем предыдущий обработчик
     mainButton.offClick(saveWish)
     
     if (item.isSuccess) {

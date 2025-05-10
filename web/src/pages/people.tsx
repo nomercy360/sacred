@@ -1,5 +1,5 @@
 import { fetchProfiles, UserProfile } from '~/lib/api'
-import { Match, Switch } from 'solid-js'
+import { Match, Switch, createEffect } from 'solid-js'
 import { ImageButton } from '~/components/image-button'
 import { createQuery } from '@tanstack/solid-query'
 import { Link } from '~/components/link'
@@ -57,8 +57,8 @@ export default function WishlistPage() {
 									>
 										<div class="flex flex-col items-center justify-center gap-0.5">
 											<img src={user.avatar_url} alt={user.name} class="size-9 rounded-full" />
-											<p class="mt-2 text-xl font-bold">{user.name}</p>
-											<p class="text-sm font-normal">
+											<p class="mt-2 text-xl font-bold text-black">{user.name}</p>
+											<p class="text-sm font-normal text-black">
 												{user.followers} followers
 											</p>
 										</div>

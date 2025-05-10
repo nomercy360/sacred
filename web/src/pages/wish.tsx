@@ -119,7 +119,7 @@ const ViewItem = () => {
 		}
 		navigate('/')
 	}
-
+	
 	createEffect(() => {
 		if (item.isSuccess && item.data?.user_id === store.user?.id) {
 			mainButton.onClick(despawnWish)
@@ -138,7 +138,7 @@ const ViewItem = () => {
 				<Show when={item.data?.user_id === store.user?.id}>
 					<button
 						class="flex items-center justify-center bg-secondary rounded-full size-10"
-						onClick={despawnWish}
+						onClick={() => navigate(`/wishes/${item.data?.id}/edit`)}
 					>
 						<span class="material-symbols-rounded text-base">edit</span>
 					</button>
@@ -199,7 +199,7 @@ const ViewItem = () => {
 							class={cn(
 								'text-sm font-medium rounded-xl h-12 px-4 w-full flex flex-row items-center justify-between',
 								{
-									'bg-secondary text-secondary-foreground': item.data?.copied_wish_id,
+									'bg-red-500 text-white': item.data?.copied_wish_id,
 									'bg-primary text-primary-foreground': !item.data?.copied_wish_id,
 								},
 							)}

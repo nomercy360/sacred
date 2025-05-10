@@ -14,7 +14,7 @@ export default function UserBoardPage() {
 		<div class="relative flex flex-col items-center w-full h-screen overflow-y-auto pb-20">
 			<div
 				class="bg-background h-20 flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5">
-				<Link class="flex flex-row space-x-2 items-center justify-start" href="/profile/edit">
+				<Link href={"/profile/edit"} class="flex flex-row space-x-2 items-center justify-start" >
 					<img
 						src={store.user?.avatar_url}
 						alt={store.user?.name}

@@ -36,7 +36,7 @@ export default function CategoriesSelect(props: SelectCategoriesProps) {
 					{(category) => (
 						<button
 							style={{ 'background-image': !isSelected(category.id) ? `url(${category.image_url}), url('/placeholder.jpg')` : '' }}
-							class={cn('rounded-3xl flex items-center justify-center aspect-square bg-cover bg-center', isSelected(category.id) && 'bg-primary')}
+							class={cn('rounded-3xl flex items-center justify-center aspect-square bg-cover bg-center ', isSelected(category.id) && 'bg-primary')}
 							onClick={() => toggleCategory(category.id)}
 						>
 							<p class="text-white font-bold">

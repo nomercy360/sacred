@@ -18,6 +18,7 @@ import (
 	"sacred/internal/db"
 	"sacred/internal/nanoid"
 	"sacred/internal/terrors"
+	"strings"
 	"time"
 )
 
@@ -86,6 +87,11 @@ func (a *API) UpdateWishHandler(c echo.Context) error {
 	var req contract.UpdateWishRequest
 	if err := c.Bind(&req); err != nil {
 		return terrors.BadRequest(err, "failed to bind request")
+	}
+
+	// trim whitespace from URL
+	if req.URL != nil {
+		*req.URL = strings.TrimSpace(*req.URL)
 	}
 
 	if err := req.Validate(); err != nil {

@@ -57,10 +57,14 @@ export function useWishCreation() {
 	createEffect(() => {
 		switch (step()) {
 			case StepNames.START_SCREEN:
-				backButton.setVisible()
-				backButton.onClick(decrementStep)
-				mainButton.toggle(!!updateWish.url?.match(/^https?:\/\//), 'Continue')
-				break
+            backButton.setVisible()
+            backButton.onClick(decrementStep)
+            if (!!updateWish.url?.match(/^https?:\/\//)) {
+                mainButton.enable('Continue')
+            } else {
+                mainButton.disable('Enter valid link')
+            }
+            break;
 
 			case StepNames.CHOOSE_CATEGORIES:
 				mainButton.toggle(updateWish.category_ids.length > 0, 'Continue', 'Select at least 1')

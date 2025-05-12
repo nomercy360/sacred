@@ -19,7 +19,6 @@ export default function NavigationTabs(props: any) {
 			href: '/people',
 			icon: 'group',
 		},
-
 		{
 			href: '/create/from-link',
 			icon: 'add',

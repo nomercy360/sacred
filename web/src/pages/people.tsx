@@ -36,7 +36,7 @@ export default function WishlistPage() {
 						<div class="mt-4">
 							<p class="text-red-500">Failed to load wishlist.</p>
 							<button
-								class="mt-2 px-4 py-2 bg-primary text-white rounded-2xl"
+								class="mt-12 px-4 py-2 bg-primary text-white rounded-2xl"
 								onClick={() => users.refetch()}
 							>
 								Retry

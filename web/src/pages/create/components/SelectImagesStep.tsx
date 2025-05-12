@@ -56,10 +56,10 @@ const SelectImagesStep: Component<SelectImagesStepProps> = (props) => {
 											<Show when={props.urlImages.find((i: string) => i === url)}>
 												<div
 													class="absolute inset-0 bg-black bg-opacity-20 flex items-start justify-end rounded-2xl p-3">
-                          <span
+													<span
 														class="text-xs font-medium bg-primary text-primary-foreground rounded-full size-6 flex items-center justify-center">
-                              {props.urlImages.findIndex((i: string) => i === url) + 1}
-                          </span>
+														{props.urlImages.findIndex((i: string) => i === url) + 1}
+													</span>
 												</div>
 											</Show>
 										</button>

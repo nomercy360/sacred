@@ -119,7 +119,7 @@ const ViewItem = () => {
 		}
 		navigate('/')
 	}
-	
+
 	createEffect(() => {
 		if (item.isSuccess && item.data?.user_id === store.user?.id) {
 			mainButton.onClick(despawnWish)
@@ -207,8 +207,8 @@ const ViewItem = () => {
 						>
 							{item.data?.copied_wish_id ? 'Remove from board' : 'Save to board'}
 							<span class="material-symbols-rounded text-[20px]">
-							{item.data?.copied_wish_id ? 'remove' : 'add'}
-						</span>
+								{item.data?.copied_wish_id ? 'remove' : 'add'}
+							</span>
 						</button>
 						<button
 							class={cn(
@@ -228,8 +228,8 @@ const ViewItem = () => {
 						>
 							{item.data?.is_bookmarked ? 'Remove bookmark' : 'Save bookmark'}
 							<span class="material-symbols-rounded text-[20px]">
-							{item.data?.is_bookmarked ? 'bookmark' : 'bookmark_border'}
-						</span>
+								{item.data?.is_bookmarked ? 'bookmark' : 'bookmark_border'}
+							</span>
 						</button>
 					</div>
 				</div>

@@ -4,15 +4,20 @@ export const [toasts, setToasts] = createSignal<
 	{ id: number; message: string }[]
 >([])
 
-export const addToast = (message: string) => {
+export const addToast = (message: string, persistent = false) => {
 	const id = Date.now()
-	setToasts([...toasts(), { id, message }])
+	setToasts([...toasts(), { id, message, persistent }])
 
-	// Remove the toast after 3 seconds
+	// Remove the toast after 2 seconds
 	setTimeout(() => {
 		setToasts(toasts().filter(toast => toast.id !== id))
 	}, 2000)
 }
+
+export const removeToast = (id: number) => {
+	setToasts(toasts().filter(toast => toast.id !== id))
+}
+
 
 const Toast = () => {
 	createEffect(() => {

@@ -19,7 +19,7 @@ export default function WishEditPage() {
     queryFn: () => fetchWish(params.id),
   }))
 
-  console.log(params.id)
+  console.log("PARAMS ID", params.id)
 
   const updateWishMutation = createMutation(() => ({
     mutationFn: async () => {
@@ -29,10 +29,15 @@ export default function WishEditPage() {
         notes: null,
         price: null,
         currency: null,
-        category_ids: []
+        category_ids: item.data?.categories?.map(cat => cat.id) || []
       }
-      
+
       return fetchUpdateWish(params.id, requestData)
+        .then(result => {
+          console.log("Полный ответ сервера:", result)
+          if (result.error) throw new Error(result.error)
+          return result.data
+        })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['item', params.id] })
@@ -40,7 +45,7 @@ export default function WishEditPage() {
     }
   }))
 
-  
+
   createEffect(() => {
     if (item.data) {
       setWishName(item.data.name || '')
@@ -63,7 +68,7 @@ export default function WishEditPage() {
 
   createEffect(() => {
     mainButton.offClick(saveWish)
-    
+
     if (item.isSuccess) {
       mainButton.onClick(saveWish)
       mainButton.enable('Save wish')
@@ -80,7 +85,7 @@ export default function WishEditPage() {
   return (
     <div class="flex flex-col items-center p-4 min-h-screen">
       <h1 class="text-xl font-bold mb-6">Edit Wish</h1>
-      
+
       <Show when={item.isSuccess} fallback={
         <div class="flex items-center justify-center h-40">
           <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
@@ -89,21 +94,21 @@ export default function WishEditPage() {
         <div class="w-full space-y-4">
           <div>
             <label class="block text-sm font-medium mb-1">Wish name</label>
-            <input 
-              type="text" 
-              value={wishName()} 
-              onInput={(e) => setWishName(e.target.value)}
+            <input
+              type="text"
+              value={wishName()}
+              onChange={(e) => setWishName(e.target.value)}
               class="w-full px-3 py-2 border rounded-lg"
               placeholder="Enter wish name"
             />
           </div>
-          
+
           <div>
             <label class="block text-sm font-medium mb-1">Link</label>
-            <input 
-              type="url" 
-              value={wishLink()} 
-              onInput={(e) => setWishLink(e.target.value)}
+            <input
+              type="url"
+              value={wishLink()}
+              onChange={(e) => setWishLink(e.target.value)}
               class="w-full px-3 py-2 border rounded-lg"
               placeholder="https://example.com"
             />

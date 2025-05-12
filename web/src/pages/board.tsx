@@ -193,14 +193,14 @@ function OnboardingPopup(props: { onClose: () => void }) {
 								},
 							)}
 						>
-              <span
+							<span
 								class={cn('material-symbols-rounded text-[20px]', {
 									'text-primary-foreground': step() === index,
 								})}
 							>
-                {icon}
-              </span>
-            </span>
+								{icon}
+							</span>
+						</span>
 					))}
 				</div>
 			</div>

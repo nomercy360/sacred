@@ -35,8 +35,8 @@ export const ImageButton: Component<ImageButtonProps> = (props) => {
 				<span
 					class="text-secondary-foreground size-full bg-cover bg-center bg-no-repeat bg-secondary flex items-center justify-center font-bold text-xl rounded-full"
 				>
-          {props.children}
-        </span>
+					{props.children}
+				</span>
 			)
 		}
 
@@ -69,9 +69,9 @@ export const ImageButton: Component<ImageButtonProps> = (props) => {
 
 			return (
 				<span class={containerClasses} style={{ 'background-image': `url(${img})` }}>
-          {imageLayer}
+					{imageLayer}
 					{contentLayer}
-        </span>
+				</span>
 			)
 		})
 	}

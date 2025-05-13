@@ -175,9 +175,9 @@ export default function WishEditPage() {
           </div>
 
           <div class="flex flex-col w-full space-y-1.5">
-            <label class="font-medium text-xs text-secondary-foreground">Board link</label>
+            <label class="font-medium text-xs text-secondary-foreground">Wish link</label>
             <div class="font-semibold text-sm bg-secondary flex items-center rounded-xl h-12 px-3 py-2">
-              <span class="text-muted-foreground">wshd.xyz/</span>
+              <span class="text-muted-foreground"></span>
               <input
                 value={wishLink()}
                 onInput={(e) => setWishLink(e.currentTarget.value)}

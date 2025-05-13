@@ -1,4 +1,4 @@
-import { createSignal, createEffect, onCleanup } from 'solid-js'
+import { createSignal, createEffect } from 'solid-js'
 
 export const [toasts, setToasts] = createSignal<
 	{ id: number; message: string }[]

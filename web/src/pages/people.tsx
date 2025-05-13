@@ -53,12 +53,16 @@ export default function WishlistPage() {
 								{users.data?.map((user) => (
 									<ImageButton
 										href={`/profiles/${user.id}`}
-										images={user.wishlist_items.map((wish) => wish.images[0]?.url)}
+										images={user.wishlist_items.map((wish) => 
+											wish.images && wish.images[0] ? 
+											`https://assets.peatch.io/${wish.images[0].url}` : 
+											'/placeholder.jpg'
+										)}
 									>
 										<div class="flex flex-col items-center justify-center gap-0.5">
 											<img src={user.avatar_url} alt={user.name} class="size-9 rounded-full" />
-											<p class="mt-2 text-xl font-bold text-black">{user.name}</p>
-											<p class="text-sm font-normal text-black">
+											<p class="mt-3 text-xl font-bold">{user.name}</p>
+											<p class="text-sm font-extralight">
 												{user.followers} followers
 											</p>
 										</div>

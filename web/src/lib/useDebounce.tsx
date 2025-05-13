@@ -4,13 +4,13 @@ export default function useDebounce(
 	signalSetter: (value: any) => void,
 	delay: number,
 ) {
-	let timerHandle: number
+	let timerHandle: NodeJS.Timeout
 
 	function debouncedSignalSetter(value: any) {
 		clearTimeout(timerHandle)
 		timerHandle = setTimeout(() => signalSetter(value), delay)
 	}
 
-	onCleanup(() => clearInterval(timerHandle))
+	onCleanup(() => clearTimeout(timerHandle))
 	return debouncedSignalSetter
 }

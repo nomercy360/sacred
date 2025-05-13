@@ -37,6 +37,7 @@ export function useWishCreation() {
 	const [step, setStep] = createSignal<StepName>(StepNames.START_SCREEN)
 	const [metaWithImages, setMetaWithImages] = createSignal<MetadataResponse | null>(null)
 	const [createdWishId, setCreatedWishId] = createSignal<string | null>(null)
+	const [isLoading, setIsLoading] = createSignal(false)
 
 	const navigate = useNavigate()
 	const mainButton = useMainButton()
@@ -57,21 +58,29 @@ export function useWishCreation() {
 	createEffect(() => {
 		switch (step()) {
 			case StepNames.START_SCREEN:
-            backButton.setVisible()
-            backButton.onClick(decrementStep)
-            if (!!updateWish.url?.match(/^https?:\/\//)) {
-                mainButton.enable('Continue')
-            } else {
-                mainButton.disable('Enter valid link')
-            }
-            break;
+                backButton.setVisible()
+                backButton.onClick(decrementStep)
+                if (isLoading()) {
+                    mainButton.disable('Loading...')
+                } else if (!!updateWish.url?.match(/^https?:\/\//)) {
+                    mainButton.enable('Continue')
+                } else {
+                    mainButton.disable('Enter valid link')
+                }
+                break;
 
 			case StepNames.CHOOSE_CATEGORIES:
-				mainButton.toggle(updateWish.category_ids.length > 0, 'Continue', 'Select at least 1')
+				if (isLoading()) {
+                    mainButton.disable('Loading...')
+                } else {
+                    mainButton.toggle(updateWish.category_ids.length > 0, 'Continue', 'Select at least 1')
+                }
 				break
 
 			case StepNames.SELECT_IMAGES:
-				if (urlImages().length > 0) {
+				if (isLoading()) {
+                    mainButton.disable('Loading...')
+                } else if (urlImages().length > 0) {
 					mainButton.toggle(true, 'Continue')
 				} else {
 					mainButton.enable('Continue')
@@ -79,11 +88,19 @@ export function useWishCreation() {
 				break
 
 			case StepNames.ADD_NAME:
-				mainButton.toggle(!!updateWish.name, 'Continue', 'Add title to continue')
+				if (isLoading()) {
+                    mainButton.disable('Loading...')
+                } else {
+                    mainButton.toggle(!!updateWish.name, 'Continue', 'Add title to continue')
+                }
 				break
 
 			case StepNames.ADD_LINK:
-				mainButton.toggle(!!updateWish.url?.match(/^https?:\/\//), 'Continue')
+				if (isLoading()) {
+                    mainButton.disable('Loading...')
+                } else {
+                    mainButton.toggle(!!updateWish.url?.match(/^https?:\/\//), 'Continue')
+                }
 				break
 
 			case StepNames.CONFIRM:
@@ -107,23 +124,30 @@ export function useWishCreation() {
 
 	// File handling
 	const handleFileChange = async (event: any) => {
+		if (isLoading()) return; // Пропускаем, если уже идет загрузка
+		
 		setActiveFlow(FlowNames.START_WITH_PHOTOS)
 		const files = event.target.files
 
 		if (!files || files.length === 0) return
 
+		setIsLoading(true);
 		mainButton.showProgress(false)
 		const validFiles = validateFiles(files)
 
 		if (validFiles.length === 0) {
 			addToast('No valid files were selected.')
 			mainButton.hideProgress()
+			setIsLoading(false);
 			return
 		}
 
 		try {
 			const success = await createWishIfNeeded()
-			if (!success) return
+			if (!success) {
+				setIsLoading(false);
+				return;
+			}
 
 			const wishId = createdWishId()!
 			const newImages = [] as WishImage[]
@@ -152,6 +176,7 @@ export function useWishCreation() {
 			}
 		} finally {
 			mainButton.hideProgress()
+			setIsLoading(false);
 		}
 	}
 
@@ -163,13 +188,16 @@ export function useWishCreation() {
 
 	// Navigation and step flow
 	const onContinue = async () => {
+		if (isLoading()) return; // Пропускаем, если уже идет загрузка
+		
 		switch (step()) {
 			case StepNames.START_SCREEN:
-				setStep(StepNames.CHOOSE_CATEGORIES)
-				setMetaWithImages(null)
-				await createWishIfNeeded()
-
+				setIsLoading(true);
 				try {
+					setStep(StepNames.CHOOSE_CATEGORIES)
+					setMetaWithImages(null)
+					await createWishIfNeeded()
+
 					const data = await fetchMetadata(updateWish.url!)
 
 					if (!data.image_urls || data.image_urls.length === 0) {
@@ -187,6 +215,8 @@ export function useWishCreation() {
 				} catch (error) {
 					console.error('Error fetching metadata:', error)
 					addToast('Failed to extract content from the link')
+				} finally {
+					setIsLoading(false);
 				}
 				break
 
@@ -199,9 +229,10 @@ export function useWishCreation() {
 				break
 
 			case StepNames.SELECT_IMAGES:
-				window.Telegram.WebApp.MainButton.showProgress(true)
-
+				setIsLoading(true);
 				try {
+					window.Telegram.WebApp.MainButton.showProgress(true)
+
 					if (urlImages().length > 0) {
 						const { data, error } = await uploadWishPhotosByUrls(createdWishId()!, urlImages())
 
@@ -215,18 +246,18 @@ export function useWishCreation() {
 						// If no images selected, just proceed to next step
 						// User might have received the "No images found" message
 					}
+
+					if (updateWish.name) {
+						setStep(StepNames.CONFIRM)
+					} else {
+						setStep(StepNames.ADD_NAME)
+					}
 				} catch (error) {
 					console.error('Error uploading images:', error)
 					addToast('Failed to upload images')
-					return
 				} finally {
 					window.Telegram.WebApp.MainButton.hideProgress()
-				}
-
-				if (updateWish.name) {
-					setStep(StepNames.CONFIRM)
-				} else {
-					setStep(StepNames.ADD_NAME)
+					setIsLoading(false);
 				}
 				break
 
@@ -239,6 +270,7 @@ export function useWishCreation() {
 				break
 
 			case StepNames.CONFIRM:
+				setIsLoading(true);
 				try {
 					window.Telegram.WebApp.MainButton.showProgress(false)
 
@@ -257,6 +289,7 @@ export function useWishCreation() {
 					}
 				} finally {
 					window.Telegram.WebApp.MainButton.hideProgress()
+					setIsLoading(false);
 				}
 				break
 		}
@@ -326,6 +359,8 @@ export function useWishCreation() {
 		setStep,
 		metaWithImages,
 		createdWishId,
+		isLoading,
+		setIsLoading,
 
 		// Functions
 		updateLink,

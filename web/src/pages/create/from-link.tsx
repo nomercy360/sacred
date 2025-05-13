@@ -1,4 +1,4 @@
-import { Match, onMount, Switch } from 'solid-js'
+import { Match, onMount, Show, Switch } from 'solid-js'
 import FormLayout from '~/components/form-layout'
 import { StepNames } from './components/types'
 import { useWishCreation } from './components/useWishCreation'
@@ -24,6 +24,7 @@ export default function CreateFromLinkPage() {
 		setStep,
 		removeImage,
 		onContinue,
+		isLoading,
 	} = useWishCreation()
 
 	onMount(() => {
@@ -36,6 +37,15 @@ export default function CreateFromLinkPage() {
 			step={Object.values(StepNames).indexOf(step()) + 1}
 			maxSteps={6}
 		>
+			<Show when={isLoading()}>
+				<div class="absolute inset-0 flex items-center justify-center bg-black/20 z-50">
+					<div class="bg-background rounded-lg p-4 flex flex-col items-center">
+						<div class="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mb-2"></div>
+						<div class="text-sm">Loading...</div>
+					</div>
+				</div>
+			</Show>
+
 			<Switch>
 				<Match when={step() === StepNames.START_SCREEN}>
 					<StartStep

@@ -44,18 +44,18 @@ export const ImageButton: Component<ImageButtonProps> = (props) => {
 			let containerClasses = 'relative size-full bg-secondary flex items-center justify-center'
 
 			if (imageCount() === 1) {
-				containerClasses += ' rounded-full'
+				containerClasses += 'rounded-full'
 			} else if (imageCount() === 2) {
-				containerClasses += index === 0 ? ' rounded-l-full' : ' rounded-r-full'
+				containerClasses += index === 0 ? 'rounded-l-full' : 'rounded-r-full'
 			} else if (imageCount() === 3) {
-				if (index === 0) containerClasses += ' rounded-l-full'
-				else if (index === 2) containerClasses += ' rounded-r-full'
+				if (index === 0) containerClasses += 'rounded-l-full'
+				else if (index === 2) containerClasses += 'rounded-r-full'
 			}
 
-			// Image layer with blur
+			// Image layer with stronger darkening overlay
 			const imageLayer = (
 				<span
-					class="absolute inset-0 bg-cover bg-center bg-no-repeat blur-[1px]"
+					class="absolute inset-0 bg-cover bg-center bg-no-repeat after:content-[''] after:absolute after:inset-0 after:bg-black after:bg-opacity-50"
 					style={{ 'background-image': `url(${img})` }}
 				></span>
 			)

@@ -3,8 +3,10 @@ import { Match, Switch, createEffect } from 'solid-js'
 import { ImageButton } from '~/components/image-button'
 import { createQuery } from '@tanstack/solid-query'
 import { Link } from '~/components/link'
+import { useNavigate } from '@solidjs/router'
 
 export default function PeoplePage() {
+	const navigate = useNavigate()
 	const users = createQuery<UserProfile[]>(() => ({
 		queryKey: ['users'],
 		queryFn: () => fetchProfiles(),
@@ -14,7 +16,7 @@ export default function PeoplePage() {
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
 			<div
 				class="bg-background h-20 fixed flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5">
-				<button class="flex items-center justify-center bg-secondary rounded-full size-10">
+				<button onClick={() => navigate('/search')} class="flex items-center justify-center bg-secondary rounded-full size-10">
 					<span class="material-symbols-rounded text-[20px]">search</span>
 				</button>
 				<p class="text-black text-2xl font-extrabold">

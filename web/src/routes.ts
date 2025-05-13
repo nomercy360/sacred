@@ -12,6 +12,7 @@ import CategoriesEdit from '~/pages/categories-edit'
 import BookmarksPage from '~/pages/bookmarks'
 import ProfileEditPage from '~/pages/profile-edit'
 import WishEditPage from '~/pages/wish-edit'
+import SearchPage from './pages/search-people'
 
 export const routes: RouteDefinition[] = [
 	{
@@ -59,6 +60,10 @@ export const routes: RouteDefinition[] = [
 	{
 		path: '/profile/edit',
 		component: ProfileEditPage,
+	},
+	{
+		path: '/search',
+		component: SearchPage,
 	},
 	{
 		path: '/wishes/:id/edit',

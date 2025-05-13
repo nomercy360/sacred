@@ -23,7 +23,32 @@ export function NavigationProvider(props: { children: JSX.Element }) {
 	const navigateBack = () => {
 		const state = location.state
 
-		!state && navigate('/')
+
+		if (location.pathname.includes('/profiles/')) {
+
+			navigate('/people')
+			return
+		}
+
+		if (location.pathname.includes('/wishes/')) {
+
+			const pathParts = location.pathname.split('/')
+
+			if (state && typeof state === 'object') {
+				try {
+					const stateObj = state as any
+					if (stateObj.from && typeof stateObj.from === 'string') {
+						navigate(stateObj.from)
+						return
+					}
+				} catch (e) {
+					console.error('Failed to parse state:', e)
+				}
+			}
+
+			navigate('/')
+			return
+		}
 
 		const deserialize = (state: Readonly<Partial<unknown>> | null) => {
 			try {
@@ -55,9 +80,10 @@ export function NavigationProvider(props: { children: JSX.Element }) {
 	}
 
 	createEffect(() => {
-		if (location.pathname !== '/'
-			&& location.pathname !== '/setup'
-			&& location.pathname !== '/create/from-link'
+		if (location.pathname.includes('/profiles/') ||
+			(location.pathname !== '/'
+				&& location.pathname !== '/setup'
+				&& location.pathname !== '/create/from-link')
 		) {
 			backButton.setVisible()
 			backButton.onClick(navigateBack)

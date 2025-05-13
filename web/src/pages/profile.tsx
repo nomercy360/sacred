@@ -2,7 +2,7 @@ import { fetchUserProfile, UserProfile, Wish, WishImage } from '~/lib/api'
 import { For, Match, Show, Switch } from 'solid-js'
 import { useQuery } from '@tanstack/solid-query'
 import { Link } from '~/components/link'
-import { useParams } from '@solidjs/router'
+import { useParams, useLocation } from '@solidjs/router'
 
 
 export function resolveImage(images: WishImage[]) {
@@ -24,6 +24,7 @@ export function splitIntoGroups(array: Wish[] | undefined, groupCount: number) {
 
 export default function UserProfilePage() {
 	const params = useParams()
+	const location = useLocation()
 	const user = useQuery<UserProfile>(() => ({
 		queryKey: ['profile', params.id],
 		queryFn: () => fetchUserProfile(params.id),
@@ -76,6 +77,7 @@ export default function UserProfilePage() {
 														'aspect-ratio': resolveAspectRatio(item.images),
 													}}
 													href={`/wishes/${item.id}`}
+													state={{ from: location.pathname }}
 												>
 												</Link>
 											)}

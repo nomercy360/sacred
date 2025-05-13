@@ -1,6 +1,7 @@
 // Reusable ImageButton Component
 import { Component, createMemo } from 'solid-js'
 import { Link } from '~/components/link'
+import { useLocation } from '@solidjs/router'
 
 type ImageButtonProps = {
 	children: any;
@@ -9,6 +10,7 @@ type ImageButtonProps = {
 };
 
 export const ImageButton: Component<ImageButtonProps> = (props) => {
+	const location = useLocation()
 	const limitedImages = createMemo(() => props.images?.slice(0, 3) || [])
 
 	const imageCount = createMemo(() => limitedImages().length)
@@ -80,6 +82,7 @@ export const ImageButton: Component<ImageButtonProps> = (props) => {
 		<Link
 			class={`w-full h-[200px] grid ${gridCols()} gap-0.5 rounded-full overflow-hidden relative`}
 			href={props.href}
+			state={{ from: location.pathname }}
 		>
 			{renderImages()}
 		</Link>

@@ -8,7 +8,6 @@ import { queryClient } from "~/App"
 import { addToast } from "~/components/toast"
 import { setStore } from "~/store"
 
-// Simple loader component
 const ImageLoader = () => (
   <div class="flex items-center justify-center h-40">
     <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
@@ -30,8 +29,6 @@ export default function WishEditPage() {
     queryFn: () => fetchWish(params.id),
   }))
 
-  console.log("PARAMS ID", params.id)
-
   const updateWishMutation = createMutation(() => ({
     mutationFn: async () => {
       setIsSaving(true)
@@ -41,7 +38,7 @@ export default function WishEditPage() {
         notes: null,
         price: null,
         currency: null,
-        category_ids: item.data?.categories?.map(cat => cat.id) || []
+        category_ids: item.data?.categories?.map(category => category.id) || []
       }
 
       return fetchUpdateWish(params.id, requestData)
@@ -58,7 +55,7 @@ export default function WishEditPage() {
       queryClient.invalidateQueries({ queryKey: ['item', params.id] })
       queryClient.invalidateQueries({ queryKey: ['wishes'] })
       queryClient.invalidateQueries({ queryKey: ['feed'] })
-      
+
       setStore('wishes', (old: Wish[]) => {
         return old.map((wish: Wish) => {
           if (wish.id === params.id) {
@@ -71,7 +68,7 @@ export default function WishEditPage() {
           return wish;
         });
       });
-      
+
       addToast("Wish updated successfully")
       navigate('/')
     },
@@ -94,9 +91,9 @@ export default function WishEditPage() {
     mainButton.showProgress(true)
     try {
       const result = await updateWishMutation.mutateAsync()
-      // Успешное сохранение обрабатывается в onSuccess мутации
+
     } catch (error) {
-      // Ошибка уже обрабатывается в onError мутации
+
     } finally {
       mainButton.hideProgress()
     }
@@ -104,7 +101,7 @@ export default function WishEditPage() {
 
   const deleteImage = async (imageId: string) => {
     if (isDeleting()) return;
-    
+
     setIsDeleting(true)
     try {
       const result = await deleteWishPhoto(params.id, imageId);
@@ -112,13 +109,11 @@ export default function WishEditPage() {
         addToast("Failed to delete image");
       } else {
         addToast("Image deleted successfully");
-        
-        // Обновляем все квери, связанные с вишами
+
         await queryClient.invalidateQueries({ queryKey: ['item', params.id] });
         await queryClient.invalidateQueries({ queryKey: ['wishes'] });
         await queryClient.invalidateQueries({ queryKey: ['feed'] });
-        
-        // Обновляем данные в локальном сторе
+
         setStore('wishes', (old: Wish[]) => {
           return old.map((wish: Wish) => {
             if (wish.id === params.id) {
@@ -169,28 +164,26 @@ export default function WishEditPage() {
         </div>
       }>
         <div class="w-full space-y-4 overflow-y-auto max-h-[calc(100vh-120px)] pb-6">
-          <div>
-            <label class="block text-sm font-medium mb-1">Wish name</label>
+
+          <div class="flex flex-col w-full space-y-1.5">
+            <label class="text-xs font-medium text-secondary-foreground mb-1">Visible wish name</label>
             <input
-              type="text"
               value={wishName()}
-              onChange={(e) => setWishName(e.target.value)}
-              class="w-full px-3 py-2 border rounded-lg"
-              placeholder="Enter wish name"
-              disabled={isSaving()}
+              onInput={(e) => setWishName(e.currentTarget.value)}
+              class="focus:outline-none text-sm font-semibold h-12 px-3 py-2 bg-secondary rounded-xl"
             />
           </div>
 
-          <div>
-            <label class="block text-sm font-medium mb-1">Link</label>
-            <input
-              type="url"
-              value={wishLink()}
-              onChange={(e) => setWishLink(e.target.value)}
-              class="w-full px-3 py-2 border rounded-lg"
-              placeholder="https://example.com"
-              disabled={isSaving()}
-            />
+          <div class="flex flex-col w-full space-y-1.5">
+            <label class="font-medium text-xs text-secondary-foreground">Board link</label>
+            <div class="font-semibold text-sm bg-secondary flex items-center rounded-xl h-12 px-3 py-2">
+              <span class="text-muted-foreground">wshd.xyz/</span>
+              <input
+                value={wishLink()}
+                onInput={(e) => setWishLink(e.currentTarget.value)}
+                class="text-foreground bg-transparent focus:outline-none flex-1"
+              />
+            </div>
           </div>
 
           <Show when={isSaving()}>
@@ -201,27 +194,27 @@ export default function WishEditPage() {
           </Show>
 
           <Show when={item.data?.images} fallback={<ImageLoader />}>
-					<For each={item.data?.images}>
-						{(image: WishImage) => (
-							<div class="relative">
-								<img
-									src={`https://assets.peatch.io/${image.url}`}
-									alt={item.data?.name}
-									class="w-full rounded-[25px] border-[0.5px] border-border/60"
-									style={{ 'aspect-ratio': `${image.width}/${image.height}` }}
-								/>
-								<button 
-									onClick={() => deleteImage(image.id)}
-									disabled={isDeleting() || isSaving()}
-									class="absolute top-3 right-3 bg-black/70 hover:bg-black rounded-full p-1.5 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-									title="Delete image"
-								>
-									<span class="material-symbols-rounded text-[10px]">delete</span>
-								</button>
-							</div>
-						)}
-					</For>
-				</Show>
+            <For each={item.data?.images}>
+              {(image: WishImage) => (
+                <div class="relative">
+                  <img
+                    src={`https://assets.peatch.io/${image.url}`}
+                    alt={item.data?.name}
+                    class="w-full rounded-[25px] border-[0.5px] border-border/60"
+                    style={{ 'aspect-ratio': `${image.width}/${image.height}` }}
+                  />
+                  <button
+                    onClick={() => deleteImage(image.id)}
+                    disabled={isDeleting() || isSaving()}
+                    class="absolute top-3 right-3 bg-black rounded-full size-6 flex items-center justify-center"
+                    title="Delete image"
+                  >
+                    <span class="material-symbols-rounded text-white text-[16px]">close</span>
+                  </button>
+                </div>
+              )}
+            </For>
+          </Show>
         </div>
       </Show>
     </div>

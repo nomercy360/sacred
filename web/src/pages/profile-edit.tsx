@@ -83,7 +83,7 @@ export default function ProfileEditPage() {
 					for="avatar-upload"
 					class="absolute bottom-0 right-0 bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer"
 				>
-					<span class="material-symbols-rounded text-[16px]">edit</span>
+					<span class="material-symbols-rounded text-[16px]">photo_camera</span>
 				</label>
 				<input
 					id="avatar-upload"

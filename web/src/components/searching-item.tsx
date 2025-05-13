@@ -9,8 +9,8 @@ export interface SearchingItemProps {
 
 export function SearchingItem({ profilePicture, name, followers, userId }: SearchingItemProps) {
     return (
-        <div class="flex flex-row items-center w-full justify-between mx-5 my-3 py-2">
-            <Link href={`/profiles/${userId}`} class="flex flex-row items-center gap-2 flex-1">
+        <div class="flex flex-row items-center w-full justify-between mx-5 my-3">
+            <Link href={`/profiles/${userId}`} class="flex flex-row items-center gap-3 flex-1">
                 <img src={profilePicture} alt={name} class="w-10 h-10 rounded-full object-cover" />
                 <div class="flex flex-col items-start">
                     <p class="text-sm font-bold">{name}</p>

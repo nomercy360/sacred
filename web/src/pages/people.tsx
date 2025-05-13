@@ -15,7 +15,7 @@ export default function PeoplePage() {
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
 			<div
-				class="bg-background h-20 fixed flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5">
+				class="bg-background h-20 fixed flex-shrink-0 w-full flex flex-row justify-between items-center p-5 z-10">
 				<button onClick={() => navigate('/search')} class="flex items-center justify-center bg-secondary rounded-full size-10">
 					<span class="material-symbols-rounded text-[20px]">search</span>
 				</button>
@@ -47,10 +47,10 @@ export default function PeoplePage() {
 					</Match>
 
 					<Match when={!users.isLoading && users.data?.length}>
-						<div class="space-y-4 mt-4">
-							<p>
+						<div class="space-y-4 mt-20">
+							{/* <p>
 								There is nothing here yet. Start saving or explore collections.
-							</p>
+							</p> */}
 							<div class="space-y-0.5 w-full">
 								{users.data?.map((user) => (
 									<ImageButton

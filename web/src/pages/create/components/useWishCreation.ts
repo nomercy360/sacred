@@ -295,7 +295,7 @@ export function useWishCreation() {
 		}
 	}
 
-	const decrementStep = () => {
+	const decrementStep = () => {       // где то в этом месте есть баг с кнопкой назад, надо будет потестить исправить. 
 		switch (step()) {
 			case StepNames.START_SCREEN:
 				navigate('/')

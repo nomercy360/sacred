@@ -7,6 +7,8 @@ import { useMainButton } from "~/lib/useMainButton"
 import { queryClient } from "~/App"
 import { addToast } from "~/components/toast"
 import { setStore } from "~/store"
+import { Motion } from "solid-motionone"
+
 
 const ImageLoader = () => (
   <div class="flex items-center justify-center h-40">
@@ -19,6 +21,8 @@ export default function WishEditPage() {
   const [wishLink, setWishLink] = createSignal('')
   const [isDeleting, setIsDeleting] = createSignal(false)
   const [isSaving, setIsSaving] = createSignal(false)
+
+  const [editMode, setEditMode] = createSignal(true)
 
   const params = useParams()
   const navigate = useNavigate()
@@ -196,22 +200,43 @@ export default function WishEditPage() {
           <Show when={item.data?.images} fallback={<ImageLoader />}>
             <For each={item.data?.images}>
               {(image: WishImage) => (
-                <div class="relative">
-                  <img
-                    src={`https://assets.peatch.io/${image.url}`}
-                    alt={item.data?.name}
-                    class="w-full rounded-[25px] border-[0.5px] border-border/60"
-                    style={{ 'aspect-ratio': `${image.width}/${image.height}` }}
-                  />
-                  <button
-                    onClick={() => deleteImage(image.id)}
-                    disabled={isDeleting() || isSaving()}
-                    class="absolute top-3 right-3 bg-black rounded-full size-6 flex items-center justify-center"
-                    title="Delete image"
-                  >
-                    <span class="material-symbols-rounded text-white text-[16px]">close</span>
-                  </button>
-                </div>
+                <Motion.div
+                  animate={
+                    editMode()
+                      ? {
+                        rotate: [0.5, -0.5, 0.5], // колебание влево-вправо
+                      }
+                      : {
+                        rotate: 0,
+                      }
+                  }
+                  transition={
+                    editMode()
+                      ? {
+                        duration: 0.25,
+                        repeat: Infinity,
+
+                      }
+                      : { duration: 0.2 }
+                  }
+                >
+                  <div class="relative">
+                    <img
+                      src={`https://assets.peatch.io/${image.url}`}
+                      alt={item.data?.name}
+                      class="w-full rounded-[25px] border-[0.5px] border-border/60"
+                      style={{ 'aspect-ratio': `${image.width}/${image.height}` }}
+                    />
+                    <button
+                      onClick={() => deleteImage(image.id)}
+                      disabled={isDeleting() || isSaving()}
+                      class="absolute top-3 right-3 bg-black rounded-full size-6 flex items-center justify-center"
+                      title="Delete image"
+                    >
+                      <span class="material-symbols-rounded text-white text-[16px]">close</span>
+                    </button>
+                  </div>
+                </Motion.div>
               )}
             </For>
           </Show>

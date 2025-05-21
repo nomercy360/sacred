@@ -38,10 +38,10 @@ export default function CreateFromLinkPage() {
 			maxSteps={6}
 		>
 			<Show when={isLoading()}>
-				<div class="absolute inset-0 flex items-center justify-center bg-black/20 z-50">
-					<div class="bg-background rounded-lg p-4 flex flex-col items-center">
-						<div class="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mb-2"></div>
-						<div class="text-sm">Loading...</div>
+				<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+					<div class="bg-black text-white rounded-xl shadow-md px-4 py-3 flex items-center gap-3">
+						<div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+						<span class="text-sm">Uploading your selection…</span>
 					</div>
 				</div>
 			</Show>

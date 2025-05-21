@@ -84,7 +84,7 @@ const ConfirmStep: Component<ConfirmStepProps> = (props) => {
 			>
 				<div class="grid grid-cols-2 w-full gap-2">
 					<label
-						class="bg-primary text-primary-foreground text-sm font-medium rounded-xl h-12 px-4 w-full flex flex-row items-center justify-between"
+						class="bg-primary cursor-pointer text-primary-foreground text-sm font-medium rounded-xl h-12 px-4 w-full flex flex-row items-center justify-between"
 					>
 						<input
 							type="file"

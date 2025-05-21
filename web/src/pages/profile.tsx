@@ -32,7 +32,7 @@ export default function UserProfilePage() {
 	const mainButton = useMainButton()
 
 	
-//допридумать логику подписки
+//придумать логику подписки
 	// const followUser = async () => {
 	// 	await followUser(params.id)
 	// }

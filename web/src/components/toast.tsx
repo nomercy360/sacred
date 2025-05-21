@@ -31,13 +31,24 @@ const Toast = () => {
 	return (
 		<div class="fixed top-4 left-1/2 -translate-x-1/2 transform space-y-2">
 			{toasts().map(toast => (
-				<div
+				toast.message.length > 10 ? (
+					<div
 					class="z-[999] flex w-[calc(100vw-2rem)] items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
 					<span class="material-symbols-rounded mr-2 text-[20px] text-green-600">
 						check_circle
 					</span>
 					{toast.message}
 				</div>
+				) : (
+					<div
+					class="z-[999] flex w-[86px] mr-3  items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+						{toast.message}
+					<span class="material-symbols-rounded text-[20px] text-white">
+						check
+					</span>
+					
+				</div>
+				)
 			))}
 		</div>
 	)

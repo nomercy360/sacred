@@ -57,7 +57,7 @@ export default function App(props: any) {
 			window.Telegram.WebApp.disableClosingConfirmation()
 			window.Telegram.WebApp.disableVerticalSwipes()
 
-			// window.Telegram.WebApp.CloudStorage.removeItem('onboarding')
+			window.Telegram.WebApp.CloudStorage.removeItem('onboarding')
 
 			setIsAuthenticated(true)
 			setIsLoading(false)

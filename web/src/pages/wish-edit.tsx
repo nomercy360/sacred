@@ -7,7 +7,6 @@ import { useMainButton } from "~/lib/useMainButton"
 import { queryClient } from "~/App"
 import { addToast } from "~/components/toast"
 import { setStore } from "~/store"
-import { Motion } from "solid-motionone"
 
 
 const ImageLoader = () => (
@@ -73,7 +72,7 @@ export default function WishEditPage() {
         });
       });
 
-      addToast("Wish updated successfully")
+      addToast("Saved")
       navigate('/')
     },
     onError: (error) => {

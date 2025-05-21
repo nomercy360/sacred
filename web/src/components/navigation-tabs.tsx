@@ -28,7 +28,7 @@ export default function NavigationTabs(props: any) {
 	return (
 		<>
 			<div
-				class="flex flex-col items-center justify-start border-t shadow-sm h-[110px] fixed bottom-0 w-full bg-background z-50"
+				class="flex flex-col items-center justify-start h-[110px] fixed bottom-0 w-full bg-background z-50"
 			>
 				<div class="flex flex-row pt-4 pb-5 space-x-8">
 					{tabs.map(({ href, icon }) => (

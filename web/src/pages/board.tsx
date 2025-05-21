@@ -83,13 +83,20 @@ export default function UserBoardPage() {
 										<For each={group}>
 											{(item) => (
 												<Link
-													class="bg-center bg-cover rounded-[25px] border-[0.5px] border-border/70"
+													class="flex bg-center bg-[#F4F4F5] bg-cover justify-center items-center rounded-[25px] "
 													style={{
-														'background-image': `url(${resolveImage(item.images)})`,
+														'background-image': item.images ? `url(${resolveImage(item.images)})` : 'none',
 														'aspect-ratio': resolveAspectRatio(item.images),
 													}}
 													href={`/wishes/${item.id}`}
 												>
+													{item.images.length > 0 ? (
+														null
+													) : (
+														<span class="material-symbols-rounded text-white text-[40px]">
+															no_photography
+														</span>
+													)}
 												</Link>
 											)}
 										</For>
@@ -160,7 +167,7 @@ function OnboardingPopup(props: { onClose: () => void }) {
 	}
 
 	return (
-		<div class="flex justify-end flex-col h-screen fixed inset-0 w-full backdrop-blur-sm z-50">
+		<div class="flex justify-end flex-col h-screen fixed inset-0 w-full backdrop-blur-lg z-50">
 			<div
 				class="items-center bg-background rounded-t-2xl px-4 pt-4 pb-12 flex flex-col justify-between h-[300px] animate-slide-up"
 				ref={setPopupRef}

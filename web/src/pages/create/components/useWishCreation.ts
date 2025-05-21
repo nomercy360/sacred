@@ -60,9 +60,7 @@ export function useWishCreation() {
 			case StepNames.START_SCREEN:
                 backButton.setVisible()
                 backButton.onClick(decrementStep)
-                if (isLoading()) {
-                    mainButton.disable('Loading...')
-                } else if (!!updateWish.url?.match(/^https?:\/\//)) {
+                if (!!updateWish.url?.match(/^https?:\/\//)) {
                     mainButton.enable('Continue')
                 } else {
                     mainButton.disable('Enter valid link')
@@ -71,7 +69,7 @@ export function useWishCreation() {
 
 			case StepNames.CHOOSE_CATEGORIES:
 				if (isLoading()) {
-                    mainButton.disable('Loading...')
+                    mainButton.disable('Add categories...')
                 } else {
                     mainButton.toggle(updateWish.category_ids.length > 0, 'Continue', 'Select at least 1')
                 }
@@ -192,7 +190,7 @@ export function useWishCreation() {
 		
 		switch (step()) {
 			case StepNames.START_SCREEN:
-				setIsLoading(true);
+				// setIsLoading(true);
 				try {
 					setStep(StepNames.CHOOSE_CATEGORIES)
 					setMetaWithImages(null)
@@ -221,11 +219,13 @@ export function useWishCreation() {
 				break
 
 			case StepNames.CHOOSE_CATEGORIES:
+				setIsLoading(true);
 				if (activeFlow() === FlowNames.START_WITH_PHOTOS) {
 					setUpdateWish({ url: null })
 				}
 				const nextStep = activeFlow() === FlowNames.START_WITH_LINK ? StepNames.SELECT_IMAGES : StepNames.ADD_NAME
 				setStep(nextStep)
+				setIsLoading(false);
 				break
 
 			case StepNames.SELECT_IMAGES:

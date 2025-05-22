@@ -76,7 +76,7 @@ export default function ProfileEditPage() {
 		<div class="flex flex-col items-center w-full px-4 py-6">
 			<div class="mb-8 relative">
 				<div
-					class="w-24 h-24 rounded-full bg-cover bg-center border border-gray-200"
+					class="w-24 h-24 rounded-full bg-cover bg-center "
 					style={{ 'background-image': `url(${avatar() || '/placeholder.jpg'})` }}
 				/>
 				<label

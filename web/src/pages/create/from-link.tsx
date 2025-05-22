@@ -40,8 +40,10 @@ export default function CreateFromLinkPage() {
 			<Show when={isLoading()}>
 				<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
 					<div class="bg-black text-white rounded-xl shadow-md px-4 py-3 flex items-center gap-3">
-						<div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-						<span class="text-sm">Uploading your selection…</span>
+						<div class="h-4 w-4 rounded-full animate-spin"></div>
+						<span class="text-sm">
+							{step() === StepNames.CONFIRM ? "Finishing up..." : "Uploading your selection…"}
+						</span>
 					</div>
 				</div>
 			</Show>

@@ -89,7 +89,7 @@ function ImageGridLoader(props: ImageGridLoaderProps = { isLoading: true }) {
 			<div class="w-full grid grid-cols-2 gap-0.5 overflow-y-scroll">
 				{[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
 					<div
-						class="border border-border/60 bg-secondary relative w-full bg-center bg-cover aspect-[3/4] rounded-2xl animate-pulse" />
+						class="bg-secondary relative w-full bg-center bg-cover aspect-[3/4] rounded-2xl bright-pulse" />
 				))}
 			</div>
 		</div>

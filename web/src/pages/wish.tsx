@@ -1,6 +1,6 @@
 import { createEffect, For, Match, onCleanup, Show, Switch } from 'solid-js'
 import { createMutation, createQuery } from '@tanstack/solid-query'
-import { copyWish, deleteWish, fetchWish, removeBookmark, saveBookmark, Wish } from '~/lib/api'
+import { copyWish, deleteWish, fetchWish, removeBookmark, fetchBookmarks, saveBookmark, Wish } from '~/lib/api'
 import { useNavigate, useParams } from '@solidjs/router'
 import { cn, currencySymbol, getDomainName } from '~/lib/utils'
 import { queryClient } from '~/App'
@@ -18,6 +18,18 @@ const ViewItem = () => {
 	const navigate = useNavigate()
 
 	const mainButton = useMainButton()
+
+
+	const bookmarks = createQuery<Wish[]>(() => ({
+		queryKey: ['bookmarks'],
+		queryFn: () => fetchBookmarks(),
+	}))
+
+	createEffect(() => {
+		if (bookmarks.isSuccess) {
+			console.log("BOOKMARKS", JSON.parse(JSON.stringify(bookmarks.data)))
+		}
+	})
 
 	const saveToBoard = createMutation(() => ({
 		mutationFn: () => copyWish(item.data!.id),
@@ -183,7 +195,7 @@ const ViewItem = () => {
 							<img
 								src={`https://assets.peatch.io/${image.url}`}
 								alt={item.data?.name}
-								class="w-full rounded-[25px] border-[0.5px] border-border/60"
+								class="w-full rounded-[25px]"
 								style={{ 'aspect-ratio': `${image.width}/${image.height}` }}
 							/>
 						)}

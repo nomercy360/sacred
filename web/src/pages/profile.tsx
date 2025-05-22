@@ -95,7 +95,7 @@ export default function UserProfilePage() {
 										<For each={group}>
 											{(item) => (
 												<Link
-													class="bg-center bg-cover rounded-[25px] border-[0.5px] border-border/70"
+													class="bg-center bg-cover rounded-[25px]"
 													style={{
 														'background-image': `url(${resolveImage(item.images)})`,
 														'aspect-ratio': resolveAspectRatio(item.images),

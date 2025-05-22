@@ -32,45 +32,49 @@ export const ImageButton: Component<ImageButtonProps> = (props) => {
 		const imgs = limitedImages()
 
 		if (imageCount() === 0) {
-			// No images: show a default placeholder
 			return (
 				<span
-					class="text-secondary-foreground size-full bg-cover bg-center bg-no-repeat bg-secondary flex items-center justify-center font-bold text-xl rounded-full"
+					class="relative size-full bg-secondary flex items-center justify-center font-bold text-xl text-secondary-foreground rounded-full"
 				>
 					{props.children}
 				</span>
 			)
 		}
-
+	
+		const shouldRenderContent = (index: number) => {
+			if (imageCount() === 1) return true
+			if (imageCount() === 2) return index === 0
+			if (imageCount() === 3) return index === 1
+			return false
+		}
+	
 		return imgs.map((img, index) => {
 			let containerClasses = 'relative size-full bg-secondary flex items-center justify-center'
-
+	
 			if (imageCount() === 1) {
-				containerClasses += 'rounded-full'
+				containerClasses += ' rounded-full'
 			} else if (imageCount() === 2) {
-				containerClasses += index === 0 ? 'rounded-l-full' : 'rounded-r-full'
+				containerClasses += index === 0 ? ' rounded-l-full' : ' rounded-r-full'
 			} else if (imageCount() === 3) {
-				if (index === 0) containerClasses += 'rounded-l-full'
-				else if (index === 2) containerClasses += 'rounded-r-full'
+				if (index === 0) containerClasses += ' rounded-l-full'
+				else if (index === 2) containerClasses += ' rounded-r-full'
 			}
-
-			// Image layer with stronger darkening overlay
+	
 			const imageLayer = (
 				<span
 					class="absolute inset-0 bg-cover bg-center bg-no-repeat after:content-[''] after:absolute after:inset-0 after:bg-black after:bg-opacity-50"
 					style={{ 'background-image': `url(${img})` }}
 				></span>
 			)
-
-			// Conditionally render the content layer
-			const contentLayer = ((imageCount() === 2 && index === 0) || (imageCount() === 3 && index === 1)) ? (
-				<div class="relative z-10 text-primary-foreground flex items-center justify-center h-full w-full">
+	
+			const contentLayer = shouldRenderContent(index) ? (
+				<div class="relative  text-primary-foreground flex items-center justify-center h-full w-full">
 					{props.children}
 				</div>
 			) : null
-
+	
 			return (
-				<span class={containerClasses} style={{ 'background-image': `url(${img})` }}>
+				<span class={containerClasses}>
 					{imageLayer}
 					{contentLayer}
 				</span>

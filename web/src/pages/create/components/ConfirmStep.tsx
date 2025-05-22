@@ -58,7 +58,7 @@ const ConfirmStep: Component<ConfirmStepProps> = (props) => {
 			<div class="mt-7 flex flex-col space-y-0.5 w-full items-center">
 				<For each={props.uploadImages}>
 					{(img) => (
-						<div class="border relative rounded-[48px] bg-secondary w-full aspect-[3/4]">
+						<div class="relative rounded-[48px] bg-secondary w-full aspect-[3/4]">
 							<button
 								class="absolute top-7 right-7 bg-primary text-primary-foreground rounded-full size-6 flex items-center justify-center"
 								onClick={() => props.onDeleteImage(img.id)}

@@ -23,7 +23,7 @@ export default function PeoplePage() {
 					People
 				</p>
 				<Link class="flex items-center justify-center bg-secondary rounded-full size-10"
-							href="/share">
+					href="/share">
 					<span class="material-symbols-rounded text-[20px]">mail</span>
 				</Link>
 			</div>
@@ -55,17 +55,17 @@ export default function PeoplePage() {
 								{users.data?.map((user) => (
 									<ImageButton
 										href={`/profiles/${user.id}`}
-										images={user.wishlist_items.map((wish) => 
-											wish.images && wish.images[0] ? 
-											`https://assets.peatch.io/${wish.images[0].url}` : 
-											'/placeholder.jpg'
+										images={user.wishlist_items.map((wish) =>
+											wish.images && wish.images[0] ?
+												`https://assets.peatch.io/${wish.images[0].url}` :
+												'/placeholder.jpg'
 										)}
 									>
 										<div class="flex flex-col items-center justify-center gap-0.5">
-											<img src={user.avatar_url} alt={user.name} class="size-9 rounded-full" />
-											<p class="mt-3 text-xl font-bold">{user.name}</p>
+											<img src={user.avatar_url || '/placeholder.jpg'} alt={user.name || 'User'} class="size-9 rounded-full" />
+											<p class="mt-3 text-xl font-bold">{user.name || 'Anonymous'}</p>
 											<p class="text-sm font-extralight">
-												{user.followers} followers
+												{user.followers || 0} followers
 											</p>
 										</div>
 									</ImageButton>

@@ -57,7 +57,7 @@ export function WishesGrid(props: WishesGridProps) {
 					<div class="flex flex-col gap-0.5">
 						<For each={props.wishes.data?.slice(0, Math.ceil(props.wishes.data.length / 2))}>
 							{(wish) => (
-								<Link href={`/wishes/${wish.id}`} class="border-[0.5px] border-border/70 rounded-3xl"
+								<Link href={`/wishes/${wish.id}`} class="rounded-3xl"
 									state={{ from: props.source }}
 									style="aspect-ratio: 1/1">
 									<img class="aspect-auto shrink-0 rounded-3xl"
@@ -75,7 +75,7 @@ export function WishesGrid(props: WishesGridProps) {
 					<div class="flex flex-col gap-0.5 h-full flex-grow">
 						<For each={props.wishes.data?.slice(Math.ceil(props.wishes.data.length / 2))}>
 							{(wish) => (
-								<Link href={`/wishes/${wish.id}`} class="border-[0.5px] border-border/70 rounded-3xl"
+								<Link href={`/wishes/${wish.id}`} class="rounded-3xl"
 									state={{ from: props.source }}
 									style="aspect-ratio: 1/1">
 									<img class="aspect-auto shrink-0 rounded-3xl"

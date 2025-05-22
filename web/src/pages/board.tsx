@@ -39,7 +39,7 @@ export default function UserBoardPage() {
 				<Switch>
 					<Match when={!store.wishes.length}>
 						<div
-							class="absolute top-[15%] rotate-[-4deg] left-[10%] w-[240px] text-start pl-5 pt-4 pr-10 pb-8 flex flex-col items-start justify-start gap-2 rounded-[25px] border-2 border-background bg-[#FEF5F3]">
+							class="absolute top-[15%] rotate-[-4deg] left-[10%] w-[240px] text-start pl-5 pt-4 pr-10 pb-8 flex flex-col items-start justify-start gap-2 rounded-[25px]  bg-[#FEF5F3]">
 							<span class="material-symbols-rounded text-[20px]">
 								note_stack
 							</span>
@@ -48,7 +48,7 @@ export default function UserBoardPage() {
 							</p>
 						</div>
 						<div
-							class="absolute top-[30%] rotate-[8deg] -right-2 w-[220px] text-start pl-5 pt-4 pr-10 pb-8 flex flex-col items-start justify-start gap-2 rounded-[25px] border-2 border-background bg-[#F7FCE5]">
+							class="absolute top-[30%] rotate-[8deg] -right-2 w-[220px] text-start pl-5 pt-4 pr-10 pb-8 flex flex-col items-start justify-start gap-2 rounded-[25px] bg-[#F7FCE5]">
 							<span class="material-symbols-rounded text-[20px]">
 								bookmark
 							</span>
@@ -57,7 +57,7 @@ export default function UserBoardPage() {
 							</p>
 						</div>
 						<div
-							class="absolute top-[38%] rotate-[-3deg] -left-2 w-[230px] text-start pl-5 pt-4 pr-10 pb-8 flex flex-col items-start justify-start gap-2 rounded-[25px] border-2 border-background bg-[#F8F3FF]">
+							class="absolute top-[38%] rotate-[-3deg] -left-2 w-[230px] text-start pl-5 pt-4 pr-10 pb-8 flex flex-col items-start justify-start gap-2 rounded-[25px] bg-[#F8F3FF]">
 							<span class="material-symbols-rounded text-[20px]">
 								mood
 							</span>
@@ -66,7 +66,7 @@ export default function UserBoardPage() {
 							</p>
 						</div>
 						<div
-							class="absolute top-[58%] rotate-[4deg] right-[10%] w-[230px] text-start pl-5 pt-4 pr-10 pb-8 flex flex-col items-start justify-start gap-2 rounded-[25px] border-2 border-background bg-[#FFFCEE]">
+							class="absolute top-[58%] rotate-[4deg] right-[10%] w-[230px] text-start pl-5 pt-4 pr-10 pb-8 flex flex-col items-start justify-start gap-2 rounded-[25px] bg-[#FFFCEE]">
 							<span class="material-symbols-rounded text-[20px]">
 								arrow_outward
 							</span>

@@ -162,12 +162,16 @@ export default function WishEditPage() {
       <h1 class="text-xl font-bold mb-6">Edit Wish</h1>
 
       <Show when={item.isSuccess} fallback={
-        <div class="flex items-center justify-center h-40">
-          <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div class="bg-black text-white rounded-xl shadow-md px-4 py-3 flex items-center gap-3">
+            <div class="h-4 w-4 rounded-full animate-spin"></div>
+            <span class="text-sm">
+              Uploading...
+            </span>
+          </div>
         </div>
       }>
         <div class="w-full space-y-4 overflow-y-auto max-h-[calc(100vh-120px)] pb-6">
-
           <div class="flex flex-col w-full space-y-1.5">
             <label class="text-xs font-medium text-secondary-foreground mb-1">Visible wish name</label>
             <input
@@ -189,12 +193,10 @@ export default function WishEditPage() {
             </div>
           </div>
 
-          <Show when={isSaving()}>
-            <div class="flex items-center justify-center py-4">
-              <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
-              <span class="ml-2">Saving changes...</span>
-            </div>
-          </Show>
+          <div class="flex flex-col space-y-1.5">
+            <label class="text-xs font-medium text-secondary-foreground mb-1">Upload wish photo</label>
+            <button class="text-sm font-semibold h-12 px-3 py-2 bg-primary text-white rounded-xl">add photo</button>
+          </div>
 
           <Show when={item.data?.images} fallback={<ImageLoader />}>
             <For each={item.data?.images}>
@@ -203,7 +205,7 @@ export default function WishEditPage() {
                   <img
                     src={`https://assets.peatch.io/${image.url}`}
                     alt={item.data?.name}
-                    class="w-full rounded-[25px] border-[0.5px] border-border/60"
+                    class="w-full rounded-[25px] "
                     style={{ 'aspect-ratio': `${image.width}/${image.height}` }}
                   />
                   <button

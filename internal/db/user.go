@@ -23,6 +23,7 @@ type User struct {
 	AvatarURL    *string        `db:"avatar_url" json:"avatar_url"`
 	Interests    InterestsArray `db:"interests" json:"interests"`
 	Followers    int            `db:"followers" json:"followers"`
+	IsFollowing  bool           `db:"is_following" json:"is_following"`
 }
 
 type InterestsArray []Interest
@@ -251,16 +252,17 @@ func (s *storage) ListUsers(ctx context.Context, uid string) ([]User, error) {
 		    u.referred_by,
 		    u.avatar_url,
 		    json_group_array(distinct json_object('id', c.id, 'name', c.name, 'image_url', c.image_url)) filter (where c.id is not null) as interests,
-		    (SELECT COUNT(*) FROM followers f WHERE f.following_id = u.id) as followers
+		    (SELECT COUNT(*) FROM followers f WHERE f.following_id = u.id) as followers,
+		    EXISTS(SELECT 1 FROM followers f WHERE f.follower_id = ? AND f.following_id = u.id) as is_following
 		FROM users u
 		LEFT JOIN user_interests ui ON u.id = ui.user_id
 		LEFT JOIN categories c ON ui.category_id = c.id
 		WHERE u.id != ?
-		GROUP BY u.id
+		GROUP BY u.id, u.username, u.language_code, u.chat_id, u.created_at, u.name, u.email, u.referral_code, u.referred_by, u.avatar_url
 		ORDER BY u.created_at DESC
 		LIMIT 100`
 
-	rows, err := s.db.QueryContext(ctx, query, uid)
+	rows, err := s.db.QueryContext(ctx, query, uid, uid)
 	if err != nil {
 		return nil, err
 	}
@@ -268,6 +270,7 @@ func (s *storage) ListUsers(ctx context.Context, uid string) ([]User, error) {
 
 	for rows.Next() {
 		var user User
+		var isFollowing bool
 		if err := rows.Scan(
 			&user.ID,
 			&user.Username,
@@ -281,10 +284,12 @@ func (s *storage) ListUsers(ctx context.Context, uid string) ([]User, error) {
 			&user.AvatarURL,
 			&user.Interests,
 			&user.Followers,
+			&isFollowing,
 		); err != nil {
 			return nil, err
 		}
 
+		user.IsFollowing = isFollowing
 		users = append(users, user)
 	}
 
@@ -328,4 +333,16 @@ func (s *storage) UnfollowUser(ctx context.Context, uid, unfollowID string) erro
 	)
 
 	return err
+}
+
+func (s *storage) IsFollowing(ctx context.Context, followerID, followingID string) (bool, error) {
+	var exists bool
+	query := `SELECT EXISTS(SELECT 1 FROM followers WHERE follower_id = ? AND following_id = ?)`
+
+	err := s.db.QueryRowContext(ctx, query, followerID, followingID).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
 }

@@ -26,6 +26,7 @@ type storager interface {
 	GetWishesByUserID(ctx context.Context, userID string) ([]db.Wish, error)
 	FollowUser(ctx context.Context, uid, followID string) error
 	UnfollowUser(ctx context.Context, uid, UnfollowID string) error
+	IsFollowing(ctx context.Context, followerID, followingID string) (bool, error)
 	CreateWishImage(ctx context.Context, image db.WishImage) (db.WishImage, error)
 	DeleteWishPhoto(ctx context.Context, wishID, photoID string) error
 	SaveWishToBookmarks(ctx context.Context, uid, wishID string) error

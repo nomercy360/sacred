@@ -78,30 +78,38 @@ func (a *API) UpdateUserInterests(c echo.Context) error {
 }
 
 func (a *API) GetUserProfile(c echo.Context) error {
-	uid := c.Param("id")
-	if uid == "" {
+	profileID := c.Param("id")
+	if profileID == "" {
 		return terrors.BadRequest(nil, "user id cannot be empty")
 	}
 
-	user, err := a.storage.GetUserByID(uid)
+	currentUserID := getUserID(c)
+
+	user, err := a.storage.GetUserByID(profileID)
 	if err != nil {
 		return terrors.InternalServer(err, "cannot get user")
 	}
 
-	items, err := a.storage.GetWishesByUserID(c.Request().Context(), uid)
+	items, err := a.storage.GetWishesByUserID(c.Request().Context(), profileID)
 	if err != nil {
 		return terrors.InternalServer(err, "cannot get wishlist items")
 	}
 
+	isFollowing, err := a.storage.IsFollowing(c.Request().Context(), currentUserID, profileID)
+	if err != nil {
+		return terrors.InternalServer(err, "cannot check following status")
+	}
+
 	resp := contract.UserProfileResponse{
-		ID:         user.ID,
-		Name:       user.Name,
-		Username:   user.Username,
-		CreatedAt:  user.CreatedAt,
-		Interests:  user.Interests,
-		AvatarURL:  user.AvatarURL,
-		Followers:  user.Followers,
-		SavedItems: items,
+		ID:          user.ID,
+		Name:        user.Name,
+		Username:    user.Username,
+		CreatedAt:   user.CreatedAt,
+		Interests:   user.Interests,
+		AvatarURL:   user.AvatarURL,
+		Followers:   user.Followers,
+		SavedItems:  items,
+		IsFollowing: isFollowing,
 	}
 
 	return c.JSON(http.StatusOK, resp)
@@ -123,14 +131,15 @@ func (a *API) ListProfiles(c echo.Context) error {
 		}
 
 		resp = append(resp, contract.UserProfileResponse{
-			ID:         user.ID,
-			Name:       user.Name,
-			Username:   user.Username,
-			CreatedAt:  user.CreatedAt,
-			Interests:  user.Interests,
-			AvatarURL:  user.AvatarURL,
-			Followers:  user.Followers,
-			SavedItems: items,
+			ID:          user.ID,
+			Name:        user.Name,
+			Username:    user.Username,
+			CreatedAt:   user.CreatedAt,
+			Interests:   user.Interests,
+			AvatarURL:   user.AvatarURL,
+			Followers:   user.Followers,
+			SavedItems:  items,
+			IsFollowing: user.IsFollowing,
 		})
 	}
 

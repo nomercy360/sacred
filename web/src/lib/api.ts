@@ -188,6 +188,7 @@ export type UserProfile = {
 	}>
 	followers: number
 	wishlist_items: Array<Wish>
+	is_following: boolean
 }
 
 export type Wishlist = {
@@ -302,4 +303,30 @@ export const deleteWishPhoto = async (wishId: string, photoId: string) => {
 	}
 
 	return { data, error: null }
+}
+
+export const followUser = async (followingId: string) => {
+	const { data, error } = await apiRequest('/users/follow', {
+		method: 'POST',
+		body: JSON.stringify({ following_id: followingId }),
+	})
+
+	if (error) {
+		throw new Error(error)
+	}
+
+	return data
+}
+
+export const unfollowUser = async (followingId: string) => {
+	const { data, error } = await apiRequest('/users/unfollow', {
+		method: 'POST',
+		body: JSON.stringify({ following_id: followingId }),
+	})
+
+	if (error) {
+		throw new Error(error)
+	}
+
+	return data
 }

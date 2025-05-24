@@ -28,14 +28,15 @@ type UserResponse struct {
 }
 
 type UserProfileResponse struct {
-	ID         string        `json:"id"`
-	Name       *string       `json:"name"`
-	Username   string        `json:"username"`
-	CreatedAt  time.Time     `json:"created_at"`
-	AvatarURL  *string       `json:"avatar_url"`
-	Interests  []db.Interest `json:"interests"`
-	Followers  int           `json:"followers"`
-	SavedItems []db.Wish     `json:"wishlist_items"`
+	ID          string        `json:"id"`
+	Name        *string       `json:"name"`
+	Username    string        `json:"username"`
+	CreatedAt   time.Time     `json:"created_at"`
+	AvatarURL   *string       `json:"avatar_url"`
+	Interests   []db.Interest `json:"interests"`
+	Followers   int           `json:"followers"`
+	SavedItems  []db.Wish     `json:"wishlist_items"`
+	IsFollowing bool          `json:"is_following"`
 }
 
 type AuthResponse struct {

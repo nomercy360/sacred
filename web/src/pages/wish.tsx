@@ -27,7 +27,7 @@ const ViewItem = () => {
 
 	createEffect(() => {
 		if (bookmarks.isSuccess) {
-			console.log("BOOKMARKS", JSON.parse(JSON.stringify(bookmarks.data)))
+			console.log('BOOKMARKS', JSON.parse(JSON.stringify(bookmarks.data)))
 		}
 	})
 

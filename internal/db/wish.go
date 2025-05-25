@@ -80,11 +80,11 @@ func (s *storage) GetWishByID(ctx context.Context, uid, id string) (Wish, error)
     		w.source_id,
 			EXISTS (SELECT 1 FROM user_bookmarks ub WHERE ub.user_id = ? AND ub.wish_id = w.id) AS is_bookmarked
 		FROM wishes w
-		WHERE w.id = ? AND w.user_id = ?`
+		WHERE w.id = ?`
 
 	var item Wish
 
-	if err := s.db.QueryRowContext(ctx, query, uid, id, uid).Scan(
+	if err := s.db.QueryRowContext(ctx, query, uid, id).Scan(
 		&item.ID,
 		&item.UserID,
 		&item.Name,
@@ -213,7 +213,15 @@ func (s *storage) UpdateWish(ctx context.Context, item Wish, categories []string
 	}
 	defer tx.Rollback()
 
-	query := `UPDATE wishes SET name = ?, url = ?, price = ?, notes = ?, is_fulfilled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?`
+	query := `UPDATE wishes SET 
+                  name = ?, 
+                  url = ?,
+                  price = ?, 
+                  notes = ?, 
+                  is_fulfilled = ?, 
+                  updated_at = CURRENT_TIMESTAMP,
+                  published_at = CURRENT_TIMESTAMP 
+              WHERE id = ? AND user_id = ?`
 
 	_, err = tx.ExecContext(ctx, query,
 		item.Name,

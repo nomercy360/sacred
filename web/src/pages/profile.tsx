@@ -9,7 +9,7 @@ import { store } from '~/store'
 
 export function resolveImage(images: WishImage[]) {
 	const img = images.length > 0 ? images[0] : null
-	return img ? `https://assets.peatch.io/${img.url}` : '/placeholder.jpg'
+	return img ? `https://assets.peatch.io/cdn-cgi/image/width=400/${img.url}` : '/placeholder.jpg'
 }
 
 export function resolveAspectRatio(images: WishImage[]) {
@@ -31,7 +31,7 @@ export default function UserProfilePage() {
 
 	const mainButton = useMainButton()
 
-	
+
 //придумать логику подписки
 	// const followUser = async () => {
 	// 	await followUser(params.id)
@@ -44,7 +44,7 @@ export default function UserProfilePage() {
 
 	createEffect(() => {
 		if (user.data?.id !== store.user?.id) {
-			mainButton.enable("Follow " + user.data?.name)
+			mainButton.enable('Follow ' + user.data?.name)
 		}
 	})
 

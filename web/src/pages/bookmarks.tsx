@@ -1,10 +1,10 @@
-import { createQuery } from '@tanstack/solid-query'
+import { useQuery } from '@tanstack/solid-query'
 import { fetchBookmarks, Wish } from '~/lib/api'
 import { For, Show } from 'solid-js'
 import { Link } from '~/components/link'
 
 const BookmarksPage = () => {
-	const wishes = createQuery<Wish[]>(() => ({
+	const wishes = useQuery<Wish[]>(() => ({
 		queryKey: ['bookmarks'],
 		queryFn: () => fetchBookmarks(),
 	}))
@@ -58,15 +58,10 @@ export function WishesGrid(props: WishesGridProps) {
 						<For each={props.wishes.data?.slice(0, Math.ceil(props.wishes.data.length / 2))}>
 							{(wish) => (
 								<Link href={`/wishes/${wish.id}`} class="rounded-3xl"
-									state={{ from: props.source }}
-									style="aspect-ratio: 1/1">
+											state={{ from: props.source }}>
 									<img class="aspect-auto shrink-0 rounded-3xl"
-										alt={wish.name}
-										src={wish.images[0].url}
-										onLoad={(e) => {
-											const img = e.target as HTMLImageElement
-											img.parentElement!.style.aspectRatio = `${wish.images[0].width}/${wish.images[0].height}`
-										}}
+											 alt={wish.name}
+											 src={`https://assets.peatch.io/cdn-cgi/image/width=400/${wish.images[0].url}`}
 									/>
 								</Link>
 							)}
@@ -76,15 +71,10 @@ export function WishesGrid(props: WishesGridProps) {
 						<For each={props.wishes.data?.slice(Math.ceil(props.wishes.data.length / 2))}>
 							{(wish) => (
 								<Link href={`/wishes/${wish.id}`} class="rounded-3xl"
-									state={{ from: props.source }}
-									style="aspect-ratio: 1/1">
+											state={{ from: props.source }}>
 									<img class="aspect-auto shrink-0 rounded-3xl"
-										alt={wish.name}
-										src={wish.images[0].url}
-										onLoad={(e) => {
-											const img = e.target as HTMLImageElement
-											img.parentElement!.style.aspectRatio = `${wish.images[0].width}/${wish.images[0].height}`
-										}}
+											 alt={wish.name}
+											 src={`https://assets.peatch.io/cdn-cgi/image/width=400/${wish.images[0].url}`}
 									/>
 								</Link>
 							)}

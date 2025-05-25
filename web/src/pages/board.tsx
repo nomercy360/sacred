@@ -90,9 +90,7 @@ export default function UserBoardPage() {
 													}}
 													href={`/wishes/${item.id}`}
 												>
-													{item.images.length > 0 ? (
-														null
-													) : (
+													{item.images.length > 0 ? null : (
 														<span class="material-symbols-rounded text-white text-[40px]">
 															no_photography
 														</span>

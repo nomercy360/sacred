@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+	nanoid "github.com/matoous/go-nanoid/v2"
 	initdata "github.com/telegram-mini-apps/init-data-golang"
 	"io"
 	"log"
@@ -13,7 +14,6 @@ import (
 	"net/http"
 	"sacred/internal/contract"
 	"sacred/internal/db"
-	"sacred/internal/nanoid"
 	"sacred/internal/terrors"
 	"time"
 )

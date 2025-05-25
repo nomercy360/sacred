@@ -1,7 +1,8 @@
 import { cn } from '~/lib/utils'
 import { useLocation } from '@solidjs/router'
 import { Link } from '~/components/link'
-import { store } from '~/store'
+
+
 
 export default function NavigationTabs(props: any) {
 	const location = useLocation()
@@ -9,7 +10,7 @@ export default function NavigationTabs(props: any) {
 	const tabs = [
 		{
 			href: '/feed',
-			icon: 'interests',
+			icon: 'search',
 		},
 		{
 			href: '/',
@@ -17,36 +18,38 @@ export default function NavigationTabs(props: any) {
 		},
 		{
 			href: '/people',
-			icon: 'group',
+			icon: 'emoji_language',
 		},
 		{
 			href: '/create/from-link',
-			icon: 'add',
+			icon: 'add_circle',
 		},
 	]
 
 	return (
 		<>
 			<div
-				class="flex flex-col items-center justify-start h-[110px] fixed bottom-0 w-full bg-background z-50"
+				class="flex flex-col items-center justify-start h-[100px] fixed bottom-0 w-full z-50"
 			>
-				<div class="flex flex-row pt-4 pb-5 space-x-8">
+				<div class="flex justify-center flex-row rounded-full space-x-5 shadow-xl bg-white px-2">
 					{tabs.map(({ href, icon }) => (
 						<Link
 							href={href}
 							state={{ from: location.pathname }}
-							class={cn('size-10 flex items-center justify-center rounded-full flex-col text-sm text-secondary-foreground', {
-								'bg-primary': location.pathname === href,
+							class={cn('size-10 flex items-center justify-center flex-col text-sm text-[#BABABA]', {
+								'bg-none': location.pathname === href,
 							})}
 						>
 							<span
-								class={cn('material-symbols-rounded text-[20px]', { 'text-primary-foreground': location.pathname === href })}>
-								{icon}</span>
+								class={cn('material-symbols-rounded text-[20px]', { 'text-black': location.pathname === href })}>
+								{icon}
+							</span>
 						</Link>
 					))}
 				</div>
 			</div>
 			{props.children}
 		</>
+
 	)
 }

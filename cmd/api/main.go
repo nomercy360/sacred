@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	telegram "github.com/go-telegram/bot"
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -30,6 +31,7 @@ type Config struct {
 	TelegramBotToken string `yaml:"telegram_bot_token"`
 	JWTSecret        string `yaml:"jwt_secret"`
 	MetaFetchURL     string `yaml:"meta_fetch_url"`
+	ExternalURL      string `yaml:"external_url"`
 	AWS              struct {
 		AccessKeyID     string `yaml:"access_key_id"`
 		SecretAccessKey string `yaml:"secret_access_key"`
@@ -237,7 +239,22 @@ func main() {
 		log.Fatalf("Failed to initialize AWS S3 client: %v\n", err)
 	}
 
-	a := api.New(storage, apiCfg, s3Client)
+	bot, err := telegram.New(cfg.TelegramBotToken)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	webhookURL := fmt.Sprintf("%s/webhook", cfg.ExternalURL)
+	if ok, err := bot.SetWebhook(context.Background(), &telegram.SetWebhookParams{
+		DropPendingUpdates: true,
+		URL:                webhookURL,
+	}); err != nil {
+		log.Fatalf("Failed to set webhook: %v", err)
+	} else if !ok {
+		log.Fatalf("Failed to set webhook: %v", err)
+	}
+
+	a := api.New(storage, apiCfg, s3Client, bot)
 
 	tmConfig := middleware.TimeoutConfig{
 		Timeout: 20 * time.Second,
@@ -246,6 +263,7 @@ func main() {
 	e.Use(middleware.TimeoutWithConfig(tmConfig))
 
 	e.POST("/auth/telegram", a.AuthTelegram)
+	e.POST("/webhook", a.HandleWebhook)
 
 	// Routes
 	g := e.Group("/v1")

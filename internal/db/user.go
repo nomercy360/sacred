@@ -97,7 +97,7 @@ func IsForeignKeyViolationError(err error) bool {
 	return false
 }
 
-func (s *storage) CreateUser(ctx context.Context, user User) error {
+func (s *storage) CreateUser(ctx context.Context, user *User) error {
 	query := `
 		INSERT INTO users (id, chat_id, username, name, language_code, email, referral_code, referred_by, avatar_url) 
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`

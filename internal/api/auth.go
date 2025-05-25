@@ -80,7 +80,7 @@ func (a *API) AuthTelegram(c echo.Context) error {
 			AvatarURL:    &imgUrl,
 		}
 
-		if err = a.storage.CreateUser(context.Background(), create); err != nil {
+		if err = a.storage.CreateUser(context.Background(), &create); err != nil {
 			return terrors.InternalServer(err, "failed to create user")
 		}
 

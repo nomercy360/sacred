@@ -1,10 +1,12 @@
 import { fetchUserProfile, UserProfile, Wish, WishImage } from '~/lib/api'
 import { createEffect, For, Match, Show, Switch, onCleanup } from 'solid-js'
-import { useQuery } from '@tanstack/solid-query'
+import { createMutation, useQuery } from '@tanstack/solid-query'
 import { Link } from '~/components/link'
 import { useParams, useLocation } from '@solidjs/router'
 import { useMainButton } from '~/lib/useMainButton'
 import { store } from '~/store'
+import { followUser, unfollowUser } from '~/lib/api'
+import { queryClient } from '~/App'
 
 
 export function resolveImage(images: WishImage[]) {
@@ -28,14 +30,23 @@ export default function UserProfilePage() {
 
 	const params = useParams()
 	const location = useLocation()
-
 	const mainButton = useMainButton()
 
 
-//придумать логику подписки
-	// const followUser = async () => {
-	// 	await followUser(params.id)
-	// }
+	const followMutation = createMutation(() => ({
+		mutationFn: () => followUser(params.id),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['profile', params.id] })
+		},
+	}))
+
+	const unfollowMutation = createMutation(() => ({
+		mutationFn: () => unfollowUser(params.id),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['profile', params.id] })
+		},
+	}))
+
 
 	const user = useQuery<UserProfile>(() => ({
 		queryKey: ['profile', params.id],
@@ -44,13 +55,23 @@ export default function UserProfilePage() {
 
 	createEffect(() => {
 		if (user.data?.id !== store.user?.id) {
-			mainButton.enable('Follow ' + user.data?.name)
+			mainButton.enable(user.data?.is_following ? 'Unfollow ' + user.data?.name : 'Follow ' + user.data?.name)
+			mainButton.setParams?.({
+				color: user.data?.is_following ? '#F87171' : '#000000'
+			})
+			mainButton.onClick(() => {
+				if (user.data?.is_following) {
+					unfollowMutation.mutate()
+				} else {
+					followMutation.mutate()
+				}
+			})
 		}
 	})
 
 	onCleanup(() => {
 		mainButton.hide()
-		// mainButton.offClick(followUser)
+		// mainButton.offClick()
 	})
 
 

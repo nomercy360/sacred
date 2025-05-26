@@ -21,7 +21,7 @@ const BookmarksPage = () => {
 					</span>
 				</button>
 				<p class="text-black text-xl font-extrabold">
-					Bookmarks
+					Liked
 				</p>
 				<Link
 					href="/categories-edit"
@@ -68,12 +68,12 @@ export function WishesGrid(props: WishesGridProps) {
 						</For>
 					</div>
 					<div class="flex flex-col gap-0.5 h-full flex-grow">
-						<For each={props.wishes.data?.slice(Math.ceil(props.wishes.data.length / 2))}>
+						<For each={props.wishes.data?.slice(Math.ceil(props.wishes.data.length / 2))}>						
 							{(wish) => (
 								<Link href={`/wishes/${wish.id}`} class="rounded-3xl"
-											state={{ from: props.source }}>
+									state={{ from: props.source }}>
 									<img class="aspect-auto shrink-0 rounded-3xl"
-											 alt={wish.name}
+										alt={wish.name}
 											 src={`https://assets.peatch.io/cdn-cgi/image/width=400/${wish.images[0].url}`}
 									/>
 								</Link>

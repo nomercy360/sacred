@@ -27,7 +27,7 @@ export default function UserBoardPage() {
 						href={'/bookmarks'}
 						state={{ from: '/' }}
 						class="flex items-center justify-center bg-secondary rounded-full size-10">
-						<span class="material-symbols-rounded text-[20px]">bookmark</span>
+						<span class="material-symbols-rounded text-[20px]">favorite</span>
 					</Link>
 					<button class="flex items-center justify-center bg-secondary rounded-full size-10">
 						<span class="material-symbols-rounded text-[20px]">arrow_outward</span>
@@ -136,10 +136,10 @@ function OnboardingPopup(props: { onClose: () => void }) {
 	const [step, setStep] = createSignal(0)
 
 	const tabs = [
-		{ icon: 'interests' },
+		{ icon: 'search' },
 		{ icon: 'note_stack' },
-		{ icon: 'group' },
-		{ icon: 'add' },
+		{ icon: 'people' },
+		{ icon: 'add_circle' },
 	]
 
 	function handleClickOutside(event: MouseEvent) {
@@ -188,24 +188,20 @@ function OnboardingPopup(props: { onClose: () => void }) {
 					<p class="text-xl font-extrabold">{texts[step()].title}</p>
 					<p class="text-secondary-foreground">{texts[step()].description}</p>
 				</div>
-				<div class="flex flex-row items-center space-x-8">
+				<div class="flex justify-center  flex-row rounded-full p-1 space-x-7 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.3)] bg-white px-2">
 					{tabs.map(({ icon }, index) => (
 						<span
-							class={cn(
-								'size-10 flex items-center justify-center rounded-full flex-col text-sm text-secondary-foreground',
-								{
-									'bg-primary': step() === index,
-								},
-							)}
+							class={cn('size-10 flex items-center justify-center flex-col text-sm text-[#BABABA]', {
+								'bg-none': step() === index,
+							})}
 						>
 							<span
-								class={cn('material-symbols-rounded text-[20px]', {
-									'text-primary-foreground': step() === index,
-								})}
+								class={cn('material-symbols-rounded  text-[22px]', { 'text-black': step() === index })}
 							>
 								{icon}
 							</span>
 						</span>
+						
 					))}
 				</div>
 			</div>

@@ -136,6 +136,9 @@ const ViewItem = () => {
 		if (item.isSuccess && item.data?.user_id === store.user?.id) {
 			mainButton.onClick(despawnWish)
 			mainButton.enable('Delete from board')
+			mainButton.setParams?.({
+				color: '#F87171'
+			})
 		}
 	})
 
@@ -238,9 +241,9 @@ const ViewItem = () => {
 								}
 							}}
 						>
-							{item.data?.is_bookmarked ? 'Remove bookmark' : 'Save bookmark'}
+							{item.data?.is_bookmarked ? 'Remove liked' : 'Add liked'}
 							<span class="material-symbols-rounded text-[20px]">
-								{item.data?.is_bookmarked ? 'bookmark' : 'bookmark_border'}
+								{item.data?.is_bookmarked ? 'favorite' : 'favorite_border'}
 							</span>
 						</button>
 					</div>

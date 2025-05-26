@@ -177,6 +177,11 @@ func (a *API) FollowUser(c echo.Context) error {
 
 	uid := getUserID(c)
 
+	isFollowing, _ := a.storage.IsFollowing(c.Request().Context(), uid, req.FollowingID)
+	if isFollowing {
+		return terrors.Conflict(nil, "already following this user")
+	}
+
 	if err := a.storage.FollowUser(c.Request().Context(), uid, req.FollowingID); err != nil {
 		return terrors.InternalServer(err, "could not follow user")
 	}

@@ -313,11 +313,7 @@ func (s *storage) FollowUser(ctx context.Context, uid, followID string) error {
 		uid,
 	)
 
-	if err != nil && !IsUniqueViolationError(err) {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (s *storage) UnfollowUser(ctx context.Context, uid, unfollowID string) error {

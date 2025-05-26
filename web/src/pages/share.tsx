@@ -9,7 +9,7 @@ const ShareProfile = () => {
 		const url =
 			'https://t.me/share/url?' +
 			new URLSearchParams({
-				url: 'https://t.me/sacred_wished/app?startapp=u_' + store.user?.username,
+				url: 'https://t.me/tingzbot/app?startapp=u_' + store.user?.username,
 			}).toString() +
 			`&text=Check out ${store.user?.name}'s wishes`
 

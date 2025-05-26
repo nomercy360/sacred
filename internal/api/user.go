@@ -162,7 +162,7 @@ func (a *API) UnfollowUser(c echo.Context) error {
 		return terrors.InternalServer(err, "could not unfollow user")
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusOK, echo.Map{"message": "OK"})
 }
 
 func (a *API) FollowUser(c echo.Context) error {
@@ -186,7 +186,7 @@ func (a *API) FollowUser(c echo.Context) error {
 		return terrors.InternalServer(err, "could not follow user")
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusOK, echo.Map{"message": "OK"})
 }
 
 func (a *API) SaveWishToBookmarks(c echo.Context) error {
@@ -216,7 +216,7 @@ func (a *API) SaveWishToBookmarks(c echo.Context) error {
 		return terrors.InternalServer(err, "Cannot create copied wish")
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusOK, echo.Map{"message": "OK"})
 }
 
 func (a *API) RemoveWishFromBookmarks(c echo.Context) error {
@@ -231,7 +231,7 @@ func (a *API) RemoveWishFromBookmarks(c echo.Context) error {
 		return terrors.InternalServer(err, "could not remove wish from bookmarks")
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusOK, echo.Map{"message": "OK"})
 }
 
 func (a *API) ListBookmarkedWishes(c echo.Context) error {

@@ -233,7 +233,7 @@ func (a *API) DeleteWishHandler(c echo.Context) error {
 		return terrors.InternalServer(err, "cannot delete wishlist item")
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusOK, echo.Map{"message": "OK"})
 }
 
 func (a *API) GetWishesFeed(c echo.Context) error {
@@ -396,5 +396,5 @@ func (a *API) DeleteWishPhoto(c echo.Context) error {
 		return terrors.InternalServer(err, "failed to delete photo")
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusOK, echo.Map{"message": "OK"})
 }

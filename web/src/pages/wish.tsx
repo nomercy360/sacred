@@ -111,7 +111,7 @@ const ViewItem = () => {
 		const url =
 			'https://t.me/share/url?' +
 			new URLSearchParams({
-				url: 'https://t.me/tingz/app?startapp=w_' + item.data?.id,
+				url: 'https://t.me/tingzbot/app?startapp=w_' + item.data?.id,
 			}).toString() +
 			`&text=${item.data?.name}`
 

@@ -1,24 +1,33 @@
-import type { AnchorProps } from '@solidjs/router'
-import { A } from '@solidjs/router'
-import type { Component } from 'solid-js'
+import type {AnchorProps} from '@solidjs/router'
+import {A} from '@solidjs/router'
+import type {Component} from 'solid-js'
 
 export const Link: Component<AnchorProps> = props => {
-	const onClick = (e: MouseEvent) => {
-		const targetUrl = new URL(props.href, window.location.toString())
-		const currentUrl = new URL(window.location.toString())
-		const isExternal =
-			targetUrl.protocol !== currentUrl.protocol ||
-			targetUrl.host !== currentUrl.host
+    const onClick = (e: MouseEvent) => {
+        const targetUrl = new URL(props.href, window.location.toString())
+        const currentUrl = new URL(window.location.toString())
+        const isExternal =
+            targetUrl.protocol !== currentUrl.protocol ||
+            targetUrl.host !== currentUrl.host
 
-		if (isExternal) {
-			e.preventDefault()
-			return window.Telegram.WebApp.openLink('t.me/mini_hub_bot/app')
-		}
-	}
+        const isTelegramLink =
+            targetUrl.protocol === 'https:' &&
+            targetUrl.hostname === 't.me' &&
+            targetUrl.pathname.startsWith('/')
 
-	return (
-		<A {...props} onClick={onClick} class={props.class}>
-			{props.children}
-		</A>
-	)
+        if (isTelegramLink) {
+            e.preventDefault()
+            window.Telegram.WebApp.openTelegramLink(targetUrl.toString())
+        } else if (isExternal) {
+            e.preventDefault()
+            return window.Telegram.WebApp.openLink(targetUrl.toString())
+        }
+
+    }
+
+    return (
+        <A {...props} onClick={onClick} class={props.class}>
+            {props.children}
+        </A>
+    )
 }

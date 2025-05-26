@@ -54,19 +54,19 @@ export default function UserProfilePage() {
 	}))
 
 	createEffect(() => {
-		if (user.data?.id !== store.user?.id) {
-			mainButton.enable(user.data?.is_following ? 'Unfollow ' + user.data?.name : 'Follow ' + user.data?.name)
-			mainButton.setParams?.({
-				color: user.data?.is_following ? '#F87171' : '#000000'
-			})
-			mainButton.onClick(() => {
-				if (user.data?.is_following) {
-					unfollowMutation.mutate()
-				} else {
-					followMutation.mutate()
-				}
-			})
-		}
+		if (user.data?.id === store.user?.id) return
+
+		mainButton.enable()
+		const isFollowing = user.data?.is_following
+		const name = user.data?.name ?? ''
+		const text = `${isFollowing ? 'Unfollow' : 'Follow'} ${name}`
+		const color = isFollowing ? '#F87171' : '#000000'
+		const action = isFollowing ? unfollowMutation.mutate : followMutation.mutate
+
+		mainButton.setParams({ text, color })
+		mainButton.offClick(followMutation.mutate)
+		mainButton.offClick(unfollowMutation.mutate)
+		mainButton.onClick(action)
 	})
 
 	onCleanup(() => {

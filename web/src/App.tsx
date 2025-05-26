@@ -62,6 +62,14 @@ export default function App(props: any) {
 			setIsAuthenticated(true)
 			setIsLoading(false)
 
+			// Check for start_param with w_ prefix
+			const startParam = window.Telegram.WebApp.initDataUnsafe.start_param
+			if (startParam && startParam.startsWith('w_')) {
+				const wishId = startParam.substring(2) // Remove 'w_' prefix
+				navigate(`/wishes/${wishId}`)
+				return
+			}
+
 			if (!store.user?.email || !store.user?.interests.length) {
 				navigate('/setup')
 			}

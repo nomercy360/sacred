@@ -71,7 +71,8 @@ export default function UserProfilePage() {
 
 	onCleanup(() => {
 		mainButton.hide()
-		// mainButton.offClick()
+		mainButton.offClick(followMutation.mutate)
+		mainButton.offClick(unfollowMutation.mutate)
 	})
 
 

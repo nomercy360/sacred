@@ -1,10 +1,11 @@
 import { cn } from "~/lib/utils";
-import { createEffect, createSignal } from "solid-js";
-import { fetchProfiles, fetchUserProfile, followUser, unfollowUser, UserProfile } from "~/lib/api";
-import { createMutation, createQuery, useQuery } from "@tanstack/solid-query";
-import { useNavigate, useParams } from "@solidjs/router";
-import { queryClient } from "~/App";
+import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
+import { fetchProfiles, followUser, unfollowUser, UserProfile } from "~/lib/api";
+import { createQuery } from "@tanstack/solid-query";
+import { useNavigate } from "@solidjs/router";
+
 import { Link } from "~/components/link";
+import { useBackButton } from "~/lib/useBackButton";
 
 export interface SearchingItemProps {
     profilePicture: string
@@ -21,8 +22,8 @@ export default function SearchPage() {
     const [searchInput, setSearchInput] = createSignal<HTMLInputElement | null>(null)
     const [searchResults, setSearchResults] = createSignal<SearchingItemProps[]>([])
 
-    const params = useParams()
-
+    const mainBackButton = useBackButton()
+    
     const profiles = createQuery<UserProfile[]>(() => ({
         queryKey: ['profiles'],
         queryFn: () => fetchProfiles()
@@ -50,18 +51,9 @@ export default function SearchPage() {
     }
 
 
-    const user = useQuery<UserProfile>(() => ({
-        queryKey: ['profile', params.id],
-        queryFn: () => fetchUserProfile(params.id),
-    }))
-
-
-
-
     const handleFollow = async (userId: string) => {
         try {
             await followUser(userId);
-            // обновляем локальное состояние
             setSearchResults(results =>
                 results.map(item =>
                     item.userId === userId ? { ...item, isFollowing: true, followers: item.followers + 1 } : item
@@ -75,7 +67,6 @@ export default function SearchPage() {
     const handleUnfollow = async (userId: string) => {
         try {
             await unfollowUser(userId);
-            // обновляем локальное состояние
             setSearchResults(results =>
                 results.map(item =>
                     item.userId === userId ? { ...item, isFollowing: false, followers: item.followers - 1 } : item
@@ -86,18 +77,10 @@ export default function SearchPage() {
         }
     };
 
-
-
-
     createEffect(() => {
         if (profiles.data) {
             searchPeople();
         }
-
-
-
-
-
     });
 
     const toggleSearchMode = () => {
@@ -106,6 +89,21 @@ export default function SearchPage() {
             searchInput()?.focus()
         }
     }
+
+
+    onMount(() => {
+        mainBackButton.onClick(() => {
+            navigate('/people')
+        })
+
+        window.addEventListener("popstate", () => {
+            navigate('/people')
+        });
+        onCleanup(() => window.removeEventListener("popstate", () => {
+            navigate('/people')
+        }));
+    });
+
 
     return (
         <div class="flex flex-col items-center w-full h-screen overflow-hidden">
@@ -170,11 +168,11 @@ export default function SearchPage() {
                             </Link>
 
                             {!result.isFollowing ? (
-                                <button onClick={() => handleFollow(result.userId)} class="w-20 hover:bg-primary/80 h-10 rounded-full flex items-center text-[12px] justify-center text-white bg-primary">
+                                <button onClick={() => handleFollow(result.userId)} class="w-20  h-10 rounded-full flex items-center text-[12px] justify-center text-white bg-primary">
                                     Follow
                                 </button>
                             ) : (
-                                <button onClick={() => handleUnfollow(result.userId)} class="w-20 h-10 hover:bg-[#808080]/80 rounded-full flex items-center text-[12px] justify-center text-white bg-[#808080]">
+                                <button onClick={() => handleUnfollow(result.userId)} class="w-20 h-10 rounded-full flex items-center text-[12px] justify-center text-white bg-[#808080]">
                                     Unfollow
                                 </button>
                             )}

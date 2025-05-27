@@ -70,7 +70,7 @@ export default function PeoplePage() {
 											<img src={user.avatar_url || '/placeholder.jpg'} alt={user.name || 'User'} class="size-9 rounded-full" />
 											<p class="mt-3 text-xl font-bold">{user.name || 'Anonymous'}</p>
 											<p class="text-sm font-extralight">
-												{user.followers || 0} followers
+												{user.followers || 0} {user.followers === 1 ? 'follower' : 'followers'}
 											</p>
 										</div>
 									</ImageButton>

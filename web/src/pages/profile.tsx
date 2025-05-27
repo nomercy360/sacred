@@ -33,17 +33,29 @@ export default function UserProfilePage() {
 	const mainButton = useMainButton()
 
 	const followMutation = createMutation(() => ({
-		mutationFn: () => followUser(params.id),
+		mutationFn: async () => {
+			mainButton.showProgress()
+			return await followUser(params.id)
+		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['profile', params.id] })
+		},
+		onSettled: () => {
+			mainButton.hideProgress()
 		},
 	}))
 
 	const unfollowMutation = createMutation(() => ({
-		mutationFn: () => unfollowUser(params.id),
+		mutationFn: async () => {
+			mainButton.showProgress()
+			return await unfollowUser(params.id)
+		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['profile', params.id] })
 		
+		},
+		onSettled: () => {
+			mainButton.hideProgress()
 		},
 	}))
 

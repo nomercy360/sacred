@@ -1,4 +1,4 @@
-import { createEffect, For, Match, onCleanup, Show, Switch } from 'solid-js'
+import { createEffect, For, Match, onCleanup, onMount, Show, Switch } from 'solid-js'
 import { createMutation, createQuery } from '@tanstack/solid-query'
 import { copyWish, deleteWish, fetchWish, removeBookmark, fetchBookmarks, saveBookmark, Wish } from '~/lib/api'
 import { useNavigate, useParams } from '@solidjs/router'
@@ -142,6 +142,27 @@ const ViewItem = () => {
 		}
 	})
 
+
+	createEffect(() => {
+		if (item.isSuccess && item.data?.user_id !== store.user?.id) {
+			const isSaved = Boolean(item.data?.copied_wish_id)
+	
+			window.Telegram.WebApp.MainButton.setText(isSaved ? 'Remove from board' : 'Save to board')
+			mainButton.onClick(handleCopy)
+			mainButton.enable()
+			mainButton.setParams?.({
+				color: '#000000',
+				textColor: '#ffffff',
+			})
+		}
+	})
+
+	onCleanup(() => {
+		mainButton.hide()
+		mainButton.offClick(handleCopy)
+		mainButton.offClick(despawnWish)
+	})
+
 	onCleanup(() => {
 		mainButton.hide()
 		mainButton.offClick(despawnWish)
@@ -158,11 +179,27 @@ const ViewItem = () => {
 						<span class="material-symbols-rounded text-base">edit</span>
 					</button>
 				</Show>
+
 				<Show when={item.data?.user_id !== store.user?.id}>
 					<button
-						class="shrink-0 flex items-center justify-center bg-secondary rounded-full size-10"
+						class={cn(
+							'flex items-center justify-center bg-secondary rounded-full size-10',
+							{
+								'bg-secondary text-primary': !item.data?.is_bookmarked,
+								'bg-primary text-secondary': item.data?.is_bookmarked,
+							},
+						)}
+						onClick={() => {
+							if (item.data?.is_bookmarked) {
+								removeFromBookmark.mutate()
+							} else {
+								saveToBookmark.mutate()
+							}
+						}}
 					>
-						<span class="material-symbols-rounded text-base">report</span>
+						<span class="material-symbols-rounded text-[20px]">
+							{item.data?.is_bookmarked ? 'heart_minus' : 'heart_plus'}
+						</span>
 					</button>
 				</Show>
 				<button
@@ -172,6 +209,7 @@ const ViewItem = () => {
 					<span class="material-symbols-rounded text-base">arrow_outward</span>
 				</button>
 			</div>
+
 			<div class="flex flex-col items-center text-center px-8">
 				<h1 class="leading-tight text-xl font-bold text-center">{item.data?.name}</h1>
 				<Switch>
@@ -205,50 +243,6 @@ const ViewItem = () => {
 					</For>
 				</Show>
 			</div>
-			<Show when={item.isSuccess && item.data?.user_id !== store.user?.id}>
-				<div
-					class="pt-2 px-4 flex flex-col items-start justify-start h-[95px] fixed bottom-0 w-full bg-background z-50"
-				>
-					<div class="grid grid-cols-2 w-full gap-2">
-						<button
-							class={cn(
-								'text-sm font-medium rounded-xl h-12 px-4 w-full flex flex-row items-center justify-between',
-								{
-									'bg-red-500 text-white': item.data?.copied_wish_id,
-									'bg-primary text-primary-foreground': !item.data?.copied_wish_id,
-								},
-							)}
-							onClick={handleCopy}
-						>
-							{item.data?.copied_wish_id ? 'Remove from board' : 'Save to board'}
-							<span class="material-symbols-rounded text-[20px]">
-								{item.data?.copied_wish_id ? 'remove' : 'add'}
-							</span>
-						</button>
-						<button
-							class={cn(
-								'text-sm font-medium rounded-xl h-12 px-4 w-full flex flex-row items-center justify-between',
-								{
-									'bg-secondary text-secondary-foreground': item.data?.is_bookmarked,
-									'bg-primary text-primary-foreground': !item.data?.is_bookmarked,
-								},
-							)}
-							onClick={() => {
-								if (item.data?.is_bookmarked) {
-									removeFromBookmark.mutate()
-								} else {
-									saveToBookmark.mutate()
-								}
-							}}
-						>
-							{item.data?.is_bookmarked ? 'Remove liked' : 'Add liked'}
-							<span class="material-symbols-rounded text-[20px]">
-								{item.data?.is_bookmarked ? 'favorite' : 'favorite_border'}
-							</span>
-						</button>
-					</div>
-				</div>
-			</Show>
 		</div>
 	)
 }

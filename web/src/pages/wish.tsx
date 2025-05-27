@@ -146,7 +146,7 @@ const ViewItem = () => {
 	createEffect(() => {
 		if (item.isSuccess && item.data?.user_id !== store.user?.id) {
 			const isSaved = Boolean(item.data?.copied_wish_id)
-	
+
 			window.Telegram.WebApp.MainButton.setText(isSaved ? 'Remove from board' : 'Save to board')
 			mainButton.onClick(handleCopy)
 			mainButton.enable()
@@ -182,13 +182,9 @@ const ViewItem = () => {
 
 				<Show when={item.data?.user_id !== store.user?.id}>
 					<button
-						class={cn(
-							'flex items-center justify-center bg-secondary rounded-full size-10',
-							{
-								'bg-secondary text-primary': !item.data?.is_bookmarked,
-								'bg-primary text-secondary': item.data?.is_bookmarked,
-							},
-						)}
+						class='flex items-center justify-center bg-secondary rounded-full size-10'
+
+
 						onClick={() => {
 							if (item.data?.is_bookmarked) {
 								removeFromBookmark.mutate()
@@ -197,8 +193,10 @@ const ViewItem = () => {
 							}
 						}}
 					>
-						<span class="material-symbols-rounded text-[20px]">
-							{item.data?.is_bookmarked ? 'heart_minus' : 'heart_plus'}
+						<span class="material-symbols-rounded text-[20px]"
+							style={{ 'font-variation-settings': `'FILL' ${item.data?.is_bookmarked ? 1 : 0}` }}
+						>
+							{item.data?.is_bookmarked ? 'favorite' : 'favorite_border'}
 						</span>
 					</button>
 				</Show>

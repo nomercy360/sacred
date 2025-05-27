@@ -52,7 +52,7 @@ export default function PeoplePage() {
 					</Match>
 
 					<Match when={!users.isLoading && users.data?.length}>
-						<div class="space-y-4 mt-20">
+						<div class="space-y-4 mt-20 pb-24">
 							{/* <p>
 								There is nothing here yet. Start saving or explore collections.
 							</p> */}

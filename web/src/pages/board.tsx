@@ -27,7 +27,7 @@ export default function UserBoardPage() {
 						href={'/bookmarks'}
 						state={{ from: '/' }}
 						class="flex items-center justify-center bg-secondary rounded-full size-10">
-						<span class="material-symbols-rounded text-[20px]">done</span>
+						<span class="material-symbols-rounded text-[20px]">favorite</span>
 					</Link>
 					<button class="flex items-center justify-center bg-secondary rounded-full size-10">
 						<span class="material-symbols-rounded text-[20px]">arrow_outward</span>

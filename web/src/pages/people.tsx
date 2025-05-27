@@ -1,5 +1,5 @@
 import { fetchProfiles, UserProfile } from '~/lib/api'
-import { Match, Switch, createEffect } from 'solid-js'
+import { Match, Switch, createEffect, onMount } from 'solid-js'
 import { ImageButton } from '~/components/image-button'
 import { createQuery } from '@tanstack/solid-query'
 import { Link } from '~/components/link'
@@ -11,6 +11,11 @@ export default function PeoplePage() {
 		queryKey: ['users'],
 		queryFn: () => fetchProfiles(),
 	}))
+
+
+	onMount(() => {
+		users.refetch()
+	})
 
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
@@ -24,11 +29,11 @@ export default function PeoplePage() {
 				</p>
 				<Link class="flex items-center justify-center bg-secondary rounded-full size-10"
 					href="/share">
-					<span class="material-symbols-rounded text-[20px]">mail</span>
+					<span class="material-symbols-rounded text-[20px]">link</span>
 				</Link>
 			</div>
 
-			<div class="text-center pb-[200px] flex-1 overflow-y-auto w-full mt-5">
+			<div class="text-center  flex-1 overflow-y-auto w-full">
 				<Switch>
 					<Match when={users.isLoading}>
 						<p class="mt-4">Loading your wishlist...</p>

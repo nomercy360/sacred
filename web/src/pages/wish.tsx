@@ -137,7 +137,7 @@ const ViewItem = () => {
 			mainButton.onClick(despawnWish)
 			mainButton.enable('Delete from board')
 			mainButton.setParams?.({
-				color: '#F87171'
+				color: '#000000'
 			})
 		}
 	})

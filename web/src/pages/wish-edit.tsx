@@ -21,8 +21,6 @@ export default function WishEditPage() {
   const [isDeleting, setIsDeleting] = createSignal(false)
   const [isSaving, setIsSaving] = createSignal(false)
 
-  const [editMode, setEditMode] = createSignal(true)
-
   const params = useParams()
   const navigate = useNavigate()
   const mainButton = useMainButton()
@@ -159,8 +157,6 @@ export default function WishEditPage() {
 
   return (
     <div class="flex flex-col items-center p-4 min-h-screen">
-      <h1 class="text-xl font-bold mb-6">Edit Wish</h1>
-
       <Show when={item.isSuccess} fallback={
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div class="bg-black text-white rounded-xl shadow-md px-4 py-3 flex items-center gap-3">
@@ -193,10 +189,10 @@ export default function WishEditPage() {
             </div>
           </div>
 
-          <div class="flex flex-col space-y-1.5">
+          {/* <div class="flex flex-col space-y-1.5">
             <label class="text-xs font-medium text-secondary-foreground mb-1">Upload wish photo</label>
             <button class="text-sm font-semibold h-12 px-3 py-2 bg-primary text-white rounded-xl">add photo</button>
-          </div>
+          </div> */}
 
           <Show when={item.data?.images} fallback={<ImageLoader />}>
             <For each={item.data?.images}>

@@ -29,11 +29,11 @@ const Toast = () => {
 	})
 
 	return (
-		<div class="fixed inset-x-0 bottom-[120px] flex justify-center z-[999] pointer-events-none">
+		<div class="fixed inset-x-0 bottom-[100px] flex justify-center z-[999] pointer-events-none">
 			<div class="pointer-events-auto space-y-2">
 				{toasts().map(toast => (
 					toast.message.length > 10 ? (
-						<div class="flex w-[calc(100vw-2rem)] items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+						<div class="flex w-[calc(100vw-2rem)] items-center justify-center rounded-xl bg-[#B5F022] px-4 py-2 text-sm font-medium text-primary-foreground">
 							<span class="material-symbols-rounded mr-2 text-[20px] text-green-600">
 								check_circle
 							</span>

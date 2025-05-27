@@ -1,5 +1,5 @@
 import { fetchUserProfile, UserProfile, Wish, WishImage } from '~/lib/api'
-import { createEffect, For, Match, Show, Switch, onCleanup } from 'solid-js'
+import { createEffect, For, Match, Show, Switch, onCleanup, createSignal, onMount } from 'solid-js'
 import { createMutation, useQuery } from '@tanstack/solid-query'
 import { Link } from '~/components/link'
 import { useParams, useLocation } from '@solidjs/router'
@@ -32,7 +32,6 @@ export default function UserProfilePage() {
 	const location = useLocation()
 	const mainButton = useMainButton()
 
-
 	const followMutation = createMutation(() => ({
 		mutationFn: () => followUser(params.id),
 		onSuccess: () => {
@@ -44,13 +43,16 @@ export default function UserProfilePage() {
 		mutationFn: () => unfollowUser(params.id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['profile', params.id] })
+		
 		},
 	}))
+
 
 
 	const user = useQuery<UserProfile>(() => ({
 		queryKey: ['profile', params.id],
 		queryFn: () => fetchUserProfile(params.id),
+		refetchOnWindowFocus: true,
 	}))
 
 	createEffect(() => {
@@ -60,7 +62,7 @@ export default function UserProfilePage() {
 		const isFollowing = user.data?.is_following
 		const name = user.data?.name ?? ''
 		const text = `${isFollowing ? 'Unfollow' : 'Follow'} ${name}`
-		const color = isFollowing ? '#F87171' : '#000000'
+		const color = isFollowing ? '#808080' : '#000000'
 		const action = isFollowing ? unfollowMutation.mutate : followMutation.mutate
 
 		mainButton.setParams({ text, color })
@@ -74,7 +76,6 @@ export default function UserProfilePage() {
 		mainButton.offClick(followMutation.mutate)
 		mainButton.offClick(unfollowMutation.mutate)
 	})
-
 
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">

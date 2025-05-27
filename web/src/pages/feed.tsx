@@ -25,7 +25,7 @@ const FeedPage = () => {
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
 			<div
-				class={cn('w-full h-20 pt-3 px-5 pb-7', searchMode() ? 'block' : 'hidden')}>
+				class={cn('w-full h-20 p-5', searchMode() ? 'block' : 'hidden')}>
 				<div class="flex w-full rounded-2xl bg-secondary h-10 flex-row items-center justify-between pl-3">
 					<input
 						ref={setSearchInput}
@@ -36,7 +36,7 @@ const FeedPage = () => {
 						placeholder="Search ideas"
 					/>
 					<button
-						class="bg-secondary rounded-full size-10 flex items-center justify-center"
+						class="bg-none rounded-full size-10 flex items-center justify-center"
 						onClick={search() ? () => setSearch('') : toggleSearchMode}
 					>
 						<span class="material-symbols-rounded text-[20px]">close</span>

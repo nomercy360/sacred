@@ -53,7 +53,7 @@ export default function ProfileEditPage() {
 				addToast(error)
 			} else {
 				setUser(data)
-				addToast('Profile updated successfully')
+				addToast('Saved')
 				navigate('/')
 			}
 		} catch (e) {

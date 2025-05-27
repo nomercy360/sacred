@@ -1,9 +1,18 @@
 import { cn } from "~/lib/utils";
 import { createEffect, createSignal } from "solid-js";
-import { SearchingItem, SearchingItemProps } from "~/components/searching-item";
-import { fetchProfiles, UserProfile } from "~/lib/api";
-import { createQuery } from "@tanstack/solid-query";
-import { useNavigate } from "@solidjs/router";
+import { fetchProfiles, fetchUserProfile, followUser, unfollowUser, UserProfile } from "~/lib/api";
+import { createMutation, createQuery, useQuery } from "@tanstack/solid-query";
+import { useNavigate, useParams } from "@solidjs/router";
+import { queryClient } from "~/App";
+import { Link } from "~/components/link";
+
+export interface SearchingItemProps {
+    profilePicture: string
+    name: string
+    followers: number
+    userId: string
+    isFollowing: boolean
+}
 
 export default function SearchPage() {
     const navigate = useNavigate();
@@ -11,36 +20,84 @@ export default function SearchPage() {
     const [searchMode, setSearchMode] = createSignal(true)
     const [searchInput, setSearchInput] = createSignal<HTMLInputElement | null>(null)
     const [searchResults, setSearchResults] = createSignal<SearchingItemProps[]>([])
-    
+
+    const params = useParams()
+
     const profiles = createQuery<UserProfile[]>(() => ({
         queryKey: ['profiles'],
         queryFn: () => fetchProfiles()
     }))
-    
+
     const searchPeople = () => {
         if (!profiles.data) return;
-    
-        const filtered = search() 
-            ? profiles.data.filter(profile => 
-                profile.name?.toLowerCase().includes(search().toLowerCase()) || 
+
+        const filtered = search()
+            ? profiles.data.filter(profile =>
+                profile.name?.toLowerCase().includes(search().toLowerCase()) ||
                 profile.username.toLowerCase().includes(search().toLowerCase())
-              )
+            )
             : profiles.data;
-            
+
         setSearchResults(
             filtered.map(profile => ({
                 profilePicture: profile.avatar_url || '/placeholder.jpg',
                 name: profile.name || profile.username,
                 followers: profile.followers,
-                userId: profile.id
+                userId: profile.id,
+                isFollowing: profile.is_following
             }))
         );
     }
+
+
+    const user = useQuery<UserProfile>(() => ({
+        queryKey: ['profile', params.id],
+        queryFn: () => fetchUserProfile(params.id),
+    }))
+
+
+
+
+    const handleFollow = async (userId: string) => {
+        try {
+            await followUser(userId);
+            // обновляем локальное состояние
+            setSearchResults(results =>
+                results.map(item =>
+                    item.userId === userId ? { ...item, isFollowing: true, followers: item.followers + 1 } : item
+                )
+            );
+        } catch (e) {
+            console.error("Failed to follow:", e);
+        }
+    };
+
+    const handleUnfollow = async (userId: string) => {
+        try {
+            await unfollowUser(userId);
+            // обновляем локальное состояние
+            setSearchResults(results =>
+                results.map(item =>
+                    item.userId === userId ? { ...item, isFollowing: false, followers: item.followers - 1 } : item
+                )
+            );
+        } catch (e) {
+            console.error("Failed to unfollow:", e);
+        }
+    };
+
+
+
 
     createEffect(() => {
         if (profiles.data) {
             searchPeople();
         }
+
+
+
+
+
     });
 
     const toggleSearchMode = () => {
@@ -82,7 +139,7 @@ export default function SearchPage() {
                     </button>
                 </div>
             </div>
-            
+
             <div class={cn('bg-background h-20 flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5', searchMode() ? 'hidden' : 'flex')}>
                 <button
                     class="flex items-center justify-center bg-secondary rounded-full size-10"
@@ -93,7 +150,7 @@ export default function SearchPage() {
                 <p class="text-black text-2xl font-extrabold">Search</p>
                 <div class="size-10"></div>
             </div>
-            
+
             <div class="flex flex-col items-center w-full h-full px-5 overflow-y-auto">
                 {profiles.isLoading ? (
                     <p class="mt-4">Loading profiles...</p>
@@ -103,12 +160,25 @@ export default function SearchPage() {
                     <p class="mt-4">No profiles found</p>
                 ) : (
                     searchResults().map((result) => (
-                        <SearchingItem 
-                            profilePicture={result.profilePicture} 
-                            name={result.name} 
-                            followers={result.followers}
-                            userId={result.userId} 
-                        />
+                        <div class="flex flex-row items-center w-full justify-between mx-5 my-2">
+                            <Link href={`/profiles/${result.userId}`} class="flex flex-row items-center gap-3 flex-1">
+                                <img src={result.profilePicture} alt={result.name} class="w-10 h-10 rounded-full object-cover" />
+                                <div class="flex flex-col items-start">
+                                    <p class="text-sm font-bold">{result.name}</p>
+                                    <p class="text-xs text-gray-500">{result.followers} {result.followers === 1 ? 'follower' : 'followers'}</p>
+                                </div>
+                            </Link>
+
+                            {!result.isFollowing ? (
+                                <button onClick={() => handleFollow(result.userId)} class="w-20 hover:bg-primary/80 h-10 rounded-full flex items-center text-[12px] justify-center text-white bg-primary">
+                                    Follow
+                                </button>
+                            ) : (
+                                <button onClick={() => handleUnfollow(result.userId)} class="w-20 h-10 hover:bg-[#808080]/80 rounded-full flex items-center text-[12px] justify-center text-white bg-[#808080]">
+                                    Unfollow
+                                </button>
+                            )}
+                        </div>
                     ))
                 )}
             </div>

@@ -13,7 +13,7 @@ export default function UserBoardPage() {
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-y-auto pb-20">
 			<div
-				class="bg-background h-20 flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5">
+				class="bg-background h-20 flex-shrink-0 w-full flex flex-row justify-between items-center p-5">
 				<Link href={"/profile/edit"} class="flex flex-row space-x-2 items-center justify-start" >
 					<img
 						src={store.user?.avatar_url}
@@ -27,7 +27,7 @@ export default function UserBoardPage() {
 						href={'/bookmarks'}
 						state={{ from: '/' }}
 						class="flex items-center justify-center bg-secondary rounded-full size-10">
-						<span class="material-symbols-rounded text-[20px]">favorite</span>
+						<span class="material-symbols-rounded text-[20px]">done</span>
 					</Link>
 					<button class="flex items-center justify-center bg-secondary rounded-full size-10">
 						<span class="material-symbols-rounded text-[20px]">arrow_outward</span>

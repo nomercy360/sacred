@@ -6,7 +6,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"net/http"
-	"sacred/
 	"sacred/internal/db"
 	"sacred/internal/s3"
 )
@@ -67,21 +66,21 @@ func getUserID(c echo.Context) (string, error) {
 	user := c.Get("user")
 	if user == nil {
 		return "", echo.NewHTTPError(http.StatusUnauthorized, "no authentication token")
+	}
 
-	
 	token, ok := user.(*jwt.Token)
 	if !ok {
 		return "", echo.NewHTTPError(http.StatusUnauthorized, "invalid token")
+	}
 
-	
 	claims, ok := token.Claims.(*JWTClaims)
 	if !ok {
 		return "", echo.NewHTTPError(http.StatusUnauthorized, "invalid claims")
+	}
 
-	
 	if claims.UID == "" {
 		return "", echo.NewHTTPError(http.StatusUnauthorized, "user ID not found in token")
+	}
 
-	
 	return claims.UID, nil
 }

@@ -1,0 +1,128 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import {fetchWish, fetchWishes} from '../../api/wishes';
+import type {Wish} from '../../types/wish';
+import "../../styles/global.css";
+
+export async function getStaticPaths() {
+    try {
+        const wishes = await fetchWishes();
+        return wishes.map((wish) => ({
+            params: {id: wish.id},
+        }));
+    } catch (error) {
+        console.error('Failed to fetch wishes for static paths:', error);
+        return [];
+    }
+}
+
+const {id} = Astro.params;
+
+if (!id) {
+    return Astro.redirect('/404');
+}
+
+let wish: Wish | null = null;
+try {
+    wish = await fetchWish(id);
+} catch (error) {
+    console.error('Failed to fetch wish:', error);
+    return Astro.redirect('/404');
+}
+
+const extractDomain = (url: string) => {
+    try {
+        return new URL(url).hostname.replace('www.', '');
+    } catch {
+        return url;
+    }
+};
+
+const getImageUrl = (url: string, width: number = 800) => {
+    return `https://assets.peatch.io/cdn-cgi/image/width=${width}/${url}`;
+};
+
+const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+};
+
+const sortedImages = wish.images.sort((a, b) => a.position - b.position);
+const ogImage = sortedImages.length > 0 ? getImageUrl(sortedImages[0].url, 1200) : undefined;
+---
+
+<Layout
+        title={`${wish.name} - Tingzzz`}
+        description={`${wish.name} from ${extractDomain(wish.url)}`}
+        ogTitle={`${wish.name} - Tingzzz`}
+        ogDescription={`${wish.name} from ${extractDomain(wish.url)}`}
+        ogType="product"
+        ogUrl={`${import.meta.env.PUBLIC_APP_URL || 'https://tingzzz.com'}/wish/${id}`}
+        ogImage={ogImage}
+        ogImageWidth="1200"
+        ogImageHeight="630"
+        twitterCard="summary_large_image"
+        twitterTitle={`${wish.name} - Tingzzz`}
+        twitterDescription={`${wish.name} from ${extractDomain(wish.url)}`}
+        twitterImage={ogImage}
+>
+    <div class="min-h-screen bg-white">
+        <div class="max-w-2xl mx-auto px-4 py-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                    {wish.name}
+                </h1>
+                <div class="text-gray-600">
+                    from {extractDomain(wish.url)}
+                </div>
+                <div class="text-sm text-gray-400 mt-1">
+                    Added {formatDate(wish.created_at)}
+                </div>
+            </div>
+
+            <!-- Images -->
+            <div class="space-y-4 mb-8">
+                {sortedImages.map((image) => (
+                        <div class="max-w-sm mx-auto">
+                            <img
+                                    src={getImageUrl(image.url)}
+                                    alt={wish.name}
+                                    class="rounded-lg"
+                                    loading="lazy"
+                            />
+                        </div>
+                ))}
+            </div>
+
+            <!-- Categories -->
+            {wish.categories.length > 0 && (
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Categories</h3>
+                        <div class="flex flex-wrap gap-2">
+                            {wish.categories.map((category) => (
+                                    <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
+                {category.name}
+              </span>
+                            ))}
+                        </div>
+                    </div>
+            )}
+
+            <!-- Visit Link -->
+            <div class="mt-8">
+                <a
+                        href={wish.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="w-full bg-black text-white py-3 px-6 rounded-lg text-center block font-medium hover:bg-gray-900 transition-colors"
+                >
+                    Visit {extractDomain(wish.url)}
+                </a>
+            </div>
+        </div>
+    </div>
+</Layout>

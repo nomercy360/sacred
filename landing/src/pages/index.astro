@@ -1,0 +1,56 @@
+---
+import Layout from '../layouts/Layout.astro';
+import WishCard from '../components/WishCard.astro';
+import { fetchWishes } from '../api/wishes';
+import type { Wish } from '../types/wish';
+import "../styles/global.css";
+
+let wishes: Wish[] = [];
+try {
+  wishes = await fetchWishes();
+} catch (error) {
+  console.error('Failed to fetch wishes:', error);
+  wishes = [];
+}
+---
+
+<Layout title="Wish Feed">
+  <div class="min-h-screen bg-gray-50">
+    <div class="px-5 py-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-8">Discover Wishes</h1>
+
+      {wishes && wishes.length > 0 ? (
+        <div class="flex gap-4">
+          <div class="flex-1 flex flex-col gap-4">
+            {wishes.filter((_, index) => index % 4 === 0).map((wish) => (
+              <WishCard wish={wish} />
+            ))}
+          </div>
+          <div class="flex-1 flex flex-col gap-4">
+            {wishes.filter((_, index) => index % 4 === 1).map((wish) => (
+              <WishCard wish={wish} />
+            ))}
+          </div>
+          <div class="flex-1 flex flex-col gap-4">
+            {wishes.filter((_, index) => index % 4 === 2).map((wish) => (
+              <WishCard wish={wish} />
+            ))}
+          </div>
+          <div class="flex-1 flex flex-col gap-4">
+            {wishes.filter((_, index) => index % 4 === 3).map((wish) => (
+              <WishCard wish={wish} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          {[...Array(12)].map(() => (
+            <div class="overflow-hidden animate-pulse">
+              <div class="aspect-[2/3] bg-gray-300"></div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>

@@ -1,25 +1,18 @@
-export interface Category {
-  id: string;
-  name: string;
-  image_url: string;
+export interface WishImage {
+  url: string;
+  position: number;
 }
 
-export interface WishImage {
+export interface WishCategory {
   id: string;
-  wish_id: string;
-  url: string;
-  created_at: string;
-  position: number;
-  width: number;
-  height: number;
+  name: string;
 }
 
 export interface Wish {
   id: string;
   name: string;
   url: string;
-  created_at: string;
-  updated_at: string;
-  categories: Category[];
   images: WishImage[];
+  categories: WishCategory[];
+  created_at: string;
 }

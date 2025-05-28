@@ -1,6 +1,6 @@
-import type { Wish } from '../types/wish';
+import { Wish } from '../types/wish';
 
-const API_BASE_URL = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 export async function fetchWishes(): Promise<Wish[]> {
   const response = await fetch(`${API_BASE_URL}/v1/feed`);

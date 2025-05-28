@@ -145,23 +145,12 @@ func getAuthConfig(secret string) echojwt.Config {
 		ErrorHandler: func(c echo.Context, err error) error {
 			var extErr *echojwt.TokenExtractionError
 			if !errors.As(err, &extErr) {
+				// For non-extraction errors, return unauthorized
 				return echo.NewHTTPError(http.StatusUnauthorized, "auth is invalid")
 			}
 
-			claims := &api.JWTClaims{
-				RegisteredClaims: jwt.RegisteredClaims{
-					ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour * 30)),
-				},
-			}
-
-			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-			c.Set("user", token)
-
-			if claims.UID == "" {
-				return echo.NewHTTPError(http.StatusUnauthorized, "auth is invalid")
-			}
-
+			// For token extraction errors (missing token), just continue without setting user
+			// This makes authentication optional
 			return nil
 		},
 	}

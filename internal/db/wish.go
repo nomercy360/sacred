@@ -61,7 +61,7 @@ type WishImage struct {
 	Height    int       `db:"height" json:"height"`
 }
 
-func (s *storage) GetWishByID(ctx context.Context, uid, id string) (Wish, error) {
+func (s *storage) GetWishByID(ctx context.Context, viewerID, id string) (Wish, error) {
 	query := `SELECT 
     		w.id, 
     		w.user_id,
@@ -84,7 +84,7 @@ func (s *storage) GetWishByID(ctx context.Context, uid, id string) (Wish, error)
 
 	var item Wish
 
-	if err := s.db.QueryRowContext(ctx, query, uid, id).Scan(
+	if err := s.db.QueryRowContext(ctx, query, viewerID, id).Scan(
 		&item.ID,
 		&item.UserID,
 		&item.Name,
@@ -256,10 +256,16 @@ func (s *storage) UpdateWish(ctx context.Context, item Wish, categories []string
 	return s.GetWishByID(ctx, item.UserID, item.ID)
 }
 
-func (s *storage) GetPublicWishesFeed(ctx context.Context, userID, searchQuery string) ([]Wish, error) {
+func (s *storage) GetPublicWishesFeed(ctx context.Context, viewerID, searchQuery string) ([]Wish, error) {
 	baseQuery := s.baseWishesQuery() + `
-			WHERE w.published_at IS NOT NULL AND w.user_id != ?`
-	args := []interface{}{userID}
+			WHERE w.published_at IS NOT NULL`
+
+	var args []interface{}
+
+	if viewerID != "" {
+		baseQuery += ` AND w.user_id != ?`
+		args = append(args, viewerID)
+	}
 
 	if searchQuery != "" {
 		baseQuery += ` AND (w.name LIKE ? OR w.notes LIKE ?)`

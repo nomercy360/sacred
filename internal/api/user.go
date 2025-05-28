@@ -10,7 +10,10 @@ import (
 )
 
 func (a *API) UpdateUserPreferences(c echo.Context) error {
-	uid := getUserID(c)
+	uid, err := getUserID(c)
+	if err != nil {
+		return err
+	}
 
 	var req contract.UpdateUserRequest
 	if err := c.Bind(&req); err != nil {
@@ -49,7 +52,10 @@ func (a *API) UpdateUserPreferences(c echo.Context) error {
 }
 
 func (a *API) UpdateUserInterests(c echo.Context) error {
-	uid := getUserID(c)
+	uid, err := getUserID(c)
+	if err != nil {
+		return err
+	}
 
 	var interests []string
 	if err := c.Bind(&interests); err != nil {
@@ -83,7 +89,10 @@ func (a *API) GetUserProfile(c echo.Context) error {
 		return terrors.BadRequest(nil, "user id cannot be empty")
 	}
 
-	currentUserID := getUserID(c)
+	currentUserID, err := getUserID(c)
+	if err != nil {
+		return err
+	}
 
 	user, err := a.storage.GetUserByID(profileID)
 	if err != nil {
@@ -116,7 +125,10 @@ func (a *API) GetUserProfile(c echo.Context) error {
 }
 
 func (a *API) ListProfiles(c echo.Context) error {
-	uid := getUserID(c)
+	uid, err := getUserID(c)
+	if err != nil {
+		return err
+	}
 
 	users, err := a.storage.ListUsers(c.Request().Context(), uid)
 	if err != nil {
@@ -156,7 +168,10 @@ func (a *API) UnfollowUser(c echo.Context) error {
 		return terrors.BadRequest(err, "failed to validate request")
 	}
 
-	uid := getUserID(c)
+	uid, err := getUserID(c)
+	if err != nil {
+		return err
+	}
 
 	if err := a.storage.UnfollowUser(c.Request().Context(), uid, req.FollowingID); err != nil {
 		return terrors.InternalServer(err, "could not unfollow user")
@@ -175,7 +190,10 @@ func (a *API) FollowUser(c echo.Context) error {
 		return terrors.BadRequest(err, "failed to validate request")
 	}
 
-	uid := getUserID(c)
+	uid, err := getUserID(c)
+	if err != nil {
+		return err
+	}
 
 	isFollowing, _ := a.storage.IsFollowing(c.Request().Context(), uid, req.FollowingID)
 	if isFollowing {
@@ -190,7 +208,11 @@ func (a *API) FollowUser(c echo.Context) error {
 }
 
 func (a *API) SaveWishToBookmarks(c echo.Context) error {
-	uid := getUserID(c)
+	uid, err := getUserID(c)
+	if err != nil {
+		return err
+	}
+
 	wid := c.Param("id")
 
 	if wid == "" {
@@ -220,7 +242,11 @@ func (a *API) SaveWishToBookmarks(c echo.Context) error {
 }
 
 func (a *API) RemoveWishFromBookmarks(c echo.Context) error {
-	uid := getUserID(c)
+	uid, err := getUserID(c)
+	if err != nil {
+		return err
+	}
+
 	wid := c.Param("id")
 
 	if wid == "" {
@@ -235,7 +261,10 @@ func (a *API) RemoveWishFromBookmarks(c echo.Context) error {
 }
 
 func (a *API) ListBookmarkedWishes(c echo.Context) error {
-	uid := getUserID(c)
+	uid, err := getUserID(c)
+	if err != nil {
+		return err
+	}
 
 	items, err := a.storage.ListBookmarkedWishes(c.Request().Context(), uid)
 	if err != nil {

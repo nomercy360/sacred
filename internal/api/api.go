@@ -5,6 +5,7 @@ import (
 	telegram "github.com/go-telegram/bot"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+	"net/http"
 	"sacred/internal/db"
 	"sacred/internal/s3"
 )
@@ -61,8 +62,25 @@ func New(storage storager, cfg Config, s3 *s3.Client, bot *telegram.Bot) *API {
 	}
 }
 
-func getUserID(c echo.Context) string {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*JWTClaims)
-	return claims.UID
+func getUserID(c echo.Context) (string, error) {
+	user := c.Get("user")
+	if user == nil {
+		return "", echo.NewHTTPError(http.StatusUnauthorized, "no authentication token")
+	}
+
+	token, ok := user.(*jwt.Token)
+	if !ok {
+		return "", echo.NewHTTPError(http.StatusUnauthorized, "invalid token")
+	}
+
+	claims, ok := token.Claims.(*JWTClaims)
+	if !ok {
+		return "", echo.NewHTTPError(http.StatusUnauthorized, "invalid claims")
+	}
+
+	if claims.UID == "" {
+		return "", echo.NewHTTPError(http.StatusUnauthorized, "user ID not found in token")
+	}
+
+	return claims.UID, nil
 }

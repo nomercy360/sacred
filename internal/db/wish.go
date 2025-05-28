@@ -257,8 +257,7 @@ func (s *storage) UpdateWish(ctx context.Context, item Wish, categories []string
 }
 
 func (s *storage) GetPublicWishesFeed(ctx context.Context, viewerID, searchQuery string) ([]Wish, error) {
-	baseQuery := s.baseWishesQuery() + `
-			WHERE w.published_at IS NOT NULL`
+	baseQuery := s.baseWishesQuery() + `WHERE w.published_at IS NOT NULL AND source_id IS NULL AND w.deleted_at IS NULL`
 
 	var args []interface{}
 

@@ -143,3 +143,31 @@ func (u UpdateUserRequest) Validate() error {
 
 	return nil
 }
+
+type FeedItem struct {
+	ID         string         `json:"id"`
+	Name       *string        `json:"name"`
+	URL        *string        `json:"url"`
+	Price      *float64       `json:"price,omitempty"`
+	Currency   *string        `json:"currency,omitempty"`
+	Notes      *string        `json:"notes,omitempty"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	Categories []db.Category  `json:"categories"`
+	Images     []db.WishImage `json:"images"`
+}
+
+func ToFeedItem(w db.Wish) FeedItem {
+	return FeedItem{
+		ID:         w.ID,
+		Name:       w.Name,
+		URL:        w.URL,
+		Price:      w.Price,
+		Currency:   w.Currency,
+		Notes:      w.Notes,
+		CreatedAt:  w.CreatedAt,
+		UpdatedAt:  w.UpdatedAt,
+		Categories: w.Categories,
+		Images:     w.Images,
+	}
+}

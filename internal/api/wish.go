@@ -63,14 +63,17 @@ func (a *API) handlePhotoUpload(imgURL string) (int, int, string, error) {
 }
 
 func (a *API) CreateWishHandler(c echo.Context) error {
-	userID := getUserID(c)
+	userID, err := getUserID(c)
+	if err != nil {
+		return err
+	}
 
 	item := db.Wish{
 		ID:     nanoid.Must(),
 		UserID: userID,
 	}
 
-	err := a.storage.CreateWish(c.Request().Context(), item, []string{})
+	err = a.storage.CreateWish(c.Request().Context(), item, []string{})
 	if err != nil {
 		return terrors.InternalServer(err, "cannot create wishlist item")
 	}
@@ -98,7 +101,10 @@ func (a *API) UpdateWishHandler(c echo.Context) error {
 		return terrors.BadRequest(err, fmt.Sprintf("failed to validate request: %v", err))
 	}
 
-	userID := getUserID(c)
+	userID, err := getUserID(c)
+	if err != nil {
+		return err
+	}
 	wishID := c.Param("id")
 	if wishID == "" {
 		return terrors.BadRequest(nil, "wish id cannot be empty")
@@ -133,7 +139,7 @@ func (a *API) UpdateWishHandler(c echo.Context) error {
 
 func (a *API) GetWishHandler(c echo.Context) error {
 	itemID := c.Param("id")
-	uid := getUserID(c)
+	uid, _ := getUserID(c) // auth not required for this endpoint
 
 	item, err := a.storage.GetWishByID(c.Request().Context(), uid, itemID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
@@ -146,7 +152,10 @@ func (a *API) GetWishHandler(c echo.Context) error {
 }
 
 func (a *API) ListUserWishes(c echo.Context) error {
-	uid := getUserID(c)
+	uid, err := getUserID(c)
+	if err != nil {
+		return err
+	}
 
 	res, err := a.storage.GetWishesByUserID(c.Request().Context(), uid)
 	if err != nil {
@@ -158,7 +167,10 @@ func (a *API) ListUserWishes(c echo.Context) error {
 
 func (a *API) CopyWishHandler(c echo.Context) error {
 	sourceWishID := c.Param("id")
-	targetUserID := getUserID(c)
+	targetUserID, err := getUserID(c)
+	if err != nil {
+		return err
+	}
 
 	sourceWish, err := a.storage.GetWishByID(c.Request().Context(), targetUserID, sourceWishID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
@@ -217,7 +229,10 @@ func (a *API) CopyWishHandler(c echo.Context) error {
 
 func (a *API) DeleteWishHandler(c echo.Context) error {
 	itemID := c.Param("id")
-	uid := getUserID(c)
+	uid, err := getUserID(c)
+	if err != nil {
+		return err
+	}
 
 	wish, err := a.storage.GetWishByID(c.Request().Context(), uid, itemID)
 	if err != nil {
@@ -237,7 +252,7 @@ func (a *API) DeleteWishHandler(c echo.Context) error {
 }
 
 func (a *API) GetWishesFeed(c echo.Context) error {
-	uid := getUserID(c)
+	uid, _ := getUserID(c)
 
 	searchQuery := c.QueryParam("search")
 
@@ -246,7 +261,13 @@ func (a *API) GetWishesFeed(c echo.Context) error {
 		return terrors.InternalServer(err, "cannot fetch wishes feed")
 	}
 
-	return c.JSON(http.StatusOK, wishes)
+	resp := make([]contract.FeedItem, 0, len(wishes))
+	for _, wish := range wishes {
+		item := contract.ToFeedItem(wish)
+		resp = append(resp, item)
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
 
 func (a *API) UploadWishPhoto(c echo.Context) error {
@@ -255,7 +276,10 @@ func (a *API) UploadWishPhoto(c echo.Context) error {
 		return terrors.BadRequest(nil, "wish ID is required")
 	}
 
-	userID := getUserID(c)
+	userID, err := getUserID(c)
+	if err != nil {
+		return err
+	}
 
 	wish, err := a.storage.GetWishByID(c.Request().Context(), userID, wishID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
@@ -366,7 +390,10 @@ func (a *API) DeleteWishPhoto(c echo.Context) error {
 		return terrors.BadRequest(nil, "photo ID is required")
 	}
 
-	userID := getUserID(c)
+	userID, err := getUserID(c)
+	if err != nil {
+		return err
+	}
 
 	wish, err := a.storage.GetWishByID(c.Request().Context(), userID, wishID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {

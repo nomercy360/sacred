@@ -143,10 +143,10 @@ export default function WishEditPage() {
       if (isSaving()) {
         mainButton.disable('Saving...')
       } else {
-        mainButton.enable('Save wish')
+        mainButton.enable('Save')
       }
     } else {
-      mainButton.disable('Save wish')
+      mainButton.disable('Save')
     }
   })
 

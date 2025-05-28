@@ -1,13 +1,13 @@
-import { createQuery, useQuery } from '@tanstack/solid-query'
+import { useQuery } from '@tanstack/solid-query'
 import { fetchFeed, Wish } from '~/lib/api'
 import { Link } from '~/components/link'
 import { WishesGrid } from '~/pages/bookmarks'
-import { createSignal, Show } from 'solid-js'
+import { createSignal } from 'solid-js'
 import { cn } from '~/lib/utils'
 
 const FeedPage = () => {
 	const [search, setSearch] = createSignal('')
-	const [searchMode, setSearchMode] = createSignal(true)
+	const [searchMode, setSearchMode] = createSignal(false)
 	const [searchInput, setSearchInput] = createSignal<HTMLInputElement | null>(null)
 
 	const wishes = useQuery<Wish[]>(() => ({
@@ -26,7 +26,7 @@ const FeedPage = () => {
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
 			<div
 				class={cn('w-full h-20 p-5', searchMode() ? 'block' : 'hidden')}>
-				<div class="flex w-full rounded-2xl bg-secondary h-10 flex-row items-center justify-between pl-3">
+				<div class="flex w-full rounded-2xl bg-secondary flex-row items-center justify-between pl-3">
 					<input
 						ref={setSearchInput}
 						type="text"
@@ -44,7 +44,7 @@ const FeedPage = () => {
 				</div>
 			</div>
 			<div
-				class={cn('bg-background h-20 flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5', searchMode() ? 'hidden' : 'flex')}>
+				class={cn('bg-background h-20 flex-shrink-0 w-full flex flex-row justify-between items-center p-5', searchMode() ? 'hidden' : 'flex')}>
 				<button
 					class="flex items-center justify-center bg-secondary rounded-full size-10"
 					onClick={toggleSearchMode}

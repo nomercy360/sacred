@@ -19,7 +19,7 @@ export const removeToast = (id: number) => {
 }
 
 
-const Toast = () => {
+const Toast = ({ children }: { children: string }) => {
 	createEffect(() => {
 		const currentToasts = toasts()
 		if (currentToasts.length > 5) {
@@ -33,14 +33,14 @@ const Toast = () => {
 			<div class="pointer-events-auto space-y-2">
 				{toasts().map(toast => (
 					toast.message.length > 10 ? (
-						<div class="flex w-[calc(100vw-2rem)] items-center justify-center rounded-xl bg-[#B5F022] px-4 py-2 text-sm font-medium text-primary-foreground">
-							<span class="material-symbols-rounded mr-2 text-[20px] text-green-600">
-								check_circle
+						<div class="flex w-auto mr-3 items-center justify-center rounded-full bg-[#B5F022] px-4 py-2 text-sm font-medium text-primary">
+							<span class="material-symbols-rounded mr-2 text-[20px] text-primary">
+								info
 							</span>
 							{toast.message}
 						</div>
 					) : (
-						<div class="flex w-[86px] mr-3 items-center justify-center rounded-full bg-[#B5F022] px-4 py-2 text-sm font-medium text-primary">
+						<div class="flex w-auto mr-3 items-center justify-center rounded-full bg-[#B5F022] px-4 py-2 text-sm font-medium text-primary">
 							{toast.message}
 							<span class="material-symbols-rounded text-[20px] text-primary">
 								check

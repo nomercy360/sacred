@@ -23,9 +23,9 @@ const FeedPage = () => {
 	}
 
 	return (
-		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
+		<div class="relative flex flex-col items-center bg-none w-full h-screen overflow-hidden">
 			<div
-				class={cn('w-full h-20 p-5', searchMode() ? 'block' : 'hidden')}>
+				class={cn('w-full h-20 p-5 z-20', searchMode() ? 'block' : 'hidden')}>
 				<div class="flex w-full rounded-2xl bg-secondary flex-row items-center justify-between pl-3">
 					<input
 						ref={setSearchInput}
@@ -43,8 +43,9 @@ const FeedPage = () => {
 					</button>
 				</div>
 			</div>
+			<div class="fixed top-0 left-0 right-0 z-10 bg-gradient-to-t from-transparent to-white h-20">
 			<div
-				class={cn('bg-background h-20 flex-shrink-0 w-full flex flex-row justify-between items-center p-5', searchMode() ? 'hidden' : 'flex')}>
+				class={cn('h-20 flex-shrink-0 w-full flex flex-row justify-between items-center p-5', searchMode() ? 'hidden' : 'flex')}>
 				<button
 					class="flex items-center justify-center bg-secondary rounded-full size-10"
 					onClick={toggleSearchMode}
@@ -56,6 +57,7 @@ const FeedPage = () => {
 							class="flex items-center justify-center bg-secondary rounded-full size-10">
 					<span class="material-symbols-rounded text-[20px]">page_info</span>
 				</Link>
+			</div>
 			</div>
 			<WishesGrid wishes={wishes as any} source="/feed" />
 		</div>

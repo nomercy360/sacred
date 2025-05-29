@@ -6,6 +6,7 @@ import { cn, currencySymbol, getDomainName } from '~/lib/utils'
 import { queryClient } from '~/App'
 import { setStore, setWishes, store } from '~/store'
 import { useMainButton } from '~/lib/useMainButton'
+import { addToast } from '~/components/toast'
 
 const ViewItem = () => {
 	const params = useParams()
@@ -188,8 +189,10 @@ const ViewItem = () => {
 						onClick={() => {
 							if (item.data?.is_bookmarked) {
 								removeFromBookmark.mutate()
+								addToast('Removed from bookmarks')
 							} else {
 								saveToBookmark.mutate()
+								addToast('Added to bookmarks')
 							}
 						}}
 					>

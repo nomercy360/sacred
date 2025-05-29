@@ -13,8 +13,9 @@ const BookmarksPage = () => {
 		<div
 			class="relative flex flex-col items-center w-full h-screen overflow-hidden"
 		>
-			<div
-				class="bg-background h-20 flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5">
+			<div class="fixed top-0 left-0 right-0 z-10 bg-gradient-to-t from-transparent to-white h-20">
+				<div
+				class="h-20 flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5">
 				<button class="flex items-center justify-center bg-secondary rounded-full size-10">
 					<span class="material-symbols-rounded text-[20px]">
 						search
@@ -31,6 +32,7 @@ const BookmarksPage = () => {
 						page_info
 					</span>
 				</Link>
+			</div>
 			</div>
 			<WishesGrid wishes={wishes as any} source="/bookmarks" />
 		</div>
@@ -53,7 +55,7 @@ export function WishesGrid(props: WishesGridProps) {
 				</div>
 			</Show>
 			<Show when={props.wishes.isSuccess && props.wishes.data?.length > 0}>
-				<div class="grid grid-cols-2 gap-0.5 pb-[200px] h-full w-full overflow-y-scroll">
+				<div class={`grid grid-cols-2 gap-0.5 pb-[200px] h-full w-full overflow-y-scroll ${props.source === '/bookmarks' || props.source === '/feed' ? 'pt-20' : ''}`}>
 					<div class="flex flex-col gap-0.5">
 						<For each={props.wishes.data?.slice(0, Math.ceil(props.wishes.data.length / 2))}>
 							{(wish) => (

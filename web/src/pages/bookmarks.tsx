@@ -48,7 +48,7 @@ export function WishesGrid(props: WishesGridProps) {
 	return (
 		<>
 			<Show when={props.wishes.isSuccess && props.wishes.data?.length === 0}>
-				<div class="w-full text-center items-center flex justify-center">
+				<div class="w-full text-center items-center flex justify-center pt-20">
 					<p class="text-xl font-extrabold">
 						No content is here yet..
 					</p>

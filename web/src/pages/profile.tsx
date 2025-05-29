@@ -93,7 +93,7 @@ export default function UserProfilePage() {
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
 			<div class="flex-shrink-0 w-full flex flex-row justify-between items-center p-5">
 				<button class="flex items-center justify-center bg-secondary rounded-full size-10">
-					<span class="material-symbols-rounded text-[20px]">page_info</span>
+					<span class="material-symbols-rounded text-[20px]">report</span>
 				</button>
 				<p class="text-black text-2xl font-extrabold">
 					<Show when={!user.isLoading} fallback={<span>Loading...</span>}>

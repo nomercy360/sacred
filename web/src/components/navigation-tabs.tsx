@@ -51,6 +51,9 @@ export default function NavigationTabs(props: any) {
 			<div
 				class="flex flex-col items-center h-[85px] fixed bottom-0 w-full z-50"
 			>
+				<button onClick={() => triggerHaptic('heavy')}>
+					Trigger Haptic
+				</button>
 				<div class="flex justify-center  flex-row rounded-full p-1 space-x-5 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.3)] bg-white px-2">
 					{tabs.map(({ href, icon }) => (
 						<Link

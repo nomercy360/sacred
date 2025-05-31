@@ -1,6 +1,7 @@
 import { cn } from '~/lib/utils'
 import { useLocation } from '@solidjs/router'
 import { Link } from '~/components/link'
+import { onMount } from 'solid-js'
 
 
 
@@ -26,6 +27,25 @@ export default function NavigationTabs(props: any) {
 		},
 	]
 
+	onMount(() => {
+		window.Telegram.WebApp.ready()
+	})
+
+	function triggerHaptic(type: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' = 'light') {
+		try {
+		  const haptic = window.Telegram?.WebApp?.HapticFeedback
+		  if (haptic?.impactOccurred) {
+			haptic.impactOccurred(type)
+			console.log(`[Haptic] Triggered: ${type}`)
+		  } else {
+			console.warn('[Haptic] Not available')
+		  }
+		} catch (err) {
+		  console.error('[Haptic] Error:', err)
+		}
+	  }
+
+
 	return (
 		<>
 			<div
@@ -40,9 +60,7 @@ export default function NavigationTabs(props: any) {
 								'bg-none': location.pathname === href,
 							})}
 							onClick={() => {
-								if (window?.Telegram?.WebApp?.HapticFeedback?.impactOccurred) {
-									window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy')
-								}
+								triggerHaptic('heavy')
 							}}
 						>
 							<span

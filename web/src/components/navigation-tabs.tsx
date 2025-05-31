@@ -41,7 +41,7 @@ export default function NavigationTabs(props: any) {
 							})}
 							onClick={() => {
 								if (window?.Telegram?.WebApp?.HapticFeedback?.impactOccurred) {
-									window.Telegram.WebApp.HapticFeedback.impactOccurred('light')
+									window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy')
 								}
 							}}
 						>

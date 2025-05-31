@@ -7,6 +7,7 @@ import { cn } from '~/lib/utils'
 import CategoriesSelect from '~/components/categories-select'
 import { useBackButton } from '~/lib/useBackButton'
 import { useNavigate } from '@solidjs/router'
+import { triggerHaptic } from '~/lib/triggerHaptic'
 
 
 const mockNames = [
@@ -64,11 +65,13 @@ const FeedPage = () => {
 	const handleSearchOpen = () => {
 		setSearchMode(true)
 		setTimeout(() => searchInput()?.focus(), 0)
+		triggerHaptic('heavy')
 	}
 
 	const handleSearchClose = () => {
 		setSearch('')
 		setSearchMode(false)
+		
 	}
 
 
@@ -76,7 +79,6 @@ const FeedPage = () => {
 	return (
 		<div class="relative flex flex-col items-center bg-none w-full h-screen overflow-hidden">
 			<Show when={searchMode()}>
-
 				<div class={cn('w-full h-20 p-5 z-20')}>
 					<form
 						onSubmit={e => {

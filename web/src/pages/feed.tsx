@@ -2,9 +2,12 @@ import { useQuery } from '@tanstack/solid-query'
 import { fetchFeed, Wish } from '~/lib/api'
 import { Link } from '~/components/link'
 import { WishesGrid } from '~/pages/bookmarks'
-import { createSignal, For, Show } from 'solid-js'
+import { createSignal, For, onCleanup, onMount, Show } from 'solid-js'
 import { cn } from '~/lib/utils'
 import CategoriesSelect from '~/components/categories-select'
+import { useBackButton } from '~/lib/useBackButton'
+import { useNavigate } from '@solidjs/router'
+
 
 const mockNames = [
 	"Arc'teryx", 'Beaded Breakast', 'Nike', 'Razor Keyboard',
@@ -21,6 +24,23 @@ const FeedPage = () => {
 	const [search, setSearch] = createSignal('')
 	const [searchMode, setSearchMode] = createSignal(false)
 	const [searchInput, setSearchInput] = createSignal<HTMLInputElement | null>(null)
+
+	const backButton = useBackButton()
+
+	const navigate = useNavigate()
+
+	onMount(() => {
+		backButton.onClick(() => {
+			navigate('/')
+		})
+		
+	})
+
+	onCleanup(() => {
+		backButton.offClick(() => {
+			navigate('/')
+		})
+	})
 
 	const filteredSuggestions = () =>
 		search().length > 0
@@ -51,12 +71,20 @@ const FeedPage = () => {
 		setSearchMode(false)
 	}
 
+
+
 	return (
 		<div class="relative flex flex-col items-center bg-none w-full h-screen overflow-hidden">
 			<Show when={searchMode()}>
 
 				<div class={cn('w-full h-20 p-5 z-20')}>
-					<div class="flex w-full rounded-2xl bg-secondary flex-row items-center justify-between pl-3">
+					<form
+						onSubmit={e => {
+							e.preventDefault()
+							handleSuggestionClick(search())
+						}}
+						class="flex w-full rounded-2xl bg-secondary flex-row items-center justify-between pl-3"
+					>
 						<input
 							ref={setSearchInput}
 							type="text"
@@ -66,12 +94,13 @@ const FeedPage = () => {
 							placeholder="Search ideas"
 						/>
 						<button
+							type="button"
 							class="bg-none rounded-full size-10 flex items-center justify-center"
 							onClick={handleSearchClose}
 						>
 							<span class="material-symbols-rounded text-[20px]">close</span>
 						</button>
-					</div>
+					</form>
 				</div>
 
 				<Show

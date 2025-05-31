@@ -109,7 +109,7 @@ export default function WishEditPage() {
       if (result.error) {
         addToast("Failed to delete image");
       } else {
-        addToast("Image deleted successfully");
+        addToast("Deleted success");
 
         await queryClient.invalidateQueries({ queryKey: ['item', params.id] });
         await queryClient.invalidateQueries({ queryKey: ['wishes'] });

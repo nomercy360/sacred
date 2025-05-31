@@ -103,8 +103,10 @@ const ViewItem = () => {
 	async function handleCopy() {
 		if (item.data?.copied_wish_id) {
 			removeFromBoard.mutate()
+			addToast('Removed from board')
 		} else {
 			saveToBoard.mutate()
+			addToast('Added to board')
 		}
 	}
 
@@ -230,16 +232,17 @@ const ViewItem = () => {
 				</Switch>
 			</div>
 
-			<div class="mt-7 flex flex-col items-center justify-start space-y-0.5">
+			<div class="mt-7 flex flex-col items-center justify-start space-y-0.5 ">
 				<Show when={item.data?.images} fallback={<ImageLoader />}>
 					<For each={item.data?.images}>
 						{(image) => (
 							<img
 								src={`https://assets.peatch.io/${image.url}`}
 								alt={item.data?.name}
-								class="w-full rounded-[25px]"
+								class="w-full rounded-[25px] border shadow-sm rounded-[25px]"
 								style={{ 'aspect-ratio': `${image.width}/${image.height}` }}
 							/>
+						
 						)}
 					</For>
 				</Show>

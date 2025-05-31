@@ -85,7 +85,7 @@ export default function UserBoardPage() {
 										<For each={group}>
 											{(item) => (
 												<Link
-													class="flex bg-center bg-[#F4F4F5] bg-cover justify-center items-center rounded-[25px] "
+													class="flex bg-center bg-[#F4F4F5] bg-cover border shadow-sm rounded-[25px] justify-center items-center "
 													style={{
 														'background-image': item.images ? `url(${resolveImage(item.images)})` : 'none',
 														'aspect-ratio': resolveAspectRatio(item.images),

@@ -39,6 +39,11 @@ export default function NavigationTabs(props: any) {
 							class={cn('size-10 flex items-center justify-center flex-col text-sm text-gray-400', {
 								'bg-none': location.pathname === href,
 							})}
+							onClick={() => {
+								if (window?.Telegram?.WebApp?.HapticFeedback?.impactOccurred) {
+									window.Telegram.WebApp.HapticFeedback.impactOccurred('light')
+								}
+							}}
 						>
 							<span
 								class={cn('material-symbols-rounded  text-[22px]', { 'text-black': location.pathname === href })}>

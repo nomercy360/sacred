@@ -2,11 +2,14 @@ import { cn } from '~/lib/utils'
 import { useLocation } from '@solidjs/router'
 import { Link } from '~/components/link'
 import { onMount } from 'solid-js'
+import { useNavigate } from '@solidjs/router'
 
 
 
 export default function NavigationTabs(props: any) {
 	const location = useLocation()
+
+	const navigate = useNavigate()
 
 	const tabs = [
 		{
@@ -33,17 +36,17 @@ export default function NavigationTabs(props: any) {
 
 	function triggerHaptic(type: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' = 'light') {
 		try {
-		  const haptic = window.Telegram?.WebApp?.HapticFeedback
-		  if (haptic?.impactOccurred) {
-			haptic.impactOccurred(type)
-			console.log(`[Haptic] Triggered: ${type}`)
-		  } else {
-			console.warn('[Haptic] Not available')
-		  }
+			const haptic = window.Telegram?.WebApp?.HapticFeedback
+			if (haptic?.impactOccurred) {
+				haptic.impactOccurred(type)
+				console.log(`[Haptic] Triggered: ${type}`)
+			} else {
+				console.warn('[Haptic] Not available')
+			}
 		} catch (err) {
-		  console.error('[Haptic] Error:', err)
+			console.error('[Haptic] Error:', err)
 		}
-	  }
+	}
 
 
 	return (
@@ -56,21 +59,18 @@ export default function NavigationTabs(props: any) {
 				</button>
 				<div class="flex justify-center  flex-row rounded-full p-1 space-x-5 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.3)] bg-white px-2">
 					{tabs.map(({ href, icon }) => (
-						<Link
-							href={href}
-							state={{ from: location.pathname }}
-							class={cn('size-10 flex items-center justify-center flex-col text-sm text-gray-400', {
-								'bg-none': location.pathname === href,
+						<button
+							type="button"
+							class={cn('size-10 flex items-center justify-center flex-col text-sm text-gray-400 rounded-full', {
+								'text-black': location.pathname === href,
 							})}
 							onClick={() => {
 								triggerHaptic('heavy')
+								navigate(href, { state: { from: location.pathname } })
 							}}
 						>
-							<span
-								class={cn('material-symbols-rounded  text-[22px]', { 'text-black': location.pathname === href })}>
-								{icon}
-							</span>
-						</Link>
+							<span class="material-symbols-rounded text-[22px]">{icon}</span>
+						</button>
 					))}
 				</div>
 			</div>

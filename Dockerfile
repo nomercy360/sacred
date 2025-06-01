@@ -13,7 +13,7 @@ WORKDIR /app
 COPY . /app/
 
 RUN go mod tidy && \
-    go install -ldflags='-s -w -extldflags "-static"' ./cmd/api/main.go
+    go install -tags fts5 -ldflags='-s -w -extldflags "-static"' ./cmd/api/main.go
 
 FROM alpine:3.19
 

@@ -39,6 +39,7 @@ type Config struct {
 		Bucket          string `yaml:"bucket"`
 	} `yaml:"aws"`
 	AssetsURL string `yaml:"assets_url"`
+	ParserURL string `yaml:"parser_url"`
 }
 
 func ReadConfig(filePath string) (*Config, error) {
@@ -219,6 +220,7 @@ func main() {
 		JWTSecret:    cfg.JWTSecret,
 		MetaFetchURL: cfg.MetaFetchURL,
 		AssetsURL:    cfg.AssetsURL,
+		ParserURL:    cfg.ParserURL,
 	}
 
 	s3Client, err := s3.NewS3Client(
@@ -246,7 +248,7 @@ func main() {
 	a := api.New(storage, apiCfg, s3Client, bot)
 
 	tmConfig := middleware.TimeoutConfig{
-		Timeout: 20 * time.Second,
+		Timeout: 30 * time.Second,
 	}
 
 	e.Use(middleware.TimeoutWithConfig(tmConfig))
@@ -263,12 +265,14 @@ func main() {
 
 	g.PUT("/wishes/:id", a.UpdateWishHandler)
 	g.POST("/wishes", a.CreateWishHandler)
+	g.POST("/wishes/from-url", a.CreateWishFromURLHandler)
 	g.GET("/wishes/:id", a.GetWishHandler)
 	g.PUT("/user/settings", a.UpdateUserPreferences)
 	g.PUT("/user/interests", a.UpdateUserInterests)
 	g.GET("/categories", a.ListCategories)
 	g.GET("/user/wishes", a.ListUserWishes)
 	g.GET("/feed", a.GetWishesFeed)
+	g.GET("/feed/search", a.SearchFeed)
 	g.GET("/profiles", a.ListProfiles)
 	g.GET("/profiles/:id", a.GetUserProfile)
 	g.POST("/users/follow", a.FollowUser)

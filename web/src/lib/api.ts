@@ -134,10 +134,61 @@ export const fetchUpdateWish = async (id: string, body: UpdateWishRequest) => {
 	return { data, error }
 }
 
-export const fetchAddWish = async () => {
-	const { data, error } = await apiRequest('/wishes', { method: 'POST' })
+export const fetchAddWish = async (files?: File[]) => {
+	if (files && files.length > 0) {
+		const formData = new FormData()
+		files.forEach(file => {
+			formData.append('photos', file)
+		})
 
-	return { data, error }
+		const response = await fetch(`${API_BASE_URL}/v1/wishes`, {
+			method: 'POST',
+			body: formData,
+			headers: {
+				Authorization: `Bearer ${store.token}`,
+			},
+		})
+
+		let data
+		try {
+			data = await response.json()
+		} catch {
+			return { error: 'Failed to get response from server', data: null }
+		}
+
+		if (!response.ok) {
+			const errorMessage = data?.error || 'An error occurred'
+			return { error: errorMessage, data: null }
+		}
+
+		return { data, error: null }
+	}
+
+	return {data: null, error: 'No files provided for wish creation'}
+}
+
+type CreateWishResponse = {
+	id: string
+	user_id: string
+	name: string | null
+	notes: string | null
+	currency: string | null
+	price: number | null
+	image_urls: string[]
+	url: string | null
+}
+
+export const createWishWithUrl = async (url: string): Promise<CreateWishResponse> => {
+	const { data, error } = await apiRequest('/wishes/from-url', {
+		method: 'POST',
+		body: JSON.stringify({ url }),
+	})
+
+	if (error) {
+		throw new Error(error)
+	}
+
+	return data
 }
 
 export type WishImage = {

@@ -1,12 +1,8 @@
-import { Component, For, Show } from 'solid-js'
+import { Component, For, Match, Show, Switch } from 'solid-js'
 
 interface SelectImagesStepProps {
-	metaWithImages: {
-		image_urls: string[]
-		metadata: {
-			[key: string]: string
-		}
-	} | null
+	parsedImageUrls: string[]
+	isLoading: boolean
 	urlImages: string[]
 	setUrlImages: (fn: (old: string[]) => string[]) => void
 }
@@ -18,14 +14,10 @@ const SelectImagesStep: Component<SelectImagesStepProps> = (props) => {
 	}
 
 	return (
-		<Show when={props.metaWithImages} fallback={<ImageGridLoader isLoading={true} />}>
-			{/* No images found state */}
-			<Show
-				when={props.metaWithImages!.image_urls.length > 0}
-				fallback={<NoImagesFound />}>
-				{/* Images found state */}
+		<Switch>
+			<Match when={props.parsedImageUrls.length > 0 && !props.isLoading}>
 				<div class="grid grid-cols-2 gap-0.5 w-full">
-					<For each={splitImages(props.metaWithImages!.image_urls)}>
+					<For each={splitImages(props.parsedImageUrls)}>
 						{(group) => (
 							<div class="flex flex-col gap-0.5">
 								<For each={group}>
@@ -69,8 +61,14 @@ const SelectImagesStep: Component<SelectImagesStepProps> = (props) => {
 						)}
 					</For>
 				</div>
-			</Show>
-		</Show>
+			</Match>
+			<Match when={!props.parsedImageUrls.length && !props.isLoading}>
+				<NoImagesFound />
+			</Match>
+			<Match when={props.parsedImageUrls.length === 0 && props.isLoading}>
+				<ImageGridLoader isLoading={props.isLoading} />
+			</Match>
+		</Switch>
 	)
 }
 

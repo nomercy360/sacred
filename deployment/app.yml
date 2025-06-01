@@ -21,7 +21,7 @@ spec:
         service: sacred-api
     spec:
       containers:
-        - image: maksim1111/sacred-api:latest
+        - image: maksim1111/sacred-api:20250531-b1a4aa3
           name: sacred-api
           imagePullPolicy: IfNotPresent
           command: [ "/app/main" ]

@@ -60,8 +60,33 @@ type FollowUserRequest struct {
 }
 
 type CreateWishResponse struct {
-	ID     string `json:"id"`
-	UserID string `json:"user_id"`
+	ID        string   `json:"id"`
+	UserID    string   `json:"user_id"`
+	Name      *string  `json:"name"`
+	Notes     *string  `json:"notes"`
+	Currency  *string  `json:"currency"`
+	Price     *float64 `json:"price"`
+	ImageURLs []string `json:"image_urls"`
+	URL       *string  `json:"url"`
+}
+
+type CreateWishRequest struct {
+	URL string `json:"url,omitempty"`
+}
+
+func (r *CreateWishRequest) Validate() error {
+	if r.URL != "" {
+		parsed, err := url.Parse(r.URL)
+		if err != nil {
+			return err
+		}
+
+		if parsed.Scheme == "" || parsed.Host == "" {
+			return errors.New("invalid URL")
+		}
+	}
+
+	return nil
 }
 
 func (r *FollowUserRequest) Validate() error {
@@ -70,13 +95,6 @@ func (r *FollowUserRequest) Validate() error {
 	}
 
 	return nil
-}
-
-var validCurrencies = map[string]struct{}{
-	"USD": {},
-	"EUR": {},
-	"RUB": {},
-	"THB": {},
 }
 
 func (r *UpdateWishRequest) Validate() error {
@@ -107,10 +125,8 @@ func (r *UpdateWishRequest) Validate() error {
 		return errors.New("name cannot be longer than 200 characters and cannot be empty")
 	}
 
-	if r.Currency != nil {
-		if _, ok := validCurrencies[*r.Currency]; !ok {
-			return errors.New("invalid currency")
-		}
+	if r.Currency != nil && len(*r.Currency) != 3 {
+		return errors.New("currency must be a 3-letter ISO code")
 	}
 
 	return nil

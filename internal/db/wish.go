@@ -257,6 +257,64 @@ func (s *storage) UpdateWish(ctx context.Context, item Wish, categories []string
 }
 
 func (s *storage) GetPublicWishesFeed(ctx context.Context, viewerID, searchQuery string) ([]Wish, error) {
+	if searchQuery != "" {
+		// Use FTS5 for search
+		baseQuery := `SELECT w.id,
+					   w.user_id,
+					   w.name,
+					   w.url,
+					   w.price,
+					   w.currency,
+					   w.notes,
+					   w.is_fulfilled,
+					   w.is_favorite,
+					   w.published_at,
+					   w.source_id,
+					   w.reserved_by,
+					   w.reserved_at,
+					   w.created_at,
+					   w.updated_at,
+					   json_group_array(distinct json_object(
+							   'id', wi.id,
+							   'wish_id', wi.wish_id,
+							   'url', wi.url,
+							   'position', wi.position,
+							   'width', wi.width,
+							   'height', wi.height))
+							   filter ( where wi.id is not null) as images,
+					   json_group_array(distinct json_object(
+							   'id', wc.category_id,
+							   'name', c.name,
+							   'image_url', c.image_url
+					   )) filter (where wc.category_id is not null) as categories
+				FROM wishes_fts fts
+				JOIN wishes w ON fts.wish_id = w.id
+				LEFT JOIN wish_images wi ON w.id = wi.wish_id
+				LEFT JOIN wish_categories wc ON w.id = wc.wish_id
+				LEFT JOIN categories c ON wc.category_id = c.id
+				WHERE wishes_fts MATCH ? 
+				  AND w.published_at IS NOT NULL 
+				  AND w.source_id IS NULL 
+				  AND w.deleted_at IS NULL`
+
+		var args []interface{}
+		// Add asterisk for prefix matching
+		args = append(args, searchQuery+"*")
+
+		if viewerID != "" {
+			baseQuery += ` AND w.user_id != ?`
+			args = append(args, viewerID)
+		}
+
+		baseQuery += `
+				GROUP BY w.id
+				ORDER BY rank
+				LIMIT 100`
+
+		return s.fetchWishes(ctx, baseQuery, args...)
+	}
+
+	// Original query without search
 	baseQuery := s.baseWishesQuery() + ` WHERE w.published_at IS NOT NULL AND w.source_id IS NULL AND w.deleted_at IS NULL`
 
 	var args []interface{}
@@ -264,12 +322,6 @@ func (s *storage) GetPublicWishesFeed(ctx context.Context, viewerID, searchQuery
 	if viewerID != "" {
 		baseQuery += ` AND w.user_id != ?`
 		args = append(args, viewerID)
-	}
-
-	if searchQuery != "" {
-		baseQuery += ` AND (w.name LIKE ? OR w.notes LIKE ?)`
-		searchPattern := "%" + searchQuery + "%"
-		args = append(args, searchPattern, searchPattern)
 	}
 
 	baseQuery += `
@@ -442,4 +494,48 @@ func (s *storage) DeleteWishPhoto(ctx context.Context, wishID, photoID string) e
 	query := `DELETE FROM wish_images WHERE id = ? AND wish_id = ?`
 	_, err := s.db.ExecContext(ctx, query, photoID, wishID)
 	return err
+}
+
+type AutocompleteSuggestion struct {
+	Text  string `json:"text"`
+	Count int    `json:"count"`
+}
+
+func (s *storage) GetWishAutocomplete(ctx context.Context, prefix string, limit int) ([]AutocompleteSuggestion, error) {
+	if prefix == "" {
+		return []AutocompleteSuggestion{}, nil
+	}
+
+	// Use FTS5 to get matching wishes and extract unique terms
+	query := `
+		SELECT DISTINCT 
+			LOWER(w.name) as suggestion,
+			COUNT(*) as count
+		FROM wishes_fts fts
+		JOIN wishes w ON fts.rowid = w.id
+		WHERE wishes_fts MATCH ?
+		  AND w.published_at IS NOT NULL 
+		  AND w.source_id IS NULL 
+		  AND w.deleted_at IS NULL
+		  AND w.name IS NOT NULL
+		GROUP BY LOWER(w.name)
+		ORDER BY count DESC, suggestion
+		LIMIT ?`
+
+	rows, err := s.db.QueryContext(ctx, query, prefix+"*", limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var suggestions []AutocompleteSuggestion
+	for rows.Next() {
+		var suggestion AutocompleteSuggestion
+		if err := rows.Scan(&suggestion.Text, &suggestion.Count); err != nil {
+			return nil, err
+		}
+		suggestions = append(suggestions, suggestion)
+	}
+
+	return suggestions, nil
 }

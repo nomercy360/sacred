@@ -35,6 +35,7 @@ type storager interface {
 	ListBookmarkedWishes(ctx context.Context, uid string) ([]db.Wish, error)
 	DeleteWish(ctx context.Context, uid, id string) error
 	GetPublicWishesFeed(ctx context.Context, uid string, search string) ([]db.Wish, error)
+	GetWishAutocomplete(ctx context.Context, prefix string, limit int) ([]db.AutocompleteSuggestion, error)
 }
 
 type API struct {
@@ -51,6 +52,7 @@ type Config struct {
 	MetaFetchURL string
 	WebAppURL    string
 	AssetsURL    string
+	ParserURL    string
 }
 
 func New(storage storager, cfg Config, s3 *s3.Client, bot *telegram.Bot) *API {

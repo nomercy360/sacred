@@ -15,11 +15,12 @@ export default function CreateFromLinkPage() {
 		setUpdateWish,
 		urlImages,
 		setUrlImages,
+		parsedImageUrls,
 		uploadImages,
 		step,
-		metaWithImages,
 		setupButtons,
 		handleFileChange,
+		isFetchingImages,
 		formHeaders,
 		setStep,
 		removeImage,
@@ -42,7 +43,7 @@ export default function CreateFromLinkPage() {
 					<div class="bg-black text-white rounded-xl shadow-md px-4 py-3 flex items-center gap-3">
 						<div class="h-4 w-4 rounded-full animate-spin"></div>
 						<span class="text-sm">
-							{step() === StepNames.CONFIRM ? "Finishing up..." : "Uploading your selection…"}
+							{step() === StepNames.CONFIRM ? 'Finishing up...' : 'Uploading your selection…'}
 						</span>
 					</div>
 				</div>
@@ -66,7 +67,8 @@ export default function CreateFromLinkPage() {
 
 				<Match when={step() === StepNames.SELECT_IMAGES}>
 					<SelectImagesStep
-						metaWithImages={metaWithImages()}
+						isLoading={isFetchingImages()}
+						parsedImageUrls={parsedImageUrls()}
 						urlImages={urlImages()}
 						setUrlImages={setUrlImages}
 					/>

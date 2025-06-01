@@ -10,7 +10,7 @@ import {
 	uploadWishPhotosByUrls,
 	UpdateWishRequest,
 	WishImage, deleteWishPhoto,
-	createWishWithUrl,
+	createWishWithUrl, deleteWish,
 } from '~/lib/api'
 import { setStore } from '~/store'
 import {
@@ -30,8 +30,8 @@ export function useWishCreation() {
 		notes: null,
 		price: null,
 	})
-	const [urlImages, setUrlImages] = createSignal<string[]>([])
-	const [uploadImages, setUploadImages] = createSignal<WishImage[]>([])
+	const [selectedImageUrls, setSelectedImageUrls] = createSignal<string[]>([])
+	const [uploadedImages, setUploadedImages] = createSignal<WishImage[]>([])
 	const [activeFlow, setActiveFlow] = createSignal<FlowName>(FlowNames.START_WITH_LINK)
 	const [step, setStep] = createSignal<StepName>(StepNames.START_SCREEN)
 	const [createdWishId, setCreatedWishId] = createSignal<string | null>(null)
@@ -76,12 +76,14 @@ export function useWishCreation() {
 				break
 
 			case StepNames.SELECT_IMAGES:
-				if (isLoading()) {
+				if (isFetchingImages()) {
 					mainButton.disable('Loading...')
-				} else if (urlImages().length > 0) {
+				} else if (selectedImageUrls().length > 0) {
 					mainButton.toggle(true, 'Continue')
-				} else {
+				} else if (uploadedImages().length > 0) {
 					mainButton.disable('Select at least 1 image')
+				} else {
+					mainButton.enable('Start Again')
 				}
 				break
 
@@ -139,10 +141,10 @@ export function useWishCreation() {
 		setCreatedWishId(data.id)
 		// Set uploaded images from response
 		if (data.images && data.images.length > 0) {
-			setUploadImages(data.images)
+			setUploadedImages(data.images)
 		}
 
-		if (uploadImages().length == 1) {
+		if (uploadedImages().length == 1) {
 			setStep(StepNames.CHOOSE_CATEGORIES)
 		}
 
@@ -153,7 +155,7 @@ export function useWishCreation() {
 	async function removeImage(id: string) {
 		if (!createdWishId()) return
 		await deleteWishPhoto(createdWishId()!, id)
-		setUploadImages((old) => old.filter((img) => img.id !== id))
+		setUploadedImages((old) => old.filter((img) => img.id !== id))
 	}
 
 	// Navigation and step flow
@@ -163,29 +165,34 @@ export function useWishCreation() {
 		switch (step()) {
 			case StepNames.START_SCREEN:
 				const useUrl = activeFlow() === FlowNames.START_WITH_LINK
-				if (!createdWishId()) {
-					// If URL flow, and we have a URL, use the new endpoint
-					if (useUrl && updateWish.url && updateWish.url.match(/^https?:\/\//)) {
-						try {
-							setIsFetchingImages(true)
-							setStep(StepNames.SELECT_IMAGES)
-							const data = await createWishWithUrl(updateWish.url)
-							setCreatedWishId(data.id)
-							// Update wish data with parsed information
-							if (data.name) setUpdateWish({ name: data.name })
-							if (data.price) setUpdateWish({ price: data.price })
-							if (data.currency) setUpdateWish({ currency: data.currency })
-							if (data.notes) setUpdateWish({ notes: data.notes })
-							// Set the image URLs from the response
-							if (data.image_urls && data.image_urls.length > 0) {
-								setParsedImageUrls(data.image_urls)
-							}
-							return true
-						} catch (error) {
-							addToast('Failed to create wish from URL. Please try again.')
-						} finally {
-							setIsFetchingImages(false)
+				if (!useUrl) return
+
+				const wishId = createdWishId()
+				if (wishId !== null) {
+					await deleteWish(wishId)
+				}
+
+				// If URL flow, and we have a URL, use the new endpoint
+				if (useUrl && updateWish.url && updateWish.url.match(/^https?:\/\//)) {
+					try {
+						setIsFetchingImages(true)
+						setStep(StepNames.SELECT_IMAGES)
+						const data = await createWishWithUrl(updateWish.url)
+						setCreatedWishId(data.id)
+						// Update wish data with parsed information
+						if (data.name) setUpdateWish({ name: data.name })
+						if (data.price) setUpdateWish({ price: data.price })
+						if (data.currency) setUpdateWish({ currency: data.currency })
+						if (data.notes) setUpdateWish({ notes: data.notes })
+						// Set the image URLs from the response
+						if (data.image_urls && data.image_urls.length > 0) {
+							setParsedImageUrls(data.image_urls)
 						}
+						return true
+					} catch (error) {
+						addToast('Failed to create wish from URL. Please try again.')
+					} finally {
+						setIsFetchingImages(false)
 					}
 				}
 				break
@@ -201,31 +208,35 @@ export function useWishCreation() {
 				break
 
 			case StepNames.SELECT_IMAGES:
-				setIsLoading(true)
-				try {
-					window.Telegram.WebApp.MainButton.showProgress(true)
+				if (selectedImageUrls().length === 0 && parsedImageUrls().length === 0) {
+					setStep(StepNames.START_SCREEN)
+				} else if (selectedImageUrls().length > 0) {
+					setIsLoading(true)
+					try {
+						window.Telegram.WebApp.MainButton.showProgress(true)
 
-					if (urlImages().length > 0) {
-						const { data, error } = await uploadWishPhotosByUrls(createdWishId()!, urlImages())
+						if (selectedImageUrls().length > 0) {
+							const { data, error } = await uploadWishPhotosByUrls(createdWishId()!, selectedImageUrls())
 
-						if (error) {
-							addToast(`Failed to upload images: ${error}`)
-							return
+							if (error) {
+								addToast(`Failed to upload images: ${error}`)
+								return
+							}
+
+							setUploadedImages((old) => [...old, ...data])
+						} else {
+							// If no images selected, just proceed to next step
+							// User might have received the "No images found" message
 						}
 
-						setUploadImages((old) => [...old, ...data])
-					} else {
-						// If no images selected, just proceed to next step
-						// User might have received the "No images found" message
+						setStep(StepNames.CHOOSE_CATEGORIES)
+					} catch (error) {
+						console.error('Error uploading images:', error)
+						addToast('Failed to upload images')
+					} finally {
+						window.Telegram.WebApp.MainButton.hideProgress()
+						setIsLoading(false)
 					}
-
-					setStep(StepNames.CHOOSE_CATEGORIES)
-				} catch (error) {
-					console.error('Error uploading images:', error)
-					addToast('Failed to upload images')
-				} finally {
-					window.Telegram.WebApp.MainButton.hideProgress()
-					setIsLoading(false)
 				}
 				break
 
@@ -274,7 +285,7 @@ export function useWishCreation() {
 				break
 
 			case StepNames.SELECT_IMAGES:
-				setStep(StepNames.CHOOSE_CATEGORIES)
+				setStep(StepNames.START_SCREEN)
 				break
 
 			case StepNames.ADD_NAME:
@@ -317,10 +328,10 @@ export function useWishCreation() {
 		// State
 		updateWish,
 		setUpdateWish,
-		urlImages,
-		setUrlImages,
-		uploadImages,
-		setUploadImages,
+		urlImages: selectedImageUrls,
+		setUrlImages: setSelectedImageUrls,
+		uploadImages: uploadedImages,
+		setUploadImages: setUploadedImages,
 		activeFlow,
 		setActiveFlow,
 		step,

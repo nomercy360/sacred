@@ -80,7 +80,7 @@ export function useWishCreation() {
 					mainButton.disable('Loading...')
 				} else if (selectedImageUrls().length > 0) {
 					mainButton.toggle(true, 'Continue')
-				} else if (uploadedImages().length > 0) {
+				} else if (parsedImageUrls().length > 0) {
 					mainButton.disable('Select at least 1 image')
 				} else {
 					mainButton.enable('Start Again')

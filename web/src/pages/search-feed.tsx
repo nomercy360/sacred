@@ -79,7 +79,6 @@ export const SearchFeed = () => {
 						<input
 							ref={setSearchInput}
 							type="search"
-							inputmode="search"
   							enterkeyhint="search"
 							value={search()}
 							onInput={handleInput}

@@ -61,7 +61,7 @@ export const SearchFeed = () => {
 
 	onMount(() => {
 		backButton.onClick(() => {
-			navigate('/feed')
+			navigate('/search-feed')
 		})
 	})
 
@@ -79,6 +79,8 @@ export const SearchFeed = () => {
 						<input
 							ref={setSearchInput}
 							type="search"
+							inputmode="search"
+  							enterkeyhint="search"
 							value={search()}
 							onInput={handleInput}
 							class="h-full w-full bg-transparent focus:outline-none"

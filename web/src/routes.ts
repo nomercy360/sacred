@@ -13,6 +13,7 @@ import BookmarksPage from '~/pages/bookmarks'
 import ProfileEditPage from '~/pages/profile-edit'
 import WishEditPage from '~/pages/wish-edit'
 import SearchPage from './pages/search-people'
+import { SearchFeed } from './pages/search-feed'
 
 export const routes: RouteDefinition[] = [
 	{
@@ -64,6 +65,10 @@ export const routes: RouteDefinition[] = [
 	{
 		path: '/search',
 		component: SearchPage,
+	},
+	{
+		path: '/search-feed',
+		component: SearchFeed,
 	},
 	{
 		path: '/wishes/:id/edit',

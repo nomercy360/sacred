@@ -167,7 +167,7 @@ export default function WishEditPage() {
           </div>
         </div>
       }>
-        <div class="w-full space-y-4 overflow-y-auto max-h-[calc(100vh-120px)] pb-6">
+        <div class="w-full space-y-4 overflow-y-auto h-screen pb-6">
           <div class="flex flex-col w-full space-y-1.5">
             <label class="text-xs font-medium text-secondary-foreground mb-1">Visible wish name</label>
             <input

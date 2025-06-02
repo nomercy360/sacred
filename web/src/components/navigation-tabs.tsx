@@ -8,6 +8,7 @@ import { triggerHaptic } from '~/lib/triggerHaptic'
 
 
 export default function NavigationTabs(props: any) {
+	
 	const location = useLocation()
 
 	const navigate = useNavigate()

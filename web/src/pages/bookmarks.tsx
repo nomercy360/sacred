@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/solid-query'
 import { fetchBookmarks, Wish } from '~/lib/api'
-import { createEffect, For, onMount, Show } from 'solid-js'
+import { For,  Show } from 'solid-js'
 import { Link } from '~/components/link'
-import { useBackButton } from '~/lib/useBackButton'
-import { useNavigate } from '@solidjs/router'
 
 const BookmarksPage = () => {
 	const wishes = useQuery<Wish[]>(() => ({
@@ -47,18 +45,6 @@ type WishesGridProps = {
 }
 
 export function WishesGrid(props: WishesGridProps) {
-
-	const backButton = useBackButton()
-	const navigate = useNavigate()
-
-
-	createEffect(() => {
-		if (props.wishes.isSuccess && props.wishes.data?.length === 0) {
-			backButton.onClick(() => {
-				navigate('/search-feed')
-			})
-		}
-	})
 
 
 	return (

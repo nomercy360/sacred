@@ -7,8 +7,6 @@ import { cn } from '~/lib/utils'
 import CategoriesSelect from '~/components/categories-select'
 import { useBackButton } from '~/lib/useBackButton'
 import { useNavigate } from '@solidjs/router'
-import { triggerHaptic } from '~/lib/triggerHaptic'
-
 
 const mockNames = [
 	"Arc'teryx", 'Beaded Breakast', 'Nike', 'Razor Keyboard',
@@ -65,13 +63,12 @@ const FeedPage = () => {
 	const handleSearchOpen = () => {
 		setSearchMode(true)
 		setTimeout(() => searchInput()?.focus(), 0)
-		triggerHaptic('heavy')
+
 	}
 
 	const handleSearchClose = () => {
 		setSearch('')
 		setSearchMode(false)
-		
 	}
 
 

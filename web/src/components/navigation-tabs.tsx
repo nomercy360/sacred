@@ -48,7 +48,6 @@ export default function NavigationTabs(props: any) {
 								'text-black': location.pathname === href,
 							})}
 							onClick={() => {
-								triggerHaptic('heavy')
 								navigate(href, { state: { from: location.pathname } })
 							}}
 						>

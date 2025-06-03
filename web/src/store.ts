@@ -1,5 +1,5 @@
 import { createStore } from 'solid-js/store'
-import { Wish, Wishlist } from '~/lib/api'
+import { Wish } from '~/lib/api'
 
 type User = {
 	id: string
@@ -23,19 +23,18 @@ export const [store, setStore] = createStore<{
 	token: string
 	following: number[]
 	wishes: Wish[]
+	search: string
 }>({
 	onboarding: false,
-	user: null as any,
-	token: null as any,
+	user: null,
+	token: '',
 	following: [],
 	wishes: [],
+	search: ''
 })
 
-export const setUser = (user: any) => setStore('user', user)
-
+export const setUser = (user: User) => setStore('user', user)
 export const setToken = (token: string) => setStore('token', token)
-
 export const setWishes = (wishes: Wish[]) => setStore('wishes', wishes)
-
 export const setOnboarding = (onboarding: boolean) => setStore('onboarding', onboarding)
-
+export const setSearch = (value: string) => setStore('search', value)

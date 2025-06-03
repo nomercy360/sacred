@@ -48,17 +48,6 @@ type WishesGridProps = {
 
 export function WishesGrid(props: WishesGridProps) {
 
-	const backButton = useBackButton()
-
-	const navigate = useNavigate()
-
-
-	createEffect(() => {
-	
-			backButton.onClick(() => navigate('/search-feed'))
-
-	})
-
 	return (
 		<>
 			<Show when={props.wishes.isSuccess && props.wishes.data?.length === 0}>

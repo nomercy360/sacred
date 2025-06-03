@@ -94,7 +94,7 @@ export const SearchFeed = () => {
 							<For each={mockNames}>
 								{item => (
 									<button
-										class="px-3 py-1 rounded-full bg-[#F4F4F5] text-xs hover:bg-[#e4e4e7]"
+										class="px-3 py-1 rounded-full bg-[#F3F3F3] text-[12px] font-medium hover:bg-[#e4e4e7]"
 										onClick={() => handleSuggestionClick(item)}
 									>
 										{item}

@@ -135,7 +135,7 @@ func (a *API) SetupRoutes(e *echo.Echo) {
 	v1.GET("/categories", a.ListCategories)
 	v1.GET("/user/wishes", a.ListUserWishes)
 	v1.GET("/feed", a.GetWishesFeed)
-	v1.GET("/feed/search", a.SearchFeed)
+	v1.GET("/feed/autocomplete", a.SearchFeed)
 	v1.GET("/profiles", a.ListProfiles)
 	v1.GET("/profiles/:id", a.GetUserProfile)
 	v1.POST("/users/follow", a.FollowUser)

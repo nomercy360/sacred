@@ -1,6 +1,6 @@
 import { For, Show } from 'solid-js'
 import { cn } from '~/lib/utils'
-import { createQuery } from '@tanstack/solid-query'
+import { createQuery, useQuery } from '@tanstack/solid-query'
 import { fetchCategories, fetchProfiles } from '~/lib/api'
 
 type SelectCategoriesProps = {
@@ -23,7 +23,7 @@ export default function CategoriesSelect(props: SelectCategoriesProps) {
 		return props.selectedCategories.includes(id)
 	}
 
-	const categories = createQuery(() => ({
+	const categories = useQuery(() => ({
 		queryKey: ['categories'],
 		queryFn: () => fetchCategories(),
 	}))

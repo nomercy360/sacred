@@ -396,7 +396,7 @@ func (a *API) UpdateWishHandler(c echo.Context) error {
 		return err
 	}
 
-	wishID := c.Param("wishID")
+	wishID := c.Param("id")
 	if wishID == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "wish ID is required")
 	}

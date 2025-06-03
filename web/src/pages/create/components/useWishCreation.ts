@@ -211,8 +211,8 @@ export function useWishCreation() {
 				break
 
 			case StepNames.ADD_NAME:
-				if (!wishName()) {
-					setUpdateWish({ name: updateWish.name })
+				if (wishName()) {
+					setUpdateWish({ name: wishName() })
 				}
 				setStep(StepNames.CONFIRM)
 				break
@@ -272,7 +272,11 @@ export function useWishCreation() {
 				break
 
 			case StepNames.ADD_NAME:
-				setStep(StepNames.CONFIRM)
+				if (activeFlow() === FlowNames.START_WITH_PHOTOS && !updateWish.name) {
+					setStep(StepNames.CHOOSE_CATEGORIES)
+				} else {
+					setStep(StepNames.CONFIRM)
+				}
 				break
 
 			case StepNames.ADD_LINK:

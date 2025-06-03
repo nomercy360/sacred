@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/solid-query'
 import { fetchFeed, Wish } from '~/lib/api'
 import { Link } from '~/components/link'
 import { WishesGrid } from '~/pages/bookmarks'
-import { createSignal, For, onCleanup, onMount, Show } from 'solid-js'
+import { createEffect, createSignal, For, onCleanup, onMount, Show } from 'solid-js'
 import { cn } from '~/lib/utils'
 import CategoriesSelect from '~/components/categories-select'
 import { useBackButton } from '~/lib/useBackButton'
@@ -28,18 +28,18 @@ const FeedPage = () => {
 
 	const navigate = useNavigate()
 
-	onMount(() => {
-		backButton.onClick(() => {
-			navigate('/')
-		})
+	// onMount(() => {
+	// 	backButton.onClick(() => {
+	// 		navigate('/')
+	// 	})
 		
-	})
+	// })
 
-	onCleanup(() => {
-		backButton.offClick(() => {
-			navigate('/')
-		})
-	})
+	// onCleanup(() => {
+	// 	backButton.offClick(() => {
+	// 		navigate('/')
+	// 	})
+	// })
 
 	const filteredSuggestions = () =>
 		search().length > 0
@@ -71,6 +71,8 @@ const FeedPage = () => {
 		setSearchMode(false)
 	}
 
+
+	
 
 
 	return (

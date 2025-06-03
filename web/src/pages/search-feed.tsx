@@ -1,6 +1,6 @@
 import { Show } from "solid-js/web"
 import { cn } from "~/lib/utils"
-import { createSignal, For, onMount } from "solid-js"
+import { createEffect, createSignal, For } from "solid-js"
 import CategoriesSelect from "~/components/categories-select"
 import { WishesGrid } from '~/pages/bookmarks'
 import { Link } from '~/components/link'
@@ -59,11 +59,7 @@ export const SearchFeed = () => {
 		queryFn: () => fetchFeed(search()),
 	}))
 
-	onMount(() => {
-		backButton.onClick(() => {
-			navigate('/search-feed')
-		})
-	})
+	
 
 	return (
 		<div class="relative flex flex-col items-center bg-none w-full h-screen overflow-hidden">

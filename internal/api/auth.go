@@ -91,21 +91,21 @@ func (a *API) AuthTelegram(c echo.Context) error {
 		}
 
 		if err = a.storage.CreateUser(context.Background(), &create); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to create user")
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to create user").WithInternal(err)
 		}
 
 		user, err = a.storage.GetUserByChatID(data.User.ID)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user")
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user").WithInternal(err)
 		}
 	} else if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user").WithInternal(err)
 	}
 
 	token, err := generateJWT(user.ID, user.ChatID, a.cfg.JWTSecret)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "jwt library error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "jwt library error").WithInternal(err)
 	}
 
 	uresp := contract.UserResponse{
@@ -124,7 +124,7 @@ func (a *API) AuthTelegram(c echo.Context) error {
 
 	wishes, err := a.storage.GetWishesByUserID(context.Background(), user.ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user's wishlists")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user's wishlists").WithInternal(err)
 	}
 
 	resp := &contract.AuthResponse{

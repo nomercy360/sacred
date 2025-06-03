@@ -25,7 +25,7 @@ func (a *API) UpdateUserPreferences(c echo.Context) error {
 
 	user, err := a.storage.GetUserByID(uid)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get user")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get user").WithInternal(err)
 	}
 
 	user.Email = &req.Email
@@ -39,12 +39,12 @@ func (a *API) UpdateUserPreferences(c echo.Context) error {
 	}
 
 	if err := a.storage.UpdateUser(c.Request().Context(), user, req.Interests); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot update user")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot update user").WithInternal(err)
 	}
 
 	updated, err := a.storage.GetUserByID(uid)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get updated user")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get updated user").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, updated)
@@ -67,16 +67,16 @@ func (a *API) UpdateUserInterests(c echo.Context) error {
 
 	user, err := a.storage.GetUserByID(uid)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get user")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get user").WithInternal(err)
 	}
 
 	if err := a.storage.UpdateUser(c.Request().Context(), user, interests); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot update user")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot update user").WithInternal(err)
 	}
 
 	updated, err := a.storage.GetUserByID(uid)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get updated user")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get updated user").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, updated)
@@ -95,17 +95,17 @@ func (a *API) GetUserProfile(c echo.Context) error {
 
 	user, err := a.storage.GetUserByID(profileID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get user")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get user").WithInternal(err)
 	}
 
 	items, err := a.storage.GetWishesByUserID(c.Request().Context(), profileID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get wishlist items")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get wishlist items").WithInternal(err)
 	}
 
 	isFollowing, err := a.storage.IsFollowing(c.Request().Context(), currentUserID, profileID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot check following status")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot check following status").WithInternal(err)
 	}
 
 	resp := contract.UserProfileResponse{
@@ -131,14 +131,14 @@ func (a *API) ListProfiles(c echo.Context) error {
 
 	users, err := a.storage.ListUsers(c.Request().Context(), uid)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot list profiles")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot list profiles").WithInternal(err)
 	}
 
 	resp := make([]contract.UserProfileResponse, 0, len(users))
 	for _, user := range users {
 		items, err := a.storage.GetWishesByUserID(c.Request().Context(), user.ID)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "cannot get wishlist items")
+			return echo.NewHTTPError(http.StatusInternalServerError, "cannot get wishlist items").WithInternal(err)
 		}
 
 		resp = append(resp, contract.UserProfileResponse{
@@ -173,7 +173,7 @@ func (a *API) UnfollowUser(c echo.Context) error {
 	}
 
 	if err := a.storage.UnfollowUser(c.Request().Context(), uid, req.FollowingID); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "could not unfollow user")
+		return echo.NewHTTPError(http.StatusInternalServerError, "could not unfollow user").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{"message": "OK"})
@@ -200,7 +200,7 @@ func (a *API) FollowUser(c echo.Context) error {
 	}
 
 	if err := a.storage.FollowUser(c.Request().Context(), uid, req.FollowingID); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "could not follow user")
+		return echo.NewHTTPError(http.StatusInternalServerError, "could not follow user").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{"message": "OK"})
@@ -222,7 +222,7 @@ func (a *API) SaveWishToBookmarks(c echo.Context) error {
 	if err != nil && errors.Is(err, db.ErrNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "wish not found")
 	} else if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get wish")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get wish").WithInternal(err)
 	}
 
 	if wish.UserID == uid {
@@ -234,7 +234,7 @@ func (a *API) SaveWishToBookmarks(c echo.Context) error {
 	if err != nil && errors.Is(err, db.ErrAlreadyExists) {
 		return echo.NewHTTPError(http.StatusConflict, "Wish was already copied")
 	} else if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Cannot create copied wish")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Cannot create copied wish").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{"message": "OK"})
@@ -253,7 +253,7 @@ func (a *API) RemoveWishFromBookmarks(c echo.Context) error {
 	}
 
 	if err := a.storage.RemoveWishFromBookmarks(c.Request().Context(), uid, wid); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "could not remove wish from bookmarks")
+		return echo.NewHTTPError(http.StatusInternalServerError, "could not remove wish from bookmarks").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{"message": "OK"})
@@ -267,7 +267,7 @@ func (a *API) ListBookmarkedWishes(c echo.Context) error {
 
 	items, err := a.storage.ListBookmarkedWishes(c.Request().Context(), uid)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "could not list bookmarked wishes")
+		return echo.NewHTTPError(http.StatusInternalServerError, "could not list bookmarked wishes").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, items)

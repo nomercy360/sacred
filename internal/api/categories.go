@@ -9,7 +9,7 @@ func (a *API) ListCategories(c echo.Context) error {
 	categories, err := a.storage.ListCategories(c.Request().Context())
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get categories")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get categories").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, categories)

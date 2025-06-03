@@ -16,7 +16,7 @@ export default function PeoplePage() {
 	function resolveImageUrl(wish: Wish) {
 		if (!wish.images || wish.images.length === 0) return '/placeholder.jpg'
 
-		return `https://assets.peatch.io/cdn-cgi/image/width=100,height=100,fit=cover/${wish.images[0].url}`
+		return `https://assets.peatch.io/cdn-cgi/image/fit=cover/${wish.images[0].url}`
 	}
 
 	return (

@@ -19,9 +19,9 @@ const BookmarksPage = () => {
 				<div
 					class="h-20 flex-shrink-0 w-full flex flex-row justify-between items-center pb-9 pt-5 px-5">
 					<button class="flex items-center justify-center bg-secondary rounded-full size-10">
-					<span class="material-symbols-rounded text-[20px]">
-						search
-					</span>
+						<span class="material-symbols-rounded text-[20px]">
+							search
+						</span>
 					</button>
 					<p class="text-black text-xl font-extrabold">
 						Liked
@@ -30,9 +30,9 @@ const BookmarksPage = () => {
 						href="/categories-edit"
 						state={{ from: '/feed' }}
 						class="flex items-center justify-center bg-secondary rounded-full size-10">
-					<span class="material-symbols-rounded text-[20px]">
-						page_info
-					</span>
+						<span class="material-symbols-rounded text-[20px]">
+							page_info
+						</span>
 					</Link>
 				</div>
 			</div>
@@ -59,16 +59,19 @@ export function WishesGrid(props: WishesGridProps) {
 
 			<Show when={props.wishes.isSuccess && props.wishes.data && props.wishes.data.length > 0}>
 				<div
-					class={`grid grid-cols-2 gap-0.5 pb-[200px] h-full w-full overflow-y-scroll ${
-						props.source === '/bookmarks' || props.source === '/feed' ? 'pt-20' : ''
-					}`}
+					class={`grid grid-cols-2 gap-0.5 pb-[200px] h-full w-full overflow-y-scroll ${props.source === '/bookmarks' || props.source === '/feed' ? 'pt-20' : ''
+						}`}
 				>
 					<div class="flex flex-col gap-0.5">
 						<For each={props.wishes.data?.slice(0, Math.ceil((props.wishes.data?.length || 0) / 2))}>
 							{(wish) => {
 								const image = getFirstImage(wish)
 								return (
-									<Link
+									<div class="relative">
+										<button class="absolute top-3 right-3 bg-white rounded-full size-5 flex items-center justify-center shadow z-10">
+											<span class="material-symbols-rounded text-sm text-primary">add</span>
+										</button>
+										<Link
 										href={`/wishes/${wish.id}`}
 										class="block border shadow-sm rounded-[25px] overflow-hidden"
 										state={{ from: props.source }}
@@ -80,6 +83,8 @@ export function WishesGrid(props: WishesGridProps) {
 											height={image.height}
 										/>
 									</Link>
+									</div>
+									
 								)
 							}}
 						</For>
@@ -90,18 +95,26 @@ export function WishesGrid(props: WishesGridProps) {
 							{(wish) => {
 								const image = getFirstImage(wish)
 								return (
-									<Link
-										href={`/wishes/${wish.id}`}
-										class="block border shadow-sm rounded-[25px] overflow-hidden"
-										state={{ from: props.source }}
-									>
-										<ImageWithPlaceholder
-											src={`https://assets.peatch.io/cdn-cgi/image/width=400/${image.url}`}
-											alt={wish.name}
-											width={image.width}
-											height={image.height}
-										/>
-									</Link>
+									<div class="relative">
+										<button
+											class="absolute top-3 right-3 bg-white rounded-full size-5 flex items-center justify-center shadow z-10"
+											type="button"
+										>
+											<span class="material-symbols-rounded text-sm text-primary">add</span>
+										</button>
+										<Link
+											href={`/wishes/${wish.id}`}
+											class="block border shadow-sm rounded-[25px] overflow-hidden"
+											state={{ from: props.source }}
+										>
+											<ImageWithPlaceholder
+												src={`https://assets.peatch.io/cdn-cgi/image/width=400/${image.url}`}
+												alt={wish.name}
+												width={image.width}
+												height={image.height}
+											/>
+										</Link>
+									</div>
 								)
 							}}
 						</For>

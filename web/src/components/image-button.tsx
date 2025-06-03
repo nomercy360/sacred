@@ -54,7 +54,7 @@ export const ImageButton: Component<ImageButtonProps> = (props) => {
 			const imageLayer = (
 				<span
 					class="absolute inset-0 bg-cover bg-center bg-no-repeat after:content-[''] after:absolute after:inset-0 after:bg-black after:bg-opacity-30"
-					style={{ 'background-image': `url(${img})` }}
+					style={{ 'background-image': `url(${(img)})` }}
 				></span>
 			)
 

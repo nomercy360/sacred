@@ -33,16 +33,16 @@ const Toast = ({ children }: { children: string }) => {
 			<div class="pointer-events-auto space-y-2">
 				{toasts().map(toast => (
 					toast.message.length > 10 ? (
-						<div class="flex w-auto mr-3 items-center justify-center rounded-full bg-[#B5F022] px-4 py-2 text-sm font-medium text-primary">
+						<div class="flex w-auto mr-3 items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-secondary">
 							<span class="material-symbols-rounded mr-2 text-[20px] text-black">
 								info
 							</span>
 							{toast.message}
 						</div>
 					) : (
-						<div class="flex w-auto fixed bottom-[90px] left-[150px] mr-3 items-center justify-center rounded-full bg-[#B5F022] px-4 py-2 text-sm font-medium text-primary">
+						<div class="flex w-auto fixed bottom-[90px] left-[150px] mr-3 items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-secondary">
 							{toast.message}
-							<span class="material-symbols-rounded text-[20px] text-primary">
+							<span class="material-symbols-rounded text-[20px] text-secondary">
 								check
 							</span>
 						</div>

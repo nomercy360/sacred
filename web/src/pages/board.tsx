@@ -90,7 +90,7 @@ export default function UserBoardPage() {
 													<Link
 														class="block border shadow-sm rounded-[25px] overflow-hidden"
 														href={`/wishes/${item.id}`}
-														state={{ from: location.pathname }}
+														state={{ from: '/' }}
 													>
 														<ImageWithPlaceholder
 															src={`https://assets.peatch.io/cdn-cgi/image/width=400/${imageDetails.url}`}

@@ -24,7 +24,7 @@ export function ImageWithPlaceholder(props: ImageWithPlaceholderProps) {
 
 	return (
 		<div
-			class={`relative w-full bg-gray-200 dark:bg-gray-700 ${props.class || ''}`} // Placeholder background
+			class={`relative w-full bg-gray-200 ${props.class || ''}`} // Placeholder background
 			style={{ 'aspect-ratio': aspectRatio() }}
 		>
 			<Show when={!hasError()}>

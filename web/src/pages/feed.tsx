@@ -14,14 +14,6 @@ const FeedPage = () => {
 		queryFn: () => fetchFeed(store.search),
 	}))
 
-	const getFirstImage = (wish: Wish) => {
-		if (wish.images && wish.images.length > 0 && wish.images[0]) {
-			return wish.images[0];
-		}
-		// Return a fallback object or null if you want to handle missing images differently
-		return { url: '', width: 1, height: 1 }; // Avoids errors, placeholder will use 1:1
-	};
-
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
 			<div class="fixed top-0 left-0 right-0 z-10 bg-gradient-to-t from-transparent to-white h-20">

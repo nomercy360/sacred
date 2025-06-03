@@ -191,9 +191,7 @@ export function useWishCreation() {
 					setUpdateWish({ url: null })
 				}
 
-				const nextStep = isPhotoFlow
-					? (updateWish.name ? StepNames.CONFIRM : StepNames.ADD_NAME)
-					: StepNames.SELECT_IMAGES
+				const nextStep = isPhotoFlow ? StepNames.ADD_NAME : StepNames.SELECT_IMAGES
 
 				setStep(nextStep)
 				setIsLoading(false)
@@ -289,7 +287,7 @@ export function useWishCreation() {
 				break
 
 			case StepNames.CONFIRM:
-				if (!updateWish.name) {
+				if (activeFlow() === FlowNames.START_WITH_PHOTOS) {
 					setStep(StepNames.ADD_NAME)
 				} else {
 					setStep(StepNames.CHOOSE_CATEGORIES)

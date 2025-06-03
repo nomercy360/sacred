@@ -233,7 +233,7 @@ func (s *Storage) InitSchema() error {
 
 	// Create indexes
 	indexes := []string{
-		`CREATE INDEX users_chat_id_index ON users (chat_id);`,
+		`CREATE INDEX IF NOT EXISTS users_chat_id_index ON users (chat_id);`,
 	}
 
 	for _, stmt := range indexes {

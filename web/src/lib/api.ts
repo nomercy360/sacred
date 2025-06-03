@@ -81,6 +81,19 @@ export const fetchFeed = async (search: string) => {
 	return data
 }
 
+type AutocompleteSearchResponse = {
+	text: string
+	count: number
+}
+
+export const autocompleteSearch = async (query: string): Promise<AutocompleteSearchResponse[]> => {
+	const { data } = await apiRequest(`/feed/autocomplete?search=${encodeURIComponent(query)}`, {
+		method: 'GET',
+	})
+
+	return data
+}
+
 export const fetchBookmarks = async () => {
 	const { data } = await apiRequest('/bookmarks', {
 		method: 'GET',

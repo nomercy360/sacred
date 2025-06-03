@@ -108,6 +108,10 @@ func main() {
 		log.Fatalf("failed to connect to db: %v", err)
 	}
 
+	if err := storage.InitSchema(); err != nil {
+		log.Fatalf("failed to initialize db schema: %v", err)
+	}
+
 	logr := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	e := echo.New()

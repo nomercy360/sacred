@@ -1,8 +1,9 @@
 import { Match, Switch, For, createSignal, Show, createEffect, onCleanup } from 'solid-js'
 import { Link } from '~/components/link'
 import { setStore, store } from '~/store'
-import { cn } from '~/lib/utils'
-import { resolveAspectRatio, resolveImage, splitIntoGroups } from '~/pages/profile'
+import { cn, getFirstImage, splitIntoGroups } from '~/lib/utils'
+import { Wish } from '~/lib/api'
+import { ImageWithPlaceholder } from '~/components/image-placeholder'
 
 export default function UserBoardPage() {
 	async function closeOnboardingPopup() {
@@ -12,29 +13,29 @@ export default function UserBoardPage() {
 
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-y-auto pb-20">
-			<div class='fixed top-0 left-0 right-0 z-10 bg-gradient-to-t from-transparent to-white h-20'>
-			<div
-				class="h-20 flex-shrink-0 w-full flex flex-row justify-between items-center p-5">
-				<Link href={"/profile/edit"} class="flex flex-row space-x-2 items-center justify-start" >
-					<img
-						src={store.user?.avatar_url}
-						alt={store.user?.name}
-						class="size-9 rounded-full"
-					/>
-					<span class="text-nowrap text-xl font-extrabold">{store.user?.name}</span>
-				</Link>
-				<div class="flex flex-row items-center space-x-3">
-					<Link
-						href={'/bookmarks'}
-						state={{ from: '/' }}
-						class="flex items-center justify-center bg-secondary rounded-full size-10">
-						<span class="material-symbols-rounded text-[20px]">favorite</span>
+			<div class="fixed top-0 left-0 right-0 z-10 bg-gradient-to-t from-transparent to-white h-20">
+				<div
+					class="h-20 flex-shrink-0 w-full flex flex-row justify-between items-center p-5">
+					<Link href={'/profile/edit'} class="flex flex-row space-x-2 items-center justify-start">
+						<img
+							src={store.user?.avatar_url}
+							alt={store.user?.name}
+							class="size-9 rounded-full"
+						/>
+						<span class="text-nowrap text-xl font-extrabold">{store.user?.name}</span>
 					</Link>
-					<button class="flex items-center justify-center bg-secondary rounded-full size-10">
-						<span class="material-symbols-rounded text-[20px]">arrow_outward</span>
-					</button>
+					<div class="flex flex-row items-center space-x-3">
+						<Link
+							href={'/bookmarks'}
+							state={{ from: '/' }}
+							class="flex items-center justify-center bg-secondary rounded-full size-10">
+							<span class="material-symbols-rounded text-[20px]">favorite</span>
+						</Link>
+						<button class="flex items-center justify-center bg-secondary rounded-full size-10">
+							<span class="material-symbols-rounded text-[20px]">arrow_outward</span>
+						</button>
+					</div>
 				</div>
-			</div>
 			</div>
 
 			<div class="text-center flex-1 w-full pb-20 pt-20">
@@ -83,22 +84,23 @@ export default function UserBoardPage() {
 								{(group) => (
 									<div class="flex flex-col gap-0.5">
 										<For each={group}>
-											{(item) => (
-												<Link
-													class="flex bg-center bg-[#F4F4F5] bg-cover border shadow-sm rounded-[25px] justify-center items-center "
-													style={{
-														'background-image': item.images ? `url(${resolveImage(item.images)})` : 'none',
-														'aspect-ratio': resolveAspectRatio(item.images),
-													}}
-													href={`/wishes/${item.id}`}
-												>
-													{item.images.length > 0 ? null : (
-														<span class="material-symbols-rounded text-white text-[40px]">
-															no_photography
-														</span>
-													)}
-												</Link>
-											)}
+											{(item: Wish) => {
+												const imageDetails = getFirstImage(item)
+												return (
+													<Link
+														class="block border shadow-sm rounded-[25px] overflow-hidden"
+														href={`/wishes/${item.id}`}
+														state={{ from: location.pathname }}
+													>
+														<ImageWithPlaceholder
+															src={`https://assets.peatch.io/cdn-cgi/image/width=400/${imageDetails.url}`}
+															alt={item.name}
+															width={imageDetails.width}
+															height={imageDetails.height}
+														/>
+													</Link>
+												)
+											}}
 										</For>
 									</div>
 								)}
@@ -190,7 +192,8 @@ function OnboardingPopup(props: { onClose: () => void }) {
 					<p class="text-xl font-extrabold">{texts[step()].title}</p>
 					<p class="text-secondary-foreground">{texts[step()].description}</p>
 				</div>
-				<div class="flex justify-center  flex-row rounded-full p-1 space-x-7 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.3)] bg-white px-2">
+				<div
+					class="flex justify-center  flex-row rounded-full p-1 space-x-7 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.3)] bg-white px-2">
 					{tabs.map(({ icon }, index) => (
 						<span
 							class={cn('size-10 flex items-center justify-center flex-col text-sm text-[#BABABA]', {
@@ -203,7 +206,7 @@ function OnboardingPopup(props: { onClose: () => void }) {
 								{icon}
 							</span>
 						</span>
-						
+
 					))}
 				</div>
 			</div>

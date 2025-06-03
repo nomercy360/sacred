@@ -263,63 +263,6 @@ func (s *Storage) UpdateWish(ctx context.Context, item Wish, categories []string
 }
 
 func (s *Storage) GetPublicWishesFeed(ctx context.Context, viewerID, searchQuery string) ([]Wish, error) {
-	if searchQuery != "" {
-		// Use FTS5 for search
-		baseQuery := `SELECT w.id,
-					   w.user_id,
-					   w.name,
-					   w.url,
-					   w.price,
-					   w.currency,
-					   w.notes,
-					   w.is_fulfilled,
-					   w.is_favorite,
-					   w.published_at,
-					   w.source_id,
-					   w.reserved_by,
-					   w.reserved_at,
-					   w.created_at,
-					   w.updated_at,
-					   json_group_array(distinct json_object(
-							   'id', wi.id,
-							   'wish_id', wi.wish_id,
-							   'url', wi.url,
-							   'position', wi.position,
-							   'width', wi.width,
-							   'height', wi.height))
-							   filter ( where wi.id is not null) as images,
-					   json_group_array(distinct json_object(
-							   'id', wc.category_id,
-							   'name', c.name,
-							   'image_url', c.image_url
-					   )) filter (where wc.category_id is not null) as categories
-				FROM wishes_fts fts
-				JOIN wishes w ON fts.wish_id = w.id
-				LEFT JOIN wish_images wi ON w.id = wi.wish_id
-				LEFT JOIN wish_categories wc ON w.id = wc.wish_id
-				LEFT JOIN categories c ON wc.category_id = c.id
-				WHERE wishes_fts MATCH ? 
-				  AND w.published_at IS NOT NULL 
-				  AND w.source_id IS NULL 
-				  AND w.deleted_at IS NULL`
-
-		var args []interface{}
-		// Add asterisk for prefix matching
-		args = append(args, searchQuery+"*")
-
-		if viewerID != "" {
-			baseQuery += ` AND w.user_id != ?`
-			args = append(args, viewerID)
-		}
-
-		baseQuery += `
-				GROUP BY w.id
-				ORDER BY rank
-				LIMIT 100`
-
-		return s.fetchWishes(ctx, baseQuery, args...)
-	}
-
 	// Original query without search
 	baseQuery := s.baseWishesQuery() + ` WHERE w.published_at IS NOT NULL AND w.source_id IS NULL AND w.deleted_at IS NULL`
 
@@ -328,6 +271,11 @@ func (s *Storage) GetPublicWishesFeed(ctx context.Context, viewerID, searchQuery
 	if viewerID != "" {
 		baseQuery += ` AND w.user_id != ?`
 		args = append(args, viewerID)
+	}
+
+	if searchQuery != "" {
+		baseQuery += ` AND LOWER(w.name) = ?`
+		args = append(args, strings.ToLower(searchQuery))
 	}
 
 	baseQuery += `
@@ -368,9 +316,9 @@ func (s *Storage) baseWishesQuery() string {
 						   'image_url', c.image_url
 				   )) filter (where wc.category_id is not null) as categories
 			FROM wishes w
-         LEFT JOIN wish_images wi ON w.id = wi.wish_id
-         LEFT JOIN wish_categories wc ON w.id = wc.wish_id
-         LEFT JOIN categories c ON wc.category_id = c.id`
+         JOIN wish_images wi ON w.id = wi.wish_id
+         JOIN wish_categories wc ON w.id = wc.wish_id
+         JOIN categories c ON wc.category_id = c.id`
 }
 
 func (s *Storage) fetchWishes(ctx context.Context, query string, args ...interface{}) ([]Wish, error) {

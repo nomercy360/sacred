@@ -20,7 +20,6 @@ import (
 	"path/filepath"
 	"sacred/internal/contract"
 	"sacred/internal/db"
-	"sacred/internal/terrors"
 	"strconv"
 	"strings"
 	"time"
@@ -38,7 +37,7 @@ type ExtractContentResponse struct {
 func (a *API) handlePhotoUpload(imgURL string) (int, int, string, error) {
 	parsedURL, err := url.ParseRequestURI(imgURL)
 	if err != nil || (parsedURL.Scheme != "http" && parsedURL.Scheme != "https") {
-		return 0, 0, "", terrors.BadRequest(nil, "Invalid image URL")
+		return 0, 0, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image URL")
 	}
 
 	client := &http.Client{
@@ -47,29 +46,27 @@ func (a *API) handlePhotoUpload(imgURL string) (int, int, string, error) {
 
 	req, err := http.NewRequest("GET", imgURL, nil)
 	if err != nil {
-		return 0, 0, "", terrors.InternalServer(err, "Error creating request")
+		return 0, 0, "", echo.NewHTTPError(http.StatusInternalServerError, "Error creating request").WithInternal(err)
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return 0, 0, "", terrors.InternalServer(err, "Error fetching image")
+		return 0, 0, "", echo.NewHTTPError(http.StatusInternalServerError, "Error downloading image").WithInternal(err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		log.Printf("Failed to download image. Status: %s, Body: %s", resp.Status, string(bodyBytes))
-		return 0, 0, "", terrors.BadRequest(nil, fmt.Sprintf("Invalid image URL or access denied, status: %d", resp.StatusCode))
+		return 0, 0, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid image URL or access denied, status: %d", resp.StatusCode))
 	}
 
 	imageData, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0, 0, "", terrors.InternalServer(err, "Error reading image data")
+		return 0, 0, "", echo.NewHTTPError(http.StatusInternalServerError, "Error reading image data").WithInternal(err)
 	}
 
 	img, format, err := image.Decode(bytes.NewReader(imageData))
 	if err != nil {
-		return 0, 0, "", terrors.InternalServer(err, "Error decoding image")
+		return 0, 0, "", echo.NewHTTPError(http.StatusInternalServerError, "Error decoding image").WithInternal(err)
 	}
 	log.Printf("Decoded image format: %s", format)
 
@@ -99,7 +96,7 @@ func (a *API) handlePhotoUpload(imgURL string) (int, int, string, error) {
 
 	s3Path, err := a.s3.UploadFile(imageData, fileName)
 	if err != nil {
-		return 0, 0, "", terrors.InternalServer(err, "Error uploading image to S3")
+		return 0, 0, "", echo.NewHTTPError(http.StatusInternalServerError, "Error uploading image to S3").WithInternal(err)
 	}
 
 	return width, height, s3Path, nil
@@ -108,7 +105,7 @@ func (a *API) handlePhotoUpload(imgURL string) (int, int, string, error) {
 func (a *API) uploadPhotoFromData(imageData []byte, wishID string, position int) (db.WishImage, error) {
 	img, _, err := image.Decode(bytes.NewReader(imageData))
 	if err != nil {
-		return db.WishImage{}, terrors.BadRequest(err, "invalid image format")
+		return db.WishImage{}, echo.NewHTTPError(http.StatusBadRequest, "invalid image format").WithInternal(err)
 	}
 
 	width := img.Bounds().Dx()
@@ -119,7 +116,7 @@ func (a *API) uploadPhotoFromData(imageData []byte, wishID string, position int)
 
 	s3Path, err := a.s3.UploadFile(imageData, fileName)
 	if err != nil {
-		return db.WishImage{}, terrors.InternalServer(err, "error uploading image to S3")
+		return db.WishImage{}, echo.NewHTTPError(http.StatusInternalServerError, "Error uploading image to S3").WithInternal(err)
 	}
 
 	return db.WishImage{
@@ -155,7 +152,7 @@ func (a *API) uploadPhotosFromURLs(ctx context.Context, wishID string, imageURLs
 
 		savedImage, err := a.storage.CreateWishImage(ctx, newImage)
 		if err != nil {
-			return nil, terrors.InternalServer(err, "cannot save image to database")
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, "cannot save image to database").WithInternal(err)
 		}
 
 		results = append(results, savedImage)
@@ -227,7 +224,7 @@ func (a *API) parseAndPopulateWish(form *multipart.Form, userID string) (wish db
 
 	priceVal, parseErr := getFormFloat(form, "price")
 	if parseErr != nil {
-		err = terrors.BadRequest(parseErr, parseErr.Error())
+		err = echo.NewHTTPError(http.StatusBadRequest, parseErr.Error())
 		return
 	}
 	wish.Price = priceVal
@@ -244,33 +241,33 @@ func (a *API) parseAndPopulateWish(form *multipart.Form, userID string) (wish db
 func (a *API) validateWishCreation(wish *db.Wish, categoryIDs []string) error {
 	// Name validation
 	if wish.Name == nil || *wish.Name == "" {
-		return terrors.BadRequest(nil, "name is required and cannot be empty")
+		return echo.NewHTTPError(http.StatusBadRequest, "name is required and cannot be empty")
 	}
 	if len(*wish.Name) > 200 {
-		return terrors.BadRequest(nil, "name cannot be longer than 200 characters")
+		return echo.NewHTTPError(http.StatusBadRequest, "name cannot be longer than 200 characters")
 	}
 
 	// URL validation
 	if wish.URL != nil && *wish.URL != "" {
 		parsedURL, err := url.ParseRequestURI(*wish.URL) // More strict parsing for user inputs
 		if err != nil {
-			return terrors.BadRequest(err, "invalid URL format")
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid URL format").WithInternal(err)
 		}
 		if parsedURL.Scheme == "" || parsedURL.Host == "" {
-			return terrors.BadRequest(nil, "URL must include a scheme (e.g., http, https) and a host")
+			return echo.NewHTTPError(http.StatusBadRequest, "URL must include a scheme (e.g., http, https) and a host")
 		}
 	}
 
 	// Price and Currency validation
 	if wish.Price != nil {
 		if *wish.Price < 0 {
-			return terrors.BadRequest(nil, "price cannot be negative")
+			return echo.NewHTTPError(http.StatusBadRequest, "price cannot be negative")
 		}
 		if wish.Currency == nil || *wish.Currency == "" {
-			return terrors.BadRequest(nil, "currency is required when price is provided")
+			return echo.NewHTTPError(http.StatusBadRequest, "currency is required when price is provided")
 		}
 		if len(*wish.Currency) != 3 { // Assuming 3-letter ISO code
-			return terrors.BadRequest(nil, "currency must be a 3-letter ISO code")
+			return echo.NewHTTPError(http.StatusBadRequest, "currency must be a 3-letter ISO code")
 		}
 	} else {
 		// If price is not provided, currency should also not be provided or will be ignored.
@@ -279,12 +276,12 @@ func (a *API) validateWishCreation(wish *db.Wish, categoryIDs []string) error {
 
 	// Notes validation
 	if wish.Notes != nil && len(*wish.Notes) > 1000 {
-		return terrors.BadRequest(nil, "notes cannot be longer than 1000 characters")
+		return echo.NewHTTPError(http.StatusBadRequest, "notes cannot be longer than 1000 characters")
 	}
 
 	// Category IDs validation
 	if len(categoryIDs) == 0 {
-		return terrors.BadRequest(nil, "category_ids cannot be empty")
+		return echo.NewHTTPError(http.StatusBadRequest, "category_ids cannot be empty")
 	}
 	// Add more specific category_ids validation if needed (e.g., format, existence)
 
@@ -297,18 +294,18 @@ func (a *API) handlePhotoUploads(c echo.Context, form *multipart.Form, wishID st
 
 	for i, fileHeader := range files {
 		if fileHeader.Size > maxFileSize {
-			return terrors.BadRequest(nil, fmt.Sprintf("file '%s' exceeds maximum size of %dMB", fileHeader.Filename, maxFileSize>>20))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("file '%s' exceeds maximum size of %dMB", fileHeader.Filename, maxFileSize>>20))
 		}
 
 		src, err := fileHeader.Open()
 		if err != nil {
-			return terrors.BadRequest(err, fmt.Sprintf("failed to open uploaded file: %s", fileHeader.Filename))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to open uploaded file: %s", fileHeader.Filename)).WithInternal(err)
 		}
 		defer src.Close()
 
 		buffer := new(bytes.Buffer)
 		if _, err := io.Copy(buffer, src); err != nil {
-			return terrors.InternalServer(err, fmt.Sprintf("error reading uploaded file: %s", fileHeader.Filename))
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("error reading uploaded file: %s", fileHeader.Filename)).WithInternal(err)
 		}
 		fileData := buffer.Bytes()
 
@@ -318,7 +315,7 @@ func (a *API) handlePhotoUploads(c echo.Context, form *multipart.Form, wishID st
 		}
 
 		if _, err := a.storage.CreateWishImage(c.Request().Context(), newImage); err != nil {
-			return terrors.InternalServer(err, fmt.Sprintf("cannot save image to database for file: %s", fileHeader.Filename))
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("cannot save image to database for file: %s", fileHeader.Filename)).WithInternal(err)
 		}
 	}
 	return nil
@@ -343,7 +340,7 @@ func (a *API) CreateWishHandler(c echo.Context) error {
 
 	form, err := c.MultipartForm() // Default is 32MB, use c.MultipartForm(maxMemoryBytes) if needed
 	if err != nil {
-		return terrors.BadRequest(err, "failed to parse multipart form")
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to parse multipart form").WithInternal(err)
 	}
 
 	wish, categoryIDs, imageURLs, err := a.parseAndPopulateWish(form, userID)
@@ -360,7 +357,7 @@ func (a *API) CreateWishHandler(c echo.Context) error {
 	}
 
 	if len(form.File["photos"]) == 0 && len(imageURLs) == 0 {
-		return terrors.BadRequest(nil, "at least photos or image_urls must be provided")
+		return echo.NewHTTPError(http.StatusBadRequest, "at least photos or image_urls must be provided")
 	}
 
 	now := time.Now().UTC()
@@ -369,7 +366,7 @@ func (a *API) CreateWishHandler(c echo.Context) error {
 	wish.UpdatedAt = now
 
 	if err := a.storage.CreateWish(c.Request().Context(), wish, categoryIDs); err != nil {
-		return terrors.InternalServer(err, "cannot create wishlist item in database")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot create wishlist item in database").WithInternal(err)
 	}
 
 	if err := a.handlePhotoUploads(c, form, wish.ID); err != nil {
@@ -387,7 +384,7 @@ func (a *API) CreateWishHandler(c echo.Context) error {
 
 	finalWish, err := a.storage.GetWishByID(c.Request().Context(), userID, wish.ID)
 	if err != nil {
-		return terrors.InternalServer(err, "failed to retrieve created wishlist item")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve created wishlist item").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusCreated, finalWish)
@@ -401,19 +398,19 @@ func (a *API) UpdateWishHandler(c echo.Context) error {
 
 	wishID := c.Param("wishID")
 	if wishID == "" {
-		return terrors.BadRequest(nil, "wish ID is required")
+		return echo.NewHTTPError(http.StatusBadRequest, "wish ID is required")
 	}
 
 	existingWish, err := a.storage.GetWishByID(c.Request().Context(), userID, wishID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
-		return terrors.NotFound(err, "wishlist item not found")
+		return echo.NewHTTPError(http.StatusNotFound, "wishlist item not found").WithInternal(err)
 	} else if err != nil {
-		return terrors.InternalServer(err, "cannot get wishlist item")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get wishlist item").WithInternal(err)
 	}
 
 	form, err := c.MultipartForm()
 	if err != nil {
-		return terrors.BadRequest(err, "failed to parse multipart form")
+		return echo.NewHTTPError(http.StatusBadRequest, "failed to parse multipart form").WithInternal(err)
 	}
 
 	wish, categoryIDs, _, err := a.parseAndPopulateWish(form, userID)
@@ -437,7 +434,7 @@ func (a *API) UpdateWishHandler(c echo.Context) error {
 	wish.UpdatedAt = time.Now().UTC()
 
 	if err := a.storage.UpdateWish(c.Request().Context(), wish, categoryIDs); err != nil {
-		return terrors.InternalServer(err, "cannot update wishlist item in database")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot update wishlist item in database").WithInternal(err)
 	}
 
 	if err := a.handlePhotoUploads(c, form, wish.ID); err != nil {
@@ -448,13 +445,13 @@ func (a *API) UpdateWishHandler(c echo.Context) error {
 	if len(deleteImageIDs) > 0 {
 		// TODO: It should also trigger deletion of actual image files from S3/storage.
 		if err := a.storage.DeleteWishImages(c.Request().Context(), wishID, deleteImageIDs); err != nil {
-			return terrors.InternalServer(err, "failed to delete images")
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to delete images").WithInternal(err)
 		}
 	}
 
 	updatedWish, err := a.storage.GetWishByID(c.Request().Context(), userID, wishID)
 	if err != nil {
-		return terrors.InternalServer(err, "failed to retrieve updated wishlist item")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve updated wishlist item").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, updatedWish)
@@ -466,9 +463,9 @@ func (a *API) GetWishHandler(c echo.Context) error {
 
 	item, err := a.storage.GetWishByID(c.Request().Context(), uid, itemID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
-		return terrors.NotFound(err, "wishlist item not found")
+		return echo.NewHTTPError(http.StatusNotFound, "wishlist item not found").WithInternal(err)
 	} else if err != nil {
-		return terrors.InternalServer(err, "cannot get wishlist item")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get wishlist item").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, item)
@@ -482,7 +479,7 @@ func (a *API) ListUserWishes(c echo.Context) error {
 
 	res, err := a.storage.GetWishesByUserID(c.Request().Context(), uid)
 	if err != nil {
-		return terrors.InternalServer(err, "cannot get wishlist item")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get wishlist item").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, res)
@@ -497,9 +494,9 @@ func (a *API) CopyWishHandler(c echo.Context) error {
 
 	sourceWish, err := a.storage.GetWishByID(c.Request().Context(), targetUserID, sourceWishID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
-		return terrors.NotFound(err, "source wish not found")
+		return echo.NewHTTPError(http.StatusNotFound, "source wish not found").WithInternal(err)
 	} else if err != nil {
-		return terrors.InternalServer(err, "cannot fetch source wish")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot fetch source wish").WithInternal(err)
 	}
 
 	var categoryIDs []string
@@ -522,9 +519,9 @@ func (a *API) CopyWishHandler(c echo.Context) error {
 
 	err = a.storage.CreateWish(c.Request().Context(), newWish, categoryIDs)
 	if err != nil && errors.Is(err, db.ErrAlreadyExists) {
-		return terrors.Conflict(err, "Wish was already copied")
+		return echo.NewHTTPError(http.StatusConflict, "Wish was already copied").WithInternal(err)
 	} else if err != nil {
-		return terrors.InternalServer(err, "Cannot create copied wish")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Cannot create copied wish").WithInternal(err)
 	}
 
 	for _, img := range sourceWish.Images {
@@ -539,13 +536,13 @@ func (a *API) CopyWishHandler(c echo.Context) error {
 		}
 
 		if _, err := a.storage.CreateWishImage(c.Request().Context(), newImage); err != nil {
-			return terrors.InternalServer(err, "cannot copy images")
+			return echo.NewHTTPError(http.StatusInternalServerError, "cannot copy images").WithInternal(err)
 		}
 	}
 
 	copiedWish, err := a.storage.GetWishByID(c.Request().Context(), targetUserID, newWish.ID)
 	if err != nil {
-		return terrors.InternalServer(err, "cannot fetch copied wish")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot fetch copied wish").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusCreated, copiedWish)
@@ -560,16 +557,16 @@ func (a *API) DeleteWishHandler(c echo.Context) error {
 
 	wish, err := a.storage.GetWishByID(c.Request().Context(), uid, itemID)
 	if err != nil {
-		return terrors.InternalServer(err, "cannot get wishlist item")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get wishlist item").WithInternal(err)
 	}
 
 	if wish.UserID != uid {
-		return terrors.Forbidden(nil, "cannot delete other user's wish")
+		return echo.NewHTTPError(http.StatusForbidden, "cannot delete other user's wish")
 	}
 
 	err = a.storage.DeleteWish(c.Request().Context(), uid, itemID)
 	if err != nil {
-		return terrors.InternalServer(err, "cannot delete wishlist item")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot delete wishlist item").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{"message": "OK"})
@@ -578,12 +575,12 @@ func (a *API) DeleteWishHandler(c echo.Context) error {
 func (a *API) SearchFeed(c echo.Context) error {
 	searchQuery := c.QueryParam("search")
 	if searchQuery == "" {
-		return terrors.BadRequest(nil, "search query cannot be empty")
+		return echo.NewHTTPError(http.StatusBadRequest, "search query cannot be empty")
 	}
 
 	suggestions, err := a.storage.GetWishAutocomplete(c.Request().Context(), searchQuery, 10)
 	if err != nil {
-		return terrors.InternalServer(err, "cannot fetch autocomplete suggestions")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot fetch autocomplete suggestions").WithInternal(err)
 	}
 
 	return c.JSON(http.StatusOK, suggestions)
@@ -596,7 +593,7 @@ func (a *API) GetWishesFeed(c echo.Context) error {
 
 	wishes, err := a.storage.GetPublicWishesFeed(c.Request().Context(), uid, searchQuery)
 	if err != nil {
-		return terrors.InternalServer(err, "cannot fetch wishes feed")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot fetch wishes feed").WithInternal(err)
 	}
 
 	resp := make([]contract.FeedItem, 0, len(wishes))

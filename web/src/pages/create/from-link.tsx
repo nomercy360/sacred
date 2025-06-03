@@ -26,6 +26,8 @@ export default function CreateFromLinkPage() {
 		onContinue,
 		isLoading,
 		selectedFiles,
+		setWishName,
+		wishName,
 	} = useWishCreation()
 
 	onMount(() => {
@@ -76,8 +78,8 @@ export default function CreateFromLinkPage() {
 
 				<Match when={step() === StepNames.ADD_NAME}>
 					<AddNameStep
-						name={updateWish.name}
-						onNameChange={(name) => setUpdateWish({ name })}
+						name={wishName()}
+						onNameChange={(name) => setWishName(name)}
 					/>
 				</Match>
 

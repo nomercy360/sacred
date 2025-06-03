@@ -8,7 +8,6 @@ import {
 	createWish,
 	CreateWishData,
 	UpdateWishRequest,
-	WishImage,
 } from '~/lib/api'
 import { setStore } from '~/store'
 import {
@@ -35,6 +34,7 @@ export function useWishCreation() {
 	const [isLoading, setIsLoading] = createSignal(false)
 	const [parsedImageUrls, setParsedImageUrls] = createSignal<string[]>([])
 	const [isFetchingImages, setIsFetchingImages] = createSignal(false)
+	const [wishName, setWishName] = createSignal<string>('')
 
 	const navigate = useNavigate()
 	const mainButton = useMainButton()
@@ -88,7 +88,7 @@ export function useWishCreation() {
 				if (isLoading()) {
 					mainButton.disable('Loading...')
 				} else {
-					mainButton.toggle(!!updateWish.name, 'Continue', 'Add title to continue')
+					mainButton.toggle(!!wishName(), 'Continue', 'Add title to continue')
 				}
 				break
 
@@ -101,11 +101,7 @@ export function useWishCreation() {
 				break
 
 			case StepNames.CONFIRM:
-				if (isLoading()) {
-					mainButton.disable('Publishing...')
-				} else {
-					mainButton.enable('Publish')
-				}
+				mainButton.hide()
 				break
 		}
 	})
@@ -139,7 +135,7 @@ export function useWishCreation() {
 	// Remove image from selection before submission
 	function removeImage(index: number) {
 		const urlImagesCount = selectedImageUrls().length
-		
+
 		if (index < urlImagesCount) {
 			// Removing a URL image
 			setSelectedImageUrls((urls) => urls.filter((_, i) => i !== index))
@@ -163,10 +159,13 @@ export function useWishCreation() {
 				if (useUrl && updateWish.url && updateWish.url.match(/^https?:\/\//)) {
 					try {
 						setIsFetchingImages(true)
-						setStep(StepNames.SELECT_IMAGES)
+						setStep(StepNames.CHOOSE_CATEGORIES)
 						const data = await fetchMetadata(updateWish.url)
 						// Update wish data with parsed information
-						if (data.product_name) setUpdateWish({ name: data.product_name })
+						if (data.product_name) {
+							setWishName(data.product_name)
+							setUpdateWish({ name: data.product_name })
+						}
 						if (data.price) setUpdateWish({ price: data.price })
 						if (data.currency) setUpdateWish({ currency: data.currency })
 						if (data.metadata['description']) setUpdateWish({ notes: data.metadata['description'] })
@@ -184,25 +183,37 @@ export function useWishCreation() {
 				}
 				break
 
-			case StepNames.CHOOSE_CATEGORIES:
+			case StepNames.CHOOSE_CATEGORIES: {
 				setIsLoading(true)
-				if (activeFlow() === FlowNames.START_WITH_PHOTOS) {
+
+				const isPhotoFlow = activeFlow() === FlowNames.START_WITH_PHOTOS
+				if (isPhotoFlow) {
 					setUpdateWish({ url: null })
 				}
-				const nextStep = updateWish.name ? StepNames.CONFIRM : StepNames.ADD_NAME
+
+				const nextStep = isPhotoFlow
+					? (updateWish.name ? StepNames.CONFIRM : StepNames.ADD_NAME)
+					: StepNames.SELECT_IMAGES
+
 				setStep(nextStep)
 				setIsLoading(false)
 				break
+			}
 
 			case StepNames.SELECT_IMAGES:
 				if (selectedImageUrls().length === 0 && parsedImageUrls().length === 0) {
 					setStep(StepNames.START_SCREEN)
+				} else if (updateWish.name) {
+					setStep(StepNames.CONFIRM)
 				} else {
-					setStep(StepNames.CHOOSE_CATEGORIES)
+					setStep(StepNames.ADD_NAME)
 				}
 				break
 
 			case StepNames.ADD_NAME:
+				if (!wishName()) {
+					setUpdateWish({ name: updateWish.name })
+				}
 				setStep(StepNames.CONFIRM)
 				break
 
@@ -253,19 +264,15 @@ export function useWishCreation() {
 				break
 
 			case StepNames.CHOOSE_CATEGORIES:
-				if (activeFlow() === FlowNames.START_WITH_PHOTOS) {
-					setStep(StepNames.START_SCREEN)
-				} else {
-					setStep(StepNames.SELECT_IMAGES)
-				}
-				break
-
-			case StepNames.SELECT_IMAGES:
 				setStep(StepNames.START_SCREEN)
 				break
 
-			case StepNames.ADD_NAME:
+			case StepNames.SELECT_IMAGES:
 				setStep(StepNames.CHOOSE_CATEGORIES)
+				break
+
+			case StepNames.ADD_NAME:
+				setStep(StepNames.CONFIRM)
 				break
 
 			case StepNames.ADD_LINK:
@@ -318,10 +325,11 @@ export function useWishCreation() {
 		isLoading,
 		setIsLoading,
 		selectedFiles,
+		wishName,
 
 		// Functions
 		updateLink,
-		updateName,
+		setWishName,
 		updateCategories,
 		handleFileChange,
 		setupButtons,

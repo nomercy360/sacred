@@ -1,4 +1,4 @@
-import { createEffect, createSignal, onCleanup, onMount } from 'solid-js'
+import { createEffect, createSignal, onCleanup } from 'solid-js'
 import { createStore } from 'solid-js/store'
 import { useNavigate } from '@solidjs/router'
 import { addToast } from '~/components/toast'
@@ -34,7 +34,6 @@ export function useWishCreation() {
 	const [isLoading, setIsLoading] = createSignal(false)
 	const [parsedImageUrls, setParsedImageUrls] = createSignal<string[]>([])
 	const [isFetchingImages, setIsFetchingImages] = createSignal(false)
-	const [wishName, setWishName] = createSignal<string>('')
 
 	const navigate = useNavigate()
 	const mainButton = useMainButton()
@@ -88,8 +87,12 @@ export function useWishCreation() {
 				if (isLoading()) {
 					mainButton.disable('Loading...')
 				} else {
-					mainButton.toggle(!!wishName(), 'Continue', 'Add title to continue')
+					mainButton.toggle(!!updateWish.name, 'Continue', 'Add title to continue')
 				}
+				break
+
+			case StepNames.EDIT_NAME:
+				mainButton.toggle(!!updateWish.name, 'Continue', 'Add title to continue')
 				break
 
 			case StepNames.ADD_LINK:
@@ -162,10 +165,7 @@ export function useWishCreation() {
 						setStep(StepNames.CHOOSE_CATEGORIES)
 						const data = await fetchMetadata(updateWish.url)
 						// Update wish data with parsed information
-						if (data.product_name) {
-							setWishName(data.product_name)
-							setUpdateWish({ name: data.product_name })
-						}
+						if (data.product_name) setUpdateWish({ name: data.product_name })
 						if (data.price) setUpdateWish({ price: data.price })
 						if (data.currency) setUpdateWish({ currency: data.currency })
 						if (data.metadata['description']) setUpdateWish({ notes: data.metadata['description'] })
@@ -211,9 +211,10 @@ export function useWishCreation() {
 				break
 
 			case StepNames.ADD_NAME:
-				if (wishName()) {
-					setUpdateWish({ name: wishName() })
-				}
+				setStep(StepNames.CONFIRM)
+				break
+
+			case StepNames.EDIT_NAME:
 				setStep(StepNames.CONFIRM)
 				break
 
@@ -272,11 +273,15 @@ export function useWishCreation() {
 				break
 
 			case StepNames.ADD_NAME:
-				if (activeFlow() === FlowNames.START_WITH_PHOTOS && !updateWish.name) {
+				if (activeFlow() === FlowNames.START_WITH_PHOTOS) {
 					setStep(StepNames.CHOOSE_CATEGORIES)
 				} else {
-					setStep(StepNames.CONFIRM)
+					setStep(StepNames.SELECT_IMAGES)
 				}
+				break
+
+			case StepNames.EDIT_NAME:
+				setStep(StepNames.CONFIRM)
 				break
 
 			case StepNames.ADD_LINK:
@@ -311,6 +316,7 @@ export function useWishCreation() {
 		[StepNames.CHOOSE_CATEGORIES]: 'Choose categories',
 		[StepNames.SELECT_IMAGES]: 'Select images',
 		[StepNames.ADD_NAME]: 'Give name to the wish',
+		[StepNames.EDIT_NAME]: 'Edit wish name',
 		[StepNames.ADD_LINK]: 'Add link',
 		[StepNames.CONFIRM]: undefined,
 	}
@@ -329,11 +335,9 @@ export function useWishCreation() {
 		isLoading,
 		setIsLoading,
 		selectedFiles,
-		wishName,
 
 		// Functions
 		updateLink,
-		setWishName,
 		updateCategories,
 		handleFileChange,
 		setupButtons,

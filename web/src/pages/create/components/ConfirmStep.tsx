@@ -5,6 +5,7 @@ interface ConfirmStepProps {
 	name: string | null
 	link: string | null
 	imageUrls: string[]
+	price: string | null
 	imageFiles: File[]
 	onNameClick: () => void
 	onAddLinkClick: () => void
@@ -49,7 +50,7 @@ const ConfirmStep: Component<ConfirmStepProps> = (props) => {
 						target="_blank"
 						rel="noopener noreferrer"
 					>
-						at {linkToDomain(props.link!)}
+						{props.price ? props.price + ' ' : ''} at {linkToDomain(props.link!)}
 						<span class="material-symbols-rounded text-[16px] ml-2">
 							open_in_new
 						</span>

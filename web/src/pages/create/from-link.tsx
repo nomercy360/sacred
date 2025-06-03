@@ -6,6 +6,7 @@ import StartStep from './components/StartStep'
 import CategoriesStep from './components/CategoriesStep'
 import SelectImagesStep from './components/SelectImagesStep'
 import AddNameStep from './components/AddNameStep'
+import EditName from './components/EditName'
 import ConfirmStep from './components/ConfirmStep'
 import AddLinkStep from '~/pages/create/components/AddLinkStep'
 
@@ -26,13 +27,18 @@ export default function CreateFromLinkPage() {
 		onContinue,
 		isLoading,
 		selectedFiles,
-		setWishName,
-		wishName,
 	} = useWishCreation()
 
 	onMount(() => {
 		setupButtons()
 	})
+
+	const formatPrice = (price: number | null | undefined) => {
+		if (price !== null && price !== undefined) {
+			return `${price} ${updateWish.currency || 'USD'}`
+		}
+		return null
+	}
 
 	return (
 		<FormLayout
@@ -78,8 +84,15 @@ export default function CreateFromLinkPage() {
 
 				<Match when={step() === StepNames.ADD_NAME}>
 					<AddNameStep
-						name={wishName()}
-						onNameChange={(name) => setWishName(name)}
+						name={updateWish.name}
+						onNameChange={(newName) => setUpdateWish({ name: newName })}
+					/>
+				</Match>
+
+				<Match when={step() === StepNames.EDIT_NAME}>
+					<EditName
+						name={updateWish.name}
+						onNameChange={(newName) => setUpdateWish({ name: newName })}
 					/>
 				</Match>
 
@@ -92,13 +105,14 @@ export default function CreateFromLinkPage() {
 
 				<Match when={step() === StepNames.CONFIRM}>
 					<ConfirmStep
+						price={formatPrice(updateWish.price)}
 						onFileUpload={handleFileChange}
 						onPublishClick={() => onContinue()}
 						name={updateWish.name}
 						link={updateWish.url}
 						imageUrls={urlImages()}
 						imageFiles={selectedFiles()}
-						onNameClick={() => setStep(StepNames.ADD_NAME)}
+						onNameClick={() => setStep(StepNames.EDIT_NAME)}
 						onAddLinkClick={() => setStep(StepNames.ADD_LINK)}
 						onDeleteImage={(index) => removeImage(index)}
 					/>

@@ -35,7 +35,12 @@ type ExtractContentResponse struct {
 }
 
 func (a *API) handlePhotoUpload(imgURL string) (int, int, string, error) {
-	parsedURL, err := url.ParseRequestURI(imgURL)
+	decodedURL, err := url.QueryUnescape(imgURL)
+	if err != nil {
+		return 0, 0, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image URL").WithInternal(err)
+	}
+
+	parsedURL, err := url.ParseRequestURI(decodedURL)
 	if err != nil || (parsedURL.Scheme != "http" && parsedURL.Scheme != "https") {
 		return 0, 0, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image URL")
 	}
@@ -44,7 +49,7 @@ func (a *API) handlePhotoUpload(imgURL string) (int, int, string, error) {
 		Timeout: 15 * time.Second,
 	}
 
-	req, err := http.NewRequest("GET", imgURL, nil)
+	req, err := http.NewRequest("GET", decodedURL, nil)
 	if err != nil {
 		return 0, 0, "", echo.NewHTTPError(http.StatusInternalServerError, "Error creating request").WithInternal(err)
 	}
@@ -321,17 +326,6 @@ func (a *API) handlePhotoUploads(c echo.Context, form *multipart.Form, wishID st
 	return nil
 }
 
-func (a *API) handleImageURLs(c echo.Context, imageURLs []string, wishID string, filesUploadedCount int) error {
-	if len(imageURLs) > 0 {
-		// startPosition ensures that if photos are uploaded via file and URL, their order/index is distinct.
-		_, err := a.uploadPhotosFromURLs(c.Request().Context(), wishID, imageURLs, filesUploadedCount)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (a *API) CreateWishHandler(c echo.Context) error {
 	userID, err := getUserID(c)
 	if err != nil {
@@ -378,8 +372,12 @@ func (a *API) CreateWishHandler(c echo.Context) error {
 		filesUploadedCount = len(photos)
 	}
 
-	if err := a.handleImageURLs(c, imageURLs, wish.ID, filesUploadedCount); err != nil {
-		return err
+	if len(imageURLs) > 0 {
+		// startPosition ensures that if photos are uploaded via file and URL, their order/index is distinct.
+		_, err := a.uploadPhotosFromURLs(c.Request().Context(), wish.ID, imageURLs, filesUploadedCount)
+		if err != nil {
+			return err
+		}
 	}
 
 	finalWish, err := a.storage.GetWishByID(c.Request().Context(), userID, wish.ID)

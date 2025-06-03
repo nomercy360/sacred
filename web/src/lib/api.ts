@@ -188,7 +188,7 @@ export const createWish = async (wishData: CreateWishData) => {
 	// Add image URLs
 	if (wishData.image_urls && wishData.image_urls.length > 0) {
 		wishData.image_urls.forEach(url => {
-			formData.append('image_urls', url)
+			formData.append('image_urls', encodeURIComponent(url))
 		})
 	}
 
@@ -221,7 +221,6 @@ export const createWish = async (wishData: CreateWishData) => {
 
 	return { data, error: null }
 }
-
 
 type CreateWishResponse = {
 	id: string

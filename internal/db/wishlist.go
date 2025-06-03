@@ -16,7 +16,7 @@ type Wishlist struct {
 	DeletedAt   *time.Time `db:"deleted_at" json:"deleted_at"`
 }
 
-func (s *storage) CreateWishlist(ctx context.Context, list Wishlist) (Wishlist, error) {
+func (s *Storage) CreateWishlist(ctx context.Context, list Wishlist) (Wishlist, error) {
 	query := `INSERT INTO wishlists (id, user_id, name, description, is_public) VALUES (?, ?, ?, ?, ?)`
 
 	_, err := s.db.ExecContext(ctx, query,
@@ -34,7 +34,7 @@ func (s *storage) CreateWishlist(ctx context.Context, list Wishlist) (Wishlist, 
 	return s.GetWishlistByID(ctx, list.ID)
 }
 
-func (s *storage) GetWishlistByID(ctx context.Context, id string) (Wishlist, error) {
+func (s *Storage) GetWishlistByID(ctx context.Context, id string) (Wishlist, error) {
 	query := `SELECT id, user_id, name, description, is_public, created_at FROM wishlists WHERE id = ?`
 
 	var list Wishlist
@@ -55,7 +55,7 @@ func (s *storage) GetWishlistByID(ctx context.Context, id string) (Wishlist, err
 	return list, nil
 }
 
-func (s *storage) GetWishlists(ctx context.Context) ([]Wishlist, error) {
+func (s *Storage) GetWishlists(ctx context.Context) ([]Wishlist, error) {
 	query := `SELECT id, user_id, name, description, is_public, created_at FROM wishlists`
 
 	rows, err := s.db.QueryContext(ctx, query)

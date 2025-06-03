@@ -13,7 +13,7 @@ import (
 type User struct {
 	ID           string         `db:"id" json:"id"`
 	Username     string         `db:"username" json:"username"`
-	LanguageCode *string        `db:"language_code" json:"language_code"`
+	LanguageCode string         `db:"language_code" json:"language_code"`
 	ChatID       int64          `db:"chat_id" json:"chat_id"`
 	CreatedAt    time.Time      `db:"created_at" json:"created_at"`
 	Name         *string        `db:"name" json:"name"`
@@ -97,7 +97,7 @@ func IsForeignKeyViolationError(err error) bool {
 	return false
 }
 
-func (s *storage) CreateUser(ctx context.Context, user *User) error {
+func (s *Storage) CreateUser(ctx context.Context, user *User) error {
 	query := `
 		INSERT INTO users (id, chat_id, username, name, language_code, email, referral_code, referred_by, avatar_url) 
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -119,7 +119,7 @@ func (s *storage) CreateUser(ctx context.Context, user *User) error {
 	return err
 }
 
-func (s *storage) getUserBy(query string, arg interface{}) (User, error) {
+func (s *Storage) getUserBy(query string, arg interface{}) (User, error) {
 	var user User
 
 	if err := s.db.QueryRowContext(context.Background(), query, arg).Scan(
@@ -143,7 +143,7 @@ func (s *storage) getUserBy(query string, arg interface{}) (User, error) {
 	return user, nil
 }
 
-func (s *storage) GetUserByChatID(chatID int64) (User, error) {
+func (s *Storage) GetUserByChatID(chatID int64) (User, error) {
 	query := `
 		SELECT 
 		    u.id,
@@ -166,7 +166,7 @@ func (s *storage) GetUserByChatID(chatID int64) (User, error) {
 	return s.getUserBy(query, chatID)
 }
 
-func (s *storage) GetUserByID(id string) (User, error) {
+func (s *Storage) GetUserByID(id string) (User, error) {
 	query := `
 		SELECT 
 		    u.id,
@@ -188,7 +188,7 @@ func (s *storage) GetUserByID(id string) (User, error) {
 	return s.getUserBy(query, id)
 }
 
-func (s *storage) UpdateUser(ctx context.Context, user User, interests []string) error {
+func (s *Storage) UpdateUser(ctx context.Context, user User, interests []string) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -236,7 +236,7 @@ func (s *storage) UpdateUser(ctx context.Context, user User, interests []string)
 	return tx.Commit()
 }
 
-func (s *storage) ListUsers(ctx context.Context, uid string) ([]User, error) {
+func (s *Storage) ListUsers(ctx context.Context, uid string) ([]User, error) {
 	var users []User
 
 	query := `
@@ -300,7 +300,7 @@ func (s *storage) ListUsers(ctx context.Context, uid string) ([]User, error) {
 	return users, nil
 }
 
-func (s *storage) FollowUser(ctx context.Context, uid, followID string) error {
+func (s *Storage) FollowUser(ctx context.Context, uid, followID string) error {
 	query := `
 		INSERT INTO followers (following_id, follower_id)
 		VALUES (?, ?)
@@ -316,7 +316,7 @@ func (s *storage) FollowUser(ctx context.Context, uid, followID string) error {
 	return err
 }
 
-func (s *storage) UnfollowUser(ctx context.Context, uid, unfollowID string) error {
+func (s *Storage) UnfollowUser(ctx context.Context, uid, unfollowID string) error {
 	query := `
 		DELETE FROM followers WHERE following_id = ? AND follower_id = ? 
 	`
@@ -331,7 +331,7 @@ func (s *storage) UnfollowUser(ctx context.Context, uid, unfollowID string) erro
 	return err
 }
 
-func (s *storage) IsFollowing(ctx context.Context, followerID, followingID string) (bool, error) {
+func (s *Storage) IsFollowing(ctx context.Context, followerID, followingID string) (bool, error) {
 	var exists bool
 	query := `SELECT EXISTS(SELECT 1 FROM followers WHERE follower_id = ? AND following_id = ?)`
 

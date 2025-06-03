@@ -196,7 +196,7 @@ func (a *API) fetchAndUploadUserAvatar(ctx context.Context, userID int64) (*stri
 	}
 
 	// Download the file
-	fileURL := fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", a.cfg.BotToken, file.FilePath)
+	fileURL := fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", a.cfg.TelegramBotToken, file.FilePath)
 	resp, err := http.Get(fileURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download file: %w", err)

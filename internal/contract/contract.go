@@ -3,14 +3,40 @@ package contract
 import (
 	"errors"
 	"fmt"
-	"net/url"
+	"github.com/golang-jwt/jwt/v5"
 	"regexp"
 	"sacred/internal/db"
 	"time"
 )
 
-type Error struct {
+type OkResponse struct {
 	Message string `json:"message"`
+} // @Name OkResponse
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+} // @Name ErrorResponse
+
+type StatusResponse struct {
+	Success bool `json:"success"`
+} // @Name StatusResponse
+
+type JWTClaims struct {
+	jwt.RegisteredClaims
+	UID    string `json:"uid"`
+	ChatID int64  `json:"chat_id"`
+}
+
+type AuthTelegramRequest struct {
+	Query string `json:"query"`
+} // @Name AuthTelegramRequest
+
+func (a AuthTelegramRequest) Validate() error {
+	if a.Query == "" {
+		return fmt.Errorf("query cannot be empty")
+	}
+
+	return nil
 }
 
 type UserResponse struct {
@@ -18,7 +44,7 @@ type UserResponse struct {
 	Name         *string       `json:"name"`
 	Username     string        `json:"username"`
 	ChatID       int64         `json:"chat_id"`
-	LanguageCode *string       `json:"language_code"`
+	LanguageCode string        `json:"language_code"`
 	CreatedAt    time.Time     `json:"created_at"`
 	Email        *string       `json:"email"`
 	ReferralCode string        `json:"referral_code"`
@@ -45,16 +71,6 @@ type AuthResponse struct {
 	Wishes []db.Wish    `json:"wishes"`
 }
 
-type UpdateWishRequest struct {
-	URL         *string  `json:"url"`
-	Name        *string  `json:"name"`
-	Price       *float64 `json:"price"`
-	Currency    *string  `json:"currency"`
-	Notes       *string  `json:"notes"`
-	IsPublic    bool     `json:"is_public"`
-	CategoryIDs []string `json:"category_ids"`
-}
-
 type FollowUserRequest struct {
 	FollowingID string `json:"following_id"`
 }
@@ -70,63 +86,9 @@ type CreateWishResponse struct {
 	URL       *string  `json:"url"`
 }
 
-type CreateWishRequest struct {
-	URL string `json:"url,omitempty"`
-}
-
-func (r *CreateWishRequest) Validate() error {
-	if r.URL != "" {
-		parsed, err := url.Parse(r.URL)
-		if err != nil {
-			return err
-		}
-
-		if parsed.Scheme == "" || parsed.Host == "" {
-			return errors.New("invalid URL")
-		}
-	}
-
-	return nil
-}
-
 func (r *FollowUserRequest) Validate() error {
 	if r.FollowingID == "" {
 		return fmt.Errorf("following_id is empty")
-	}
-
-	return nil
-}
-
-func (r *UpdateWishRequest) Validate() error {
-	if r.URL != nil {
-		parsed, err := url.Parse(*r.URL)
-		if err != nil {
-			return err
-		}
-
-		if parsed.Scheme == "" || parsed.Host == "" {
-			return errors.New("invalid URL")
-		}
-	}
-
-	if r.Price != nil && *r.Price < 0 {
-		return errors.New("price cannot be negative")
-	}
-
-	if len(r.CategoryIDs) == 0 {
-		return errors.New("categories can not be empty")
-	}
-
-	if r.Notes != nil && len(*r.Notes) > 1000 {
-		return errors.New("notes cannot be longer than 1000 characters")
-	}
-
-	if r.Name != nil && len(*r.Name) > 200 && len(*r.Name) < 1 {
-		return errors.New("name cannot be longer than 200 characters and cannot be empty")
-	}
-
-	if r.Currency != nil && len(*r.Currency) != 3 {
-		return errors.New("currency must be a 3-letter ISO code")
 	}
 
 	return nil

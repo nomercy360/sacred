@@ -16,9 +16,4 @@ export const FlowNames = {
 
 export type FlowName = typeof FlowNames[keyof typeof FlowNames]
 
-export type MetadataResponse = {
-	image_urls: string[]
-	metadata: {
-		[key: string]: string
-	}
-}
+

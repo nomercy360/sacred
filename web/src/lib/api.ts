@@ -39,25 +39,6 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 	}
 }
 
-
-export async function fetchPresignedUrl(filename: string) {
-	return await apiRequest('/presigned-url',
-		{
-			method: 'POST',
-			body: JSON.stringify({ file_name: filename }),
-		})
-}
-
-export async function uploadToS3(url: string, file: File) {
-	return await fetch(url, {
-		method: 'PUT',
-		body: file,
-		headers: {
-			'Content-Type': file.type,
-		},
-	})
-}
-
 export const saveUserPreferences = async (preferences: any) => {
 	const { data, error } = await apiRequest('/user/settings', {
 		method: 'PUT',
@@ -123,49 +104,124 @@ export type UpdateWishRequest = {
 	price: number | null
 	currency: string | null
 	category_ids: string[]
+	delete_image_ids?: string[]
 }
 
-export const fetchUpdateWish = async (id: string, body: UpdateWishRequest) => {
-	const { data, error } = await apiRequest('/wishes/' + id, {
-		method: 'PUT',
-		body: JSON.stringify(body),
+export const fetchUpdateWish = async (id: string, body: UpdateWishRequest & { photos?: File[] }) => {
+	const formData = new FormData()
+
+	// Add fields to form data
+	if (body.name !== null) formData.append('name', body.name || '')
+	if (body.url !== null) formData.append('url', body.url || '')
+	if (body.notes !== null) formData.append('notes', body.notes || '')
+	if (body.price !== null) formData.append('price', body.price.toString())
+	if (body.currency !== null) formData.append('currency', body.currency || '')
+
+	// Add category IDs
+	body.category_ids.forEach(id => {
+		formData.append('category_ids', id)
 	})
 
-	return { data, error }
-}
-
-export const fetchAddWish = async (files?: File[]) => {
-	if (files && files.length > 0) {
-		const formData = new FormData()
-		files.forEach(file => {
-			formData.append('photos', file)
+	// Add delete image IDs if present
+	if (body.delete_image_ids && body.delete_image_ids.length > 0) {
+		body.delete_image_ids.forEach(id => {
+			formData.append('delete_image_ids', id)
 		})
-
-		const response = await fetch(`${API_BASE_URL}/v1/wishes`, {
-			method: 'POST',
-			body: formData,
-			headers: {
-				Authorization: `Bearer ${store.token}`,
-			},
-		})
-
-		let data
-		try {
-			data = await response.json()
-		} catch {
-			return { error: 'Failed to get response from server', data: null }
-		}
-
-		if (!response.ok) {
-			const errorMessage = data?.error || 'An error occurred'
-			return { error: errorMessage, data: null }
-		}
-
-		return { data, error: null }
 	}
 
-	return {data: null, error: 'No files provided for wish creation'}
+	// Add photo files if present
+	if (body.photos && body.photos.length > 0) {
+		body.photos.forEach(file => {
+			formData.append('photos', file)
+		})
+	}
+
+	const response = await fetch(`${API_BASE_URL}/v1/wishes/${id}`, {
+		method: 'PUT',
+		body: formData,
+		headers: {
+			Authorization: `Bearer ${store.token}`,
+		},
+	})
+
+	let data
+	try {
+		data = await response.json()
+	} catch {
+		return { error: 'Failed to get response from server', data: null }
+	}
+
+	if (!response.ok) {
+		const errorMessage = data?.error || 'An error occurred'
+		return { error: errorMessage, data: null }
+	}
+
+	return { data, error: null }
 }
+
+export type CreateWishData = {
+	name: string
+	url?: string
+	price?: number
+	currency?: string
+	notes?: string
+	category_ids: string[]
+	image_urls?: string[]
+	photos?: File[]
+}
+
+export const createWish = async (wishData: CreateWishData) => {
+	const formData = new FormData()
+
+	// Add required fields
+	formData.append('name', wishData.name)
+	wishData.category_ids.forEach(id => {
+		formData.append('category_ids', id)
+	})
+
+	// Add optional fields
+	if (wishData.url) formData.append('url', wishData.url)
+	if (wishData.price !== undefined) formData.append('price', wishData.price.toString())
+	if (wishData.currency) formData.append('currency', wishData.currency)
+	if (wishData.notes) formData.append('notes', wishData.notes)
+
+	// Add image URLs
+	if (wishData.image_urls && wishData.image_urls.length > 0) {
+		wishData.image_urls.forEach(url => {
+			formData.append('image_urls', url)
+		})
+	}
+
+	// Add photo files
+	if (wishData.photos && wishData.photos.length > 0) {
+		wishData.photos.forEach(file => {
+			formData.append('photos', file)
+		})
+	}
+
+	const response = await fetch(`${API_BASE_URL}/v1/wishes`, {
+		method: 'POST',
+		body: formData,
+		headers: {
+			Authorization: `Bearer ${store.token}`,
+		},
+	})
+
+	let data
+	try {
+		data = await response.json()
+	} catch {
+		return { error: 'Failed to get response from server', data: null }
+	}
+
+	if (!response.ok) {
+		const errorMessage = data?.error || 'An error occurred'
+		return { error: errorMessage, data: null }
+	}
+
+	return { data, error: null }
+}
+
 
 type CreateWishResponse = {
 	id: string
@@ -176,19 +232,6 @@ type CreateWishResponse = {
 	price: number | null
 	image_urls: string[]
 	url: string | null
-}
-
-export const createWishWithUrl = async (url: string): Promise<CreateWishResponse> => {
-	const { data, error } = await apiRequest('/wishes/from-url', {
-		method: 'POST',
-		body: JSON.stringify({ url }),
-	})
-
-	if (error) {
-		throw new Error(error)
-	}
-
-	return data
 }
 
 export type WishImage = {
@@ -315,46 +358,6 @@ export const removeBookmark = async (id: string) => {
 	return data
 }
 
-export const uploadWishPhoto = async (wishId: string, file: File) => {
-	const formData = new FormData()
-	formData.append('photo', file)
-
-	const response = await fetch(`${API_BASE_URL}/v1/wishes/${wishId}/photos`, {
-		method: 'POST',
-		body: formData,
-		headers: {
-			Authorization: `Bearer ${store.token}`,
-		},
-	})
-
-	const data = await response.json()
-	return { data, error: null }
-}
-
-export const uploadWishPhotosByUrls = async (wishId: string, imageUrls: string[]) => {
-	const { data, error } = await apiRequest(`/wishes/${wishId}/photos`, {
-		method: 'POST',
-		body: JSON.stringify({ image_urls: imageUrls }),
-	})
-
-	if (error) {
-		throw new Error(error)
-	}
-
-	return { data, error: null }
-}
-
-export const deleteWishPhoto = async (wishId: string, photoId: string) => {
-	const { data, error } = await apiRequest(`/wishes/${wishId}/photos/${photoId}`, {
-		method: 'DELETE',
-	})
-
-	if (error) {
-		throw new Error(error)
-	}
-
-	return { data, error: null }
-}
 
 export const followUser = async (followingId: string) => {
 	const { data, error } = await apiRequest('/users/follow', {

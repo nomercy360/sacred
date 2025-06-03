@@ -4,12 +4,13 @@ import { WishImage } from '~/lib/api'
 interface ConfirmStepProps {
 	name: string | null
 	link: string | null
-	uploadImages: WishImage[]
-	onDeleteImage: (id: string) => void
+	imageUrls: string[]
+	imageFiles: File[]
 	onNameClick: () => void
 	onAddLinkClick: () => void
 	onFileUpload: (e: Event) => void
 	onPublishClick: () => void
+	onDeleteImage: (index: number) => void
 }
 
 function linkToDomain(link: string) {
@@ -56,17 +57,41 @@ const ConfirmStep: Component<ConfirmStepProps> = (props) => {
 				</Show>
 			</div>
 			<div class="mt-7 flex flex-col space-y-0.5 w-full items-center">
-				<For each={props.uploadImages}>
-					{(img) => (
+				{/* Display URL images */}
+				<For each={props.imageUrls}>
+					{(url, index) => (
 						<div class="relative rounded-[48px] bg-secondary w-full aspect-[3/4]">
 							<button
 								class="absolute top-7 right-7 bg-primary text-primary-foreground rounded-full size-6 flex items-center justify-center"
-								onClick={() => props.onDeleteImage(img.id)}
+								onClick={() => props.onDeleteImage(index())}
 							>
 								<span class="material-symbols-rounded text-[16px]">close</span>
 							</button>
 							<img
-								src={`https://assets.peatch.io/${img.url}`}
+								src={url}
+								alt=""
+								loading="lazy"
+								class="w-full object-contain rounded-[48px] aspect-auto shrink-0 pointer-events-none select-none"
+								onLoad={(e) => {
+									const img = e.target as HTMLImageElement
+									img.parentElement!.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`
+								}}
+							/>
+						</div>
+					)}
+				</For>
+				{/* Display file images */}
+				<For each={props.imageFiles}>
+					{(file, index) => (
+						<div class="relative rounded-[48px] bg-secondary w-full aspect-[3/4]">
+							<button
+								class="absolute top-7 right-7 bg-primary text-primary-foreground rounded-full size-6 flex items-center justify-center"
+								onClick={() => props.onDeleteImage(props.imageUrls.length + index())}
+							>
+								<span class="material-symbols-rounded text-[16px]">close</span>
+							</button>
+							<img
+								src={URL.createObjectURL(file)}
 								alt=""
 								loading="lazy"
 								class="w-full object-contain rounded-[48px] aspect-auto shrink-0 pointer-events-none select-none"
@@ -91,6 +116,7 @@ const ConfirmStep: Component<ConfirmStepProps> = (props) => {
 							class="sr-only w-full h-full"
 							placeholder="Enter image"
 							accept="image/*"
+							multiple
 							onChange={props.onFileUpload}
 						/>
 						Add photos

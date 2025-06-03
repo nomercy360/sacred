@@ -16,7 +16,6 @@ export default function CreateFromLinkPage() {
 		urlImages,
 		setUrlImages,
 		parsedImageUrls,
-		uploadImages,
 		step,
 		setupButtons,
 		handleFileChange,
@@ -26,6 +25,7 @@ export default function CreateFromLinkPage() {
 		removeImage,
 		onContinue,
 		isLoading,
+		selectedFiles,
 	} = useWishCreation()
 
 	onMount(() => {
@@ -94,10 +94,11 @@ export default function CreateFromLinkPage() {
 						onPublishClick={() => onContinue()}
 						name={updateWish.name}
 						link={updateWish.url}
-						uploadImages={uploadImages()}
+						imageUrls={urlImages()}
+						imageFiles={selectedFiles()}
 						onNameClick={() => setStep(StepNames.ADD_NAME)}
 						onAddLinkClick={() => setStep(StepNames.ADD_LINK)}
-						onDeleteImage={(id) => removeImage(id)}
+						onDeleteImage={(index) => removeImage(index)}
 					/>
 				</Match>
 			</Switch>

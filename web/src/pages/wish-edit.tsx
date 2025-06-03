@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "@solidjs/router"
 import { createMutation, useQuery } from "@tanstack/solid-query"
 import { createEffect, createSignal, For, onCleanup, Show } from "solid-js"
-import { fetchUpdateWish, fetchWish, deleteWishPhoto } from "~/lib/api"
+import { fetchUpdateWish, fetchWish } from "~/lib/api"
 import { Wish, WishImage } from "~/lib/api"
 import { useMainButton } from "~/lib/useMainButton"
 import { queryClient } from "~/App"
@@ -105,7 +105,18 @@ export default function WishEditPage() {
 
     setIsDeleting(true)
     try {
-      const result = await deleteWishPhoto(params.id, imageId);
+      // Update wish with delete_image_ids
+      const requestData = {
+        name: wishName() || item.data?.name || null,
+        url: wishLink() || item.data?.url || null,
+        notes: item.data?.notes || null,
+        price: item.data?.price || null,
+        currency: item.data?.currency || null,
+        category_ids: item.data?.categories?.map(category => category.id) || [],
+        delete_image_ids: [imageId]
+      }
+
+      const result = await fetchUpdateWish(params.id, requestData);
       if (result.error) {
         addToast("Failed to delete image");
       } else {

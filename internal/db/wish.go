@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -17,12 +18,12 @@ type Wish struct {
 	Notes        *string     `db:"notes" json:"notes"`
 	SourceID     *string     `db:"source_id" json:"source_id"`
 	IsFulfilled  bool        `db:"is_fulfilled" json:"is_fulfilled"`
-	IsFavorite   bool        `db:"is_favorite" json:"is_favorite"`
-	ReservedBy   *string     `db:"reserved_by" json:"reserved_by"`
-	ReservedAt   *time.Time  `db:"reserved_at" json:"reserved_at"`
+	IsFavorite   bool        `db:"is_favorite" json:"is_favorite,omitempty"`
+	ReservedBy   *string     `db:"reserved_by" json:"reserved_by,omitempty"`
+	ReservedAt   *time.Time  `db:"reserved_at" json:"reserved_at,omitempty"`
 	CreatedAt    time.Time   `db:"created_at" json:"created_at"`
 	UpdatedAt    time.Time   `db:"updated_at" json:"updated_at"`
-	DeletedAt    *time.Time  `db:"deleted_at" json:"deleted_at"`
+	DeletedAt    *time.Time  `db:"deleted_at" json:"deleted_at,omitempty"`
 	PublishedAt  *time.Time  `db:"published_at" json:"published_at"`
 	Images       []WishImage `json:"images"`
 	Categories   []Category  `json:"categories"`
@@ -61,7 +62,7 @@ type WishImage struct {
 	Height    int       `db:"height" json:"height"`
 }
 
-func (s *storage) GetWishByID(ctx context.Context, viewerID, id string) (Wish, error) {
+func (s *Storage) GetWishByID(ctx context.Context, viewerID, id string) (Wish, error) {
 	query := `SELECT 
     		w.id, 
     		w.user_id,
@@ -162,8 +163,11 @@ func (s *storage) GetWishByID(ctx context.Context, viewerID, id string) (Wish, e
 	return item, nil
 }
 
-func (s *storage) CreateWish(ctx context.Context, item Wish, categories []string) error {
-	query := `INSERT INTO wishes (id, user_id, name, url, price, currency, notes, is_fulfilled, published_at, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+func (s *Storage) CreateWish(ctx context.Context, item Wish, categories []string) error {
+	query := `INSERT INTO wishes 
+    	(id, user_id, name, url, price, currency, notes, is_fulfilled, 
+    	 published_at, source_id, created_at, updated_at
+    	 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -181,6 +185,8 @@ func (s *storage) CreateWish(ctx context.Context, item Wish, categories []string
 		item.IsFulfilled,
 		item.PublishedAt,
 		item.SourceID,
+		item.CreatedAt,
+		item.UpdatedAt,
 	)
 
 	if err != nil && IsUniqueViolationError(err) {
@@ -206,10 +212,10 @@ func (s *storage) CreateWish(ctx context.Context, item Wish, categories []string
 	return nil
 }
 
-func (s *storage) UpdateWish(ctx context.Context, item Wish, categories []string) (Wish, error) {
+func (s *Storage) UpdateWish(ctx context.Context, item Wish, categories []string) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return Wish{}, err
+		return err
 	}
 	defer tx.Rollback()
 
@@ -234,29 +240,29 @@ func (s *storage) UpdateWish(ctx context.Context, item Wish, categories []string
 	)
 
 	if err != nil {
-		return Wish{}, err
+		return err
 	}
 
 	_, err = tx.ExecContext(ctx, `DELETE FROM wish_categories WHERE wish_id = ?`, item.ID)
 	if err != nil {
-		return Wish{}, err
+		return err
 	}
 
 	for _, categoryID := range categories {
 		_, err = tx.ExecContext(ctx, `INSERT INTO wish_categories (wish_id, category_id) VALUES (?, ?)`, item.ID, categoryID)
 		if err != nil {
-			return Wish{}, err
+			return err
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		return Wish{}, err
+		return err
 	}
 
-	return s.GetWishByID(ctx, item.UserID, item.ID)
+	return err
 }
 
-func (s *storage) GetPublicWishesFeed(ctx context.Context, viewerID, searchQuery string) ([]Wish, error) {
+func (s *Storage) GetPublicWishesFeed(ctx context.Context, viewerID, searchQuery string) ([]Wish, error) {
 	if searchQuery != "" {
 		// Use FTS5 for search
 		baseQuery := `SELECT w.id,
@@ -332,7 +338,7 @@ func (s *storage) GetPublicWishesFeed(ctx context.Context, viewerID, searchQuery
 	return s.fetchWishes(ctx, baseQuery, args...)
 }
 
-func (s *storage) baseWishesQuery() string {
+func (s *Storage) baseWishesQuery() string {
 	return `SELECT w.id,
 				   w.user_id,
 				   w.name,
@@ -367,7 +373,7 @@ func (s *storage) baseWishesQuery() string {
          LEFT JOIN categories c ON wc.category_id = c.id`
 }
 
-func (s *storage) fetchWishes(ctx context.Context, query string, args ...interface{}) ([]Wish, error) {
+func (s *Storage) fetchWishes(ctx context.Context, query string, args ...interface{}) ([]Wish, error) {
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -421,7 +427,7 @@ func (s *storage) fetchWishes(ctx context.Context, query string, args ...interfa
 	return items, nil
 }
 
-func (s *storage) ListWishes(ctx context.Context) ([]Wish, error) {
+func (s *Storage) ListWishes(ctx context.Context) ([]Wish, error) {
 	query := s.baseWishesQuery() + `
 			GROUP BY w.id
 			ORDER BY w.created_at DESC
@@ -429,7 +435,7 @@ func (s *storage) ListWishes(ctx context.Context) ([]Wish, error) {
 	return s.fetchWishes(ctx, query)
 }
 
-func (s *storage) GetWishesByUserID(ctx context.Context, userID string) ([]Wish, error) {
+func (s *Storage) GetWishesByUserID(ctx context.Context, userID string) ([]Wish, error) {
 	query := s.baseWishesQuery() + `
 			WHERE w.user_id = ?
         	GROUP BY w.id
@@ -438,8 +444,8 @@ func (s *storage) GetWishesByUserID(ctx context.Context, userID string) ([]Wish,
 	return s.fetchWishes(ctx, query, userID)
 }
 
-func (s *storage) CreateWishImage(ctx context.Context, image WishImage) (WishImage, error) {
-	query := `INSERT INTO wish_images (id, wish_id, url, position, width, height) VALUES (?, ?, ?, ?, ?, ?)`
+func (s *Storage) CreateWishImage(ctx context.Context, image WishImage) (WishImage, error) {
+	query := `INSERT INTO wish_images (id, wish_id, url, position, width, height, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
 
 	_, err := s.db.ExecContext(ctx, query,
 		image.ID,
@@ -448,6 +454,7 @@ func (s *storage) CreateWishImage(ctx context.Context, image WishImage) (WishIma
 		image.Position,
 		image.Width,
 		image.Height,
+		image.CreatedAt,
 	)
 
 	if err != nil {
@@ -457,7 +464,7 @@ func (s *storage) CreateWishImage(ctx context.Context, image WishImage) (WishIma
 	return image, nil
 }
 
-func (s *storage) DeleteWish(ctx context.Context, uid, id string) error {
+func (s *Storage) DeleteWish(ctx context.Context, uid, id string) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -490,10 +497,38 @@ func (s *storage) DeleteWish(ctx context.Context, uid, id string) error {
 	return tx.Commit()
 }
 
-func (s *storage) DeleteWishPhoto(ctx context.Context, wishID, photoID string) error {
-	query := `DELETE FROM wish_images WHERE id = ? AND wish_id = ?`
-	_, err := s.db.ExecContext(ctx, query, photoID, wishID)
-	return err
+func (s *Storage) DeleteWishImages(ctx context.Context, wishID string, photoIDs []string) error {
+	if len(photoIDs) == 0 {
+		return nil
+	}
+
+	placeholders := make([]string, len(photoIDs))
+	for i := range photoIDs {
+		placeholders[i] = "?"
+	}
+	placeholderString := strings.Join(placeholders, ",")
+
+	query := fmt.Sprintf("DELETE FROM wish_images WHERE wish_id = ? AND id IN (%s)", placeholderString)
+
+	args := make([]interface{}, 0, len(photoIDs)+1)
+	args = append(args, wishID)
+	for _, id := range photoIDs {
+		args = append(args, id)
+	}
+
+	result, err := s.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to execute delete query: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		fmt.Printf("Warning: could not get rows affected after deleting wish images: %v\n", err)
+	} else {
+		fmt.Printf("Deleted %d wish image(s) for wish_id %s.\n", rowsAffected, wishID)
+	}
+
+	return nil
 }
 
 type AutocompleteSuggestion struct {
@@ -501,7 +536,7 @@ type AutocompleteSuggestion struct {
 	Count int    `json:"count"`
 }
 
-func (s *storage) GetWishAutocomplete(ctx context.Context, prefix string, limit int) ([]AutocompleteSuggestion, error) {
+func (s *Storage) GetWishAutocomplete(ctx context.Context, prefix string, limit int) ([]AutocompleteSuggestion, error) {
 	if prefix == "" {
 		return []AutocompleteSuggestion{}, nil
 	}

@@ -8,7 +8,7 @@ type Category struct {
 	ImageURL string `db:"image_url" json:"image_url"`
 }
 
-func (s *storage) ListCategories(ctx context.Context) ([]Category, error) {
+func (s *Storage) ListCategories(ctx context.Context) ([]Category, error) {
 	var categories []Category
 
 	query := `

@@ -17,6 +17,7 @@ const StartStep: Component<AddLinkStepProps> = (props) => {
 					class="sr-only w-full"
 					placeholder="Enter image"
 					accept="image/*"
+					multiple
 					onChange={props.onFileUpload}
 				/>
 				<span class="material-symbols-rounded text-base">

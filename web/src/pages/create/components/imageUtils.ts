@@ -33,12 +33,23 @@ export function splitImages(images: string[]): string[][] {
 	return [images.slice(0, middle), images.slice(middle)]
 }
 
+
+export type MetadataResponse = {
+	image_urls: string[]
+	currency?: string
+	price?: number
+	product_name?: string
+	metadata: {
+		[key: string]: string
+	}
+}
+
 /**
  * Fetches metadata from a URL
  * @param url URL to fetch metadata from
  * @returns Promise resolving to metadata response
  */
-export async function fetchMetadata(url: string) {
+export async function fetchMetadata(url: string): Promise<MetadataResponse> {
 	const res = await fetch(import.meta.env.VITE_SCRAPER_URL + '/extract-content', {
 		method: 'POST',
 		body: JSON.stringify({ url }),

@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/labstack/echo/v4"
@@ -15,12 +14,14 @@ import (
 	_ "image/png"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"path/filepath"
 	"sacred/internal/contract"
 	"sacred/internal/db"
 	"sacred/internal/terrors"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -122,17 +123,19 @@ func (a *API) uploadPhotoFromData(imageData []byte, wishID string, position int)
 	}
 
 	return db.WishImage{
-		ID:       nanoid.Must(),
-		WishID:   wishID,
-		URL:      s3Path,
-		Width:    width,
-		Height:   height,
-		Position: position,
+		ID:        nanoid.Must(),
+		WishID:    wishID,
+		URL:       s3Path,
+		Width:     width,
+		Height:    height,
+		Position:  position,
+		CreatedAt: time.Now().UTC(),
 	}, nil
 }
 
 func (a *API) uploadPhotosFromURLs(ctx context.Context, wishID string, imageURLs []string, startPosition int) ([]db.WishImage, error) {
 	results := make([]db.WishImage, 0, len(imageURLs))
+	now := time.Now().UTC()
 
 	for i, imgURL := range imageURLs {
 		width, height, path, err := a.handlePhotoUpload(imgURL)
@@ -141,12 +144,13 @@ func (a *API) uploadPhotosFromURLs(ctx context.Context, wishID string, imageURLs
 		}
 
 		newImage := db.WishImage{
-			ID:       nanoid.Must(),
-			WishID:   wishID,
-			URL:      path,
-			Width:    width,
-			Height:   height,
-			Position: startPosition + i,
+			ID:        nanoid.Must(),
+			WishID:    wishID,
+			URL:       path,
+			Width:     width,
+			Height:    height,
+			Position:  startPosition + i,
+			CreatedAt: now,
 		}
 
 		savedImage, err := a.storage.CreateWishImage(ctx, newImage)
@@ -160,99 +164,175 @@ func (a *API) uploadPhotosFromURLs(ctx context.Context, wishID string, imageURLs
 	return results, nil
 }
 
-func (a *API) CreateWishFromURLHandler(c echo.Context) error {
-	userID, err := getUserID(c)
-	if err != nil {
-		return err
+func getFormString(form *multipart.Form, key string, trimSpace bool) *string {
+	values := form.Value[key]
+	if len(values) > 0 && values[0] != "" {
+		val := values[0]
+		if trimSpace {
+			val = strings.TrimSpace(val)
+		}
+		if val != "" { // Check again after trim
+			return &val
+		}
 	}
+	return nil
+}
 
-	var req contract.CreateWishRequest
-	if err := c.Bind(&req); err != nil {
-		return terrors.BadRequest(err, "failed to bind request")
+func getFormFloat(form *multipart.Form, key string) (*float64, error) {
+	values := form.Value[key]
+	if len(values) > 0 && values[0] != "" {
+		priceStr := strings.TrimSpace(values[0])
+		if priceStr == "" { // Allow empty string to mean not provided
+			return nil, nil
+		}
+		price, err := strconv.ParseFloat(priceStr, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid float value for '%s': %s", key, priceStr)
+		}
+		return &price, nil
 	}
+	return nil, nil
+}
 
-	req.URL = strings.TrimSpace(req.URL)
-
-	if err := req.Validate(); err != nil {
-		return terrors.BadRequest(err, "failed to validate request")
-	}
-
-	// Call external service to extract content
-	extractReq := map[string]string{"url": req.URL}
-	reqBody, err := json.Marshal(extractReq)
-	if err != nil {
-		return terrors.InternalServer(err, "failed to marshal request")
-	}
-
-	parseResp, err := http.Post(a.cfg.ParserURL, "application/json", bytes.NewReader(reqBody))
-	if err != nil {
-		return terrors.InternalServer(err, "failed to extract content from URL")
-	}
-	defer parseResp.Body.Close()
-
-	if parseResp.StatusCode != http.StatusOK {
-		return terrors.InternalServer(nil, "failed to extract content from URL")
-	}
-
-	var extractResp ExtractContentResponse
-	if err := json.NewDecoder(parseResp.Body).Decode(&extractResp); err != nil {
-		return terrors.InternalServer(err, "failed to decode extract response")
-	}
-
-	wish := db.Wish{
-		ID:     nanoid.Must(),
-		UserID: userID,
-		URL:    &req.URL,
-	}
-
-	var ogImage string
-	if extractResp.Metadata != nil {
-		if desc, ok := extractResp.Metadata["description"].(string); ok {
-			if desc != "" {
-				wish.Notes = &desc
+func getFormStringSlice(form *multipart.Form, key string) []string {
+	var result []string
+	values := form.Value[key]
+	if len(values) > 0 {
+		for _, val := range values {
+			if strings.Contains(val, ",") {
+				parts := strings.Split(val, ",")
+				for _, p := range parts {
+					trimmedP := strings.TrimSpace(p)
+					if trimmedP != "" {
+						result = append(result, trimmedP)
+					}
+				}
+			} else {
+				trimmedVal := strings.TrimSpace(val)
+				if trimmedVal != "" {
+					result = append(result, trimmedVal)
+				}
 			}
 		}
+	}
+	return result
+}
 
-		if extractResp.Metadata["og:image"] != nil {
-			ogImage, _ = extractResp.Metadata["og:image"].(string)
+func (a *API) parseAndPopulateWish(form *multipart.Form, userID string) (wish db.Wish, categoryIDs []string, imageURLs []string, err error) {
+	wish.ID = nanoid.Must()
+	wish.UserID = userID
+
+	wish.URL = getFormString(form, "url", true)
+	wish.Name = getFormString(form, "name", true) // Trim name
+
+	priceVal, parseErr := getFormFloat(form, "price")
+	if parseErr != nil {
+		err = terrors.BadRequest(parseErr, parseErr.Error())
+		return
+	}
+	wish.Price = priceVal
+
+	wish.Currency = getFormString(form, "currency", true) // Trim currency
+	wish.Notes = getFormString(form, "notes", true)       // Trim notes
+
+	categoryIDs = getFormStringSlice(form, "category_ids")
+	imageURLs = getFormStringSlice(form, "image_urls")
+
+	return
+}
+
+func (a *API) validateWishCreation(wish *db.Wish, categoryIDs []string) error {
+	// Name validation
+	if wish.Name == nil || *wish.Name == "" {
+		return terrors.BadRequest(nil, "name is required and cannot be empty")
+	}
+	if len(*wish.Name) > 200 {
+		return terrors.BadRequest(nil, "name cannot be longer than 200 characters")
+	}
+
+	// URL validation
+	if wish.URL != nil && *wish.URL != "" {
+		parsedURL, err := url.ParseRequestURI(*wish.URL) // More strict parsing for user inputs
+		if err != nil {
+			return terrors.BadRequest(err, "invalid URL format")
+		}
+		if parsedURL.Scheme == "" || parsedURL.Host == "" {
+			return terrors.BadRequest(nil, "URL must include a scheme (e.g., http, https) and a host")
 		}
 	}
 
-	if len(extractResp.ImageURLs) == 0 && ogImage != "" {
-		extractResp.ImageURLs = []string{ogImage}
-	} else if len(extractResp.ImageURLs) == 0 {
-		return terrors.BadRequest(nil, "no images found in the URL")
+	// Price and Currency validation
+	if wish.Price != nil {
+		if *wish.Price < 0 {
+			return terrors.BadRequest(nil, "price cannot be negative")
+		}
+		if wish.Currency == nil || *wish.Currency == "" {
+			return terrors.BadRequest(nil, "currency is required when price is provided")
+		}
+		if len(*wish.Currency) != 3 { // Assuming 3-letter ISO code
+			return terrors.BadRequest(nil, "currency must be a 3-letter ISO code")
+		}
+	} else {
+		// If price is not provided, currency should also not be provided or will be ignored.
+		// The main handler will nil out wish.Currency if wish.Price is nil.
 	}
 
-	if extractResp.ProductName != nil {
-		wish.Name = extractResp.ProductName
+	// Notes validation
+	if wish.Notes != nil && len(*wish.Notes) > 1000 {
+		return terrors.BadRequest(nil, "notes cannot be longer than 1000 characters")
 	}
 
-	if extractResp.Price != nil {
-		wish.Price = extractResp.Price
-		if extractResp.Currency != nil {
-			wish.Currency = extractResp.Currency
+	// Category IDs validation
+	if len(categoryIDs) == 0 {
+		return terrors.BadRequest(nil, "category_ids cannot be empty")
+	}
+	// Add more specific category_ids validation if needed (e.g., format, existence)
+
+	return nil
+}
+
+func (a *API) handlePhotoUploads(c echo.Context, form *multipart.Form, wishID string) error {
+	files := form.File["photos"]
+	const maxFileSize = 10 << 20 // 10MB limit per file (example)
+
+	for i, fileHeader := range files {
+		if fileHeader.Size > maxFileSize {
+			return terrors.BadRequest(nil, fmt.Sprintf("file '%s' exceeds maximum size of %dMB", fileHeader.Filename, maxFileSize>>20))
+		}
+
+		src, err := fileHeader.Open()
+		if err != nil {
+			return terrors.BadRequest(err, fmt.Sprintf("failed to open uploaded file: %s", fileHeader.Filename))
+		}
+		defer src.Close()
+
+		buffer := new(bytes.Buffer)
+		if _, err := io.Copy(buffer, src); err != nil {
+			return terrors.InternalServer(err, fmt.Sprintf("error reading uploaded file: %s", fileHeader.Filename))
+		}
+		fileData := buffer.Bytes()
+
+		newImage, err := a.uploadPhotoFromData(fileData, wishID, i)
+		if err != nil {
+			return err
+		}
+
+		if _, err := a.storage.CreateWishImage(c.Request().Context(), newImage); err != nil {
+			return terrors.InternalServer(err, fmt.Sprintf("cannot save image to database for file: %s", fileHeader.Filename))
 		}
 	}
+	return nil
+}
 
-	// Create the wish in database
-	err = a.storage.CreateWish(c.Request().Context(), wish, nil)
-	if err != nil {
-		return terrors.InternalServer(err, "cannot create wishlist item")
+func (a *API) handleImageURLs(c echo.Context, imageURLs []string, wishID string, filesUploadedCount int) error {
+	if len(imageURLs) > 0 {
+		// startPosition ensures that if photos are uploaded via file and URL, their order/index is distinct.
+		_, err := a.uploadPhotosFromURLs(c.Request().Context(), wishID, imageURLs, filesUploadedCount)
+		if err != nil {
+			return err
+		}
 	}
-
-	resp := contract.CreateWishResponse{
-		ID:        wish.ID,
-		UserID:    userID,
-		Name:      wish.Name,
-		Notes:     wish.Notes,
-		Currency:  wish.Currency,
-		Price:     wish.Price,
-		ImageURLs: extractResp.ImageURLs,
-		URL:       wish.URL,
-	}
-
-	return c.JSON(http.StatusCreated, resp)
+	return nil
 }
 
 func (a *API) CreateWishHandler(c echo.Context) error {
@@ -261,9 +341,74 @@ func (a *API) CreateWishHandler(c echo.Context) error {
 		return err
 	}
 
-	wish := db.Wish{
-		ID:     nanoid.Must(),
-		UserID: userID,
+	form, err := c.MultipartForm() // Default is 32MB, use c.MultipartForm(maxMemoryBytes) if needed
+	if err != nil {
+		return terrors.BadRequest(err, "failed to parse multipart form")
+	}
+
+	wish, categoryIDs, imageURLs, err := a.parseAndPopulateWish(form, userID)
+	if err != nil {
+		return err
+	}
+
+	if err := a.validateWishCreation(&wish, categoryIDs); err != nil {
+		return err
+	}
+
+	if wish.Price == nil {
+		wish.Currency = nil
+	}
+
+	if len(form.File["photos"]) == 0 && len(imageURLs) == 0 {
+		return terrors.BadRequest(nil, "at least photos or image_urls must be provided")
+	}
+
+	now := time.Now().UTC()
+	wish.PublishedAt = &now
+	wish.CreatedAt = now
+	wish.UpdatedAt = now
+
+	if err := a.storage.CreateWish(c.Request().Context(), wish, categoryIDs); err != nil {
+		return terrors.InternalServer(err, "cannot create wishlist item in database")
+	}
+
+	if err := a.handlePhotoUploads(c, form, wish.ID); err != nil {
+		return err
+	}
+
+	filesUploadedCount := 0
+	if photos, ok := form.File["photos"]; ok {
+		filesUploadedCount = len(photos)
+	}
+
+	if err := a.handleImageURLs(c, imageURLs, wish.ID, filesUploadedCount); err != nil {
+		return err
+	}
+
+	finalWish, err := a.storage.GetWishByID(c.Request().Context(), userID, wish.ID)
+	if err != nil {
+		return terrors.InternalServer(err, "failed to retrieve created wishlist item")
+	}
+
+	return c.JSON(http.StatusCreated, finalWish)
+}
+
+func (a *API) UpdateWishHandler(c echo.Context) error {
+	userID, err := getUserID(c)
+	if err != nil {
+		return err
+	}
+
+	wishID := c.Param("wishID")
+	if wishID == "" {
+		return terrors.BadRequest(nil, "wish ID is required")
+	}
+
+	existingWish, err := a.storage.GetWishByID(c.Request().Context(), userID, wishID)
+	if err != nil && errors.Is(err, db.ErrNotFound) {
+		return terrors.NotFound(err, "wishlist item not found")
+	} else if err != nil {
+		return terrors.InternalServer(err, "cannot get wishlist item")
 	}
 
 	form, err := c.MultipartForm()
@@ -271,97 +416,48 @@ func (a *API) CreateWishHandler(c echo.Context) error {
 		return terrors.BadRequest(err, "failed to parse multipart form")
 	}
 
-	if form == nil || form.Value == nil {
-		return terrors.BadRequest(nil, "no form data provided")
-	}
-
-	err = a.storage.CreateWish(c.Request().Context(), wish, nil)
-	if err != nil {
-		return terrors.InternalServer(err, "cannot create wishlist item")
-	}
-
-	files := form.File["photos"]
-	for i, file := range files {
-		src, err := file.Open()
-		if err != nil {
-			return terrors.BadRequest(err, "failed to open uploaded file")
-		}
-		defer src.Close()
-
-		buffer := new(bytes.Buffer)
-		if _, err := io.Copy(buffer, src); err != nil {
-			return terrors.InternalServer(err, "error reading uploaded file")
-		}
-
-		fileData := buffer.Bytes()
-
-		newImage, err := a.uploadPhotoFromData(fileData, wish.ID, i)
-		if err != nil {
-			return err
-		}
-
-		if _, err := a.storage.CreateWishImage(c.Request().Context(), newImage); err != nil {
-			return terrors.InternalServer(err, "cannot save image to database")
-		}
-	}
-
-	res, err := a.storage.GetWishByID(c.Request().Context(), userID, wish.ID)
-	if err != nil {
-		return terrors.InternalServer(err, "cannot get wishlist item")
-	}
-
-	return c.JSON(http.StatusCreated, res)
-}
-
-func (a *API) UpdateWishHandler(c echo.Context) error {
-	var req contract.UpdateWishRequest
-	if err := c.Bind(&req); err != nil {
-		return terrors.BadRequest(err, "failed to bind request")
-	}
-
-	// trim whitespace from URL
-	if req.URL != nil {
-		*req.URL = strings.TrimSpace(*req.URL)
-	}
-
-	if err := req.Validate(); err != nil {
-		return terrors.BadRequest(err, fmt.Sprintf("failed to validate request: %v", err))
-	}
-
-	userID, err := getUserID(c)
+	wish, categoryIDs, _, err := a.parseAndPopulateWish(form, userID)
 	if err != nil {
 		return err
 	}
-	wishID := c.Param("id")
-	if wishID == "" {
-		return terrors.BadRequest(nil, "wish id cannot be empty")
+
+	if err := a.validateWishCreation(&wish, categoryIDs); err != nil {
+		return err
 	}
 
-	item := db.Wish{
-		ID:       wishID,
-		UserID:   userID,
-		URL:      req.URL,
-		Name:     req.Name,
-		Price:    req.Price,
-		Currency: req.Currency,
-		Notes:    req.Notes,
+	if wish.Price == nil {
+		wish.Currency = nil
 	}
 
-	if item.Price == nil {
-		item.Currency = nil
+	// keep immutable fields from existing wish
+	wish.ID = existingWish.ID
+	wish.UserID = existingWish.UserID
+	wish.PublishedAt = existingWish.PublishedAt
+	// Update timestamps
+	wish.UpdatedAt = time.Now().UTC()
+
+	if err := a.storage.UpdateWish(c.Request().Context(), wish, categoryIDs); err != nil {
+		return terrors.InternalServer(err, "cannot update wishlist item in database")
 	}
 
-	res, err := a.storage.UpdateWish(c.Request().Context(), item, req.CategoryIDs)
+	if err := a.handlePhotoUploads(c, form, wish.ID); err != nil {
+		return err
+	}
+
+	deleteImageIDs := getFormStringSlice(form, "delete_image_ids")
+	if len(deleteImageIDs) > 0 {
+		// TODO: It should also trigger deletion of actual image files from S3/storage.
+		if err := a.storage.DeleteWishImages(c.Request().Context(), wishID, deleteImageIDs); err != nil {
+			return terrors.InternalServer(err, "failed to delete images")
+		}
+	}
+
+	updatedWish, err := a.storage.GetWishByID(c.Request().Context(), userID, wishID)
 	if err != nil {
-		return terrors.InternalServer(err, "cannot create wishlist item")
+		return terrors.InternalServer(err, "failed to retrieve updated wishlist item")
 	}
 
-	res, err = a.storage.GetWishByID(c.Request().Context(), userID, item.ID)
-	if err != nil {
-		return terrors.InternalServer(err, "cannot get wishlist item")
-	}
-
-	return c.JSON(http.StatusCreated, res)
+	return c.JSON(http.StatusOK, updatedWish)
 }
 
 func (a *API) GetWishHandler(c echo.Context) error {
@@ -433,12 +529,13 @@ func (a *API) CopyWishHandler(c echo.Context) error {
 
 	for _, img := range sourceWish.Images {
 		newImage := db.WishImage{
-			ID:       nanoid.Must(),
-			WishID:   newWish.ID,
-			URL:      img.URL,
-			Width:    img.Width,
-			Height:   img.Height,
-			Position: img.Position,
+			ID:        nanoid.Must(),
+			WishID:    newWish.ID,
+			URL:       img.URL,
+			Width:     img.Width,
+			Height:    img.Height,
+			Position:  img.Position,
+			CreatedAt: time.Now().UTC(),
 		}
 
 		if _, err := a.storage.CreateWishImage(c.Request().Context(), newImage); err != nil {
@@ -509,114 +606,4 @@ func (a *API) GetWishesFeed(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, resp)
-}
-
-func (a *API) UploadWishPhoto(c echo.Context) error {
-	wishID := c.Param("id")
-	if wishID == "" {
-		return terrors.BadRequest(nil, "wish ID is required")
-	}
-
-	userID, err := getUserID(c)
-	if err != nil {
-		return err
-	}
-
-	wish, err := a.storage.GetWishByID(c.Request().Context(), userID, wishID)
-	if err != nil && errors.Is(err, db.ErrNotFound) {
-		return terrors.NotFound(err, "wish not found")
-	} else if err != nil {
-		return terrors.InternalServer(err, "cannot get wish")
-	}
-
-	if wish.UserID != userID {
-		return terrors.Forbidden(nil, "cannot upload photos to another user's wish")
-	}
-
-	file, _, err := c.Request().FormFile("photo")
-	if err == nil {
-		defer file.Close()
-
-		buffer := new(bytes.Buffer)
-		if _, err := io.Copy(buffer, file); err != nil {
-			return terrors.InternalServer(err, "error reading uploaded file")
-		}
-		fileData := buffer.Bytes()
-
-		newImage, err := a.uploadPhotoFromData(fileData, wishID, len(wish.Images))
-		if err != nil {
-			return err
-		}
-
-		savedImage, err := a.storage.CreateWishImage(c.Request().Context(), newImage)
-		if err != nil {
-			return terrors.InternalServer(err, "cannot save image to database")
-		}
-
-		return c.JSON(http.StatusCreated, savedImage)
-	}
-
-	var req struct {
-		ImageURLs []string `json:"image_urls"`
-	}
-
-	if err := c.Bind(&req); err != nil || len(req.ImageURLs) == 0 {
-		return terrors.BadRequest(err, "invalid request format or no image URLs provided")
-	}
-
-	// Use the reusable function
-	results, err := a.uploadPhotosFromURLs(c.Request().Context(), wishID, req.ImageURLs, len(wish.Images))
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusCreated, results)
-}
-
-func (a *API) DeleteWishPhoto(c echo.Context) error {
-	wishID := c.Param("id")
-	photoID := c.Param("photoId")
-
-	if wishID == "" {
-		return terrors.BadRequest(nil, "wish ID is required")
-	}
-
-	if photoID == "" {
-		return terrors.BadRequest(nil, "photo ID is required")
-	}
-
-	userID, err := getUserID(c)
-	if err != nil {
-		return err
-	}
-
-	wish, err := a.storage.GetWishByID(c.Request().Context(), userID, wishID)
-	if err != nil && errors.Is(err, db.ErrNotFound) {
-		return terrors.NotFound(err, "wish not found")
-	} else if err != nil {
-		return terrors.InternalServer(err, "cannot get wish")
-	}
-
-	if wish.UserID != userID {
-		return terrors.Forbidden(nil, "cannot delete photos from another user's wish")
-	}
-
-	photoExists := false
-	for _, img := range wish.Images {
-		if img.ID == photoID {
-			photoExists = true
-			break
-		}
-	}
-
-	if !photoExists {
-		return terrors.NotFound(nil, "photo not found for this wish")
-	}
-
-	err = a.storage.DeleteWishPhoto(c.Request().Context(), wishID, photoID)
-	if err != nil {
-		return terrors.InternalServer(err, "failed to delete photo")
-	}
-
-	return c.JSON(http.StatusOK, echo.Map{"message": "OK"})
 }

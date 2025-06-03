@@ -42,8 +42,12 @@ export default function App(props: any) {
 				updateOnboarding,
 			)
 
-			const resp = await fetch(`${API_BASE_URL}/auth/telegram?` + initData, {
+			const resp = await fetch(`${API_BASE_URL}/auth/telegram`, {
 				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ query: initData }),
 			})
 
 			const data = await resp.json()

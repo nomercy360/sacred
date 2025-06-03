@@ -14,26 +14,36 @@ import (
 	"net/http"
 	"sacred/internal/contract"
 	"sacred/internal/db"
-	"sacred/internal/terrors"
 	"time"
 )
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
+const (
+	ErrInvalidInitData = "invalid init data from telegram"
+	ErrInvalidRequest  = "failed to validate request"
+)
+
 func (a *API) AuthTelegram(c echo.Context) error {
-	query := c.QueryString()
-
-	expIn := 24 * time.Hour
-	botToken := a.cfg.BotToken
-
-	if err := initdata.Validate(query, botToken, expIn); err != nil {
-		return terrors.Unauthorized(err, "invalid init data from telegram")
+	var req contract.AuthTelegramRequest
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, ErrInvalidRequest).WithInternal(err)
 	}
 
-	data, err := initdata.Parse(query)
+	if err := req.Validate(); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, ErrInvalidRequest).WithInternal(err)
+	}
 
+	expIn := 24 * time.Hour
+	botToken := a.cfg.TelegramBotToken
+
+	if err := initdata.Validate(req.Query, botToken, expIn); err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrInvalidInitData).WithInternal(err)
+	}
+
+	data, err := initdata.Parse(req.Query)
 	if err != nil {
-		return terrors.Unauthorized(err, "cannot parse init data from telegram")
+		return echo.NewHTTPError(http.StatusUnauthorized, ErrInvalidInitData).WithInternal(err)
 	}
 
 	user, err := a.storage.GetUserByChatID(data.User.ID)
@@ -76,26 +86,26 @@ func (a *API) AuthTelegram(c echo.Context) error {
 			ChatID:       data.User.ID,
 			ReferralCode: nanoid.Must(),
 			Name:         name,
-			LanguageCode: &lang,
+			LanguageCode: lang,
 			AvatarURL:    &imgUrl,
 		}
 
 		if err = a.storage.CreateUser(context.Background(), &create); err != nil {
-			return terrors.InternalServer(err, "failed to create user")
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to create user")
 		}
 
 		user, err = a.storage.GetUserByChatID(data.User.ID)
 		if err != nil {
-			return terrors.InternalServer(err, "failed to get user")
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user")
 		}
 	} else if err != nil {
-		return terrors.InternalServer(err, "failed to get user")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user")
 	}
 
 	token, err := generateJWT(user.ID, user.ChatID, a.cfg.JWTSecret)
 
 	if err != nil {
-		return terrors.InternalServer(err, "jwt library error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "jwt library error")
 	}
 
 	uresp := contract.UserResponse{
@@ -114,7 +124,7 @@ func (a *API) AuthTelegram(c echo.Context) error {
 
 	wishes, err := a.storage.GetWishesByUserID(context.Background(), user.ID)
 	if err != nil {
-		return terrors.InternalServer(err, "failed to get user's wishlists")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user's wishlists")
 	}
 
 	resp := &contract.AuthResponse{
@@ -126,14 +136,8 @@ func (a *API) AuthTelegram(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-type JWTClaims struct {
-	jwt.RegisteredClaims
-	UID    string `json:"uid"`
-	ChatID int64  `json:"chat_id"`
-}
-
 func generateJWT(userID string, chatID int64, secretKey string) (string, error) {
-	claims := &JWTClaims{
+	claims := &contract.JWTClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},

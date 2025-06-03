@@ -41,6 +41,7 @@ func (a *API) handleUpdate(update *models.Update) (msg *telegram.SendMessagePara
 	var telegramUserID int64
 	var name *string
 	var username string
+	languageCode := "en" // Default language code
 	if update.Message != nil && update.Message.From != nil {
 		chatID = update.Message.From.ID
 		telegramUserID = update.Message.From.ID
@@ -53,6 +54,10 @@ func (a *API) handleUpdate(update *models.Update) (msg *telegram.SendMessagePara
 				nameWithLast := fmt.Sprintf("%s %s", update.Message.From.FirstName, update.Message.From.LastName)
 				name = &nameWithLast
 			}
+		}
+
+		if update.Message.From.LanguageCode == "ru" {
+			languageCode = "ru"
 		}
 	}
 
@@ -78,11 +83,12 @@ func (a *API) handleUpdate(update *models.Update) (msg *telegram.SendMessagePara
 		}
 
 		newUser := &db.User{
-			ID:        nanoid.Must(),
-			ChatID:    chatID,
-			Username:  username,
-			Name:      name,
-			AvatarURL: avatarURL,
+			ID:           nanoid.Must(),
+			ChatID:       chatID,
+			Username:     username,
+			Name:         name,
+			AvatarURL:    avatarURL,
+			LanguageCode: languageCode,
 		}
 
 		if err := a.storage.CreateUser(context.Background(), newUser); err != nil {

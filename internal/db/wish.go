@@ -543,19 +543,21 @@ func (s *Storage) GetWishAutocomplete(ctx context.Context, prefix string, limit 
 
 	// Use FTS5 to get matching wishes and extract unique terms
 	query := `
-		SELECT DISTINCT 
-			LOWER(w.name) as suggestion,
-			COUNT(*) as count
-		FROM wishes_fts fts
-		JOIN wishes w ON fts.rowid = w.id
-		WHERE wishes_fts MATCH ?
-		  AND w.published_at IS NOT NULL 
-		  AND w.source_id IS NULL 
-		  AND w.deleted_at IS NULL
-		  AND w.name IS NOT NULL
-		GROUP BY LOWER(w.name)
-		ORDER BY count DESC, suggestion
-		LIMIT ?`
+		SELECT suggestion,
+			   COUNT(*) as count
+		FROM (SELECT DISTINCT w.id,
+							  LOWER(w.name) as suggestion
+			  FROM wishes_fts fts
+					   JOIN wishes w ON fts.wish_id = w.id
+			  WHERE wishes_fts MATCH ?
+				AND w.published_at IS NOT NULL
+				AND w.source_id IS NULL
+				AND w.deleted_at IS NULL
+				AND w.name IS NOT NULL) unique_matches
+		GROUP BY suggestion
+		ORDER BY LENGTH(suggestion),
+				 suggestion
+		LIMIT 10;`
 
 	rows, err := s.db.QueryContext(ctx, query, prefix+"*", limit)
 	if err != nil {
@@ -563,7 +565,7 @@ func (s *Storage) GetWishAutocomplete(ctx context.Context, prefix string, limit 
 	}
 	defer rows.Close()
 
-	var suggestions []AutocompleteSuggestion
+	suggestions := make([]AutocompleteSuggestion, 0)
 	for rows.Next() {
 		var suggestion AutocompleteSuggestion
 		if err := rows.Scan(&suggestion.Text, &suggestion.Count); err != nil {

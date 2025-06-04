@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sacred/internal/contract"
+	"time"
 )
 
 const (
@@ -98,9 +99,9 @@ func Setup(e *echo.Echo, logger *slog.Logger) {
 		},
 	}))
 	e.HTTPErrorHandler = CustomHTTPErrorHandler(logger)
-	//e.Use(echoMiddleware.TimeoutWithConfig(echoMiddleware.TimeoutConfig{
-	//	Timeout: 20 * time.Second,
-	//}))
+	e.Use(echoMiddleware.TimeoutWithConfig(echoMiddleware.TimeoutConfig{
+		Timeout: 30 * time.Second,
+	}))
 }
 
 func GetUserAuthConfig(secret string) echojwt.Config {
@@ -111,22 +112,14 @@ func GetUserAuthConfig(secret string) echojwt.Config {
 		SigningKey:             []byte(secret),
 		ContinueOnIgnoredError: true,
 		ErrorHandler: func(c echo.Context, err error) error {
-
 			var extErr *echojwt.TokenExtractionError
 			if !errors.As(err, &extErr) {
-				return echo.NewHTTPError(http.StatusUnauthorized, ErrAuthInvalid)
+				// For non-extraction errors, return unauthorized
+				return echo.NewHTTPError(http.StatusUnauthorized, "auth is invalid")
 			}
 
-			claims := &contract.JWTClaims{}
-
-			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-			c.Set("user", token)
-
-			if claims.UID == "" {
-				return echo.NewHTTPError(http.StatusUnauthorized, ErrAuthInvalid)
-			}
-
+			// For token extraction errors (missing token), just continue without setting user
+			// This makes authentication optional
 			return nil
 		},
 	}

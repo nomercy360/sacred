@@ -595,7 +595,7 @@ func (a *API) GetWishSaversHandler(c echo.Context) error {
 
 	offset := (page - 1) * limit
 
-	users, total, err := a.storage.GetUsersWhoBookmarkedWish(c.Request().Context(), wishID, limit, offset)
+	users, total, err := a.storage.GetUsersWhoSavedWish(c.Request().Context(), wishID, limit, offset)
 	if err != nil {
 		log.Printf("Error fetching wish savers for wishID %s: %v", wishID, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to retrieve users who saved the wish").WithInternal(err)

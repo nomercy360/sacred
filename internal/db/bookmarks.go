@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 func (s *Storage) SaveWishToBookmarks(ctx context.Context, uid, wishID string) error {
@@ -38,24 +39,46 @@ func (s *Storage) ListBookmarkedWishes(ctx context.Context, uid string) ([]Wish,
 	return s.fetchWishes(ctx, query, uid)
 }
 
-func (s *Storage) GetUsersWhoBookmarkedWish(ctx context.Context, wishID string, limit int, offset int) ([]User, int, error) {
+func (s *Storage) GetUsersWhoSavedWish(ctx context.Context, wishID string, limit int, offset int) ([]User, int, error) {
 	var users []User
 	var total int
 
+	// Query to get both the original creator and users who saved (copied) the wish
+	// The original creator is given priority with sort_order = 0
 	query := `
-		SELECT
-			u.id,
-			u.username,
-			u.name,
-			u.avatar_url,
-			(SELECT COUNT(*) FROM followers f WHERE f.following_id = u.id) as followers
-		FROM users u
-		JOIN user_bookmarks ub ON u.id = ub.user_id
-		WHERE ub.wish_id = ?
-		ORDER BY ub.created_at DESC
+		WITH all_savers AS (
+			-- Original creator of the wish
+			SELECT DISTINCT
+				u.id,
+				u.username,
+				u.name,
+				u.avatar_url,
+				(SELECT COUNT(*) FROM followers f WHERE f.following_id = u.id) as followers,
+				w.created_at as saved_at,
+				0 as sort_order
+			FROM users u
+			INNER JOIN wishes w ON u.id = w.user_id AND w.id = ?
+			
+			UNION ALL
+			
+			-- Users who copied the wish
+			SELECT DISTINCT
+				u.id,
+				u.username,
+				u.name,
+				u.avatar_url,
+				(SELECT COUNT(*) FROM followers f WHERE f.following_id = u.id) as followers,
+				w.created_at as saved_at,
+				1 as sort_order
+			FROM users u
+			INNER JOIN wishes w ON u.id = w.user_id AND w.source_id = ?
+		)
+		SELECT id, username, name, avatar_url, followers, saved_at
+		FROM all_savers
+		ORDER BY sort_order, saved_at DESC
 		LIMIT ? OFFSET ?`
 
-	rows, err := s.db.QueryContext(ctx, query, wishID, limit, offset)
+	rows, err := s.db.QueryContext(ctx, query, wishID, wishID, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -63,12 +86,14 @@ func (s *Storage) GetUsersWhoBookmarkedWish(ctx context.Context, wishID string, 
 
 	for rows.Next() {
 		var user User
+		var savedAt time.Time
 		if err := rows.Scan(
 			&user.ID,
 			&user.Username,
 			&user.Name,
 			&user.AvatarURL,
 			&user.Followers,
+			&savedAt,
 		); err != nil {
 			return nil, 0, err
 		}
@@ -78,9 +103,23 @@ func (s *Storage) GetUsersWhoBookmarkedWish(ctx context.Context, wishID string, 
 		return nil, 0, err
 	}
 
-	// Query to get the total count
-	countQuery := `SELECT COUNT(*) FROM user_bookmarks WHERE wish_id = ?`
-	err = s.db.QueryRowContext(ctx, countQuery, wishID).Scan(&total)
+	// Query to get the total count including the original creator
+	countQuery := `
+		SELECT COUNT(DISTINCT user_id) FROM (
+			-- Original creator
+			SELECT u.id as user_id
+			FROM users u
+			INNER JOIN wishes w ON u.id = w.user_id AND w.id = ?
+			
+			UNION
+			
+			-- Users who copied
+			SELECT u.id as user_id
+			FROM users u
+			INNER JOIN wishes w ON u.id = w.user_id AND w.source_id = ?
+		) as all_users`
+
+	err = s.db.QueryRowContext(ctx, countQuery, wishID, wishID).Scan(&total)
 	if err != nil {
 		return nil, 0, err
 	}

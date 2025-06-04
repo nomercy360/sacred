@@ -2,10 +2,8 @@ package api_test
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"sacred/internal/contract"
 	"sacred/internal/db"
 	"sacred/internal/testutils"
@@ -49,26 +47,46 @@ func TestGetWishSaversHandler(t *testing.T) {
 		}, []string{categoryID})
 		require.NoError(t, err)
 
-		// Create bookmarks (savers) - User saver2 bookmarks first, then saver1 to test ordering
-		err = ts.Storage.SaveWishToBookmarks(context.Background(), saver2Auth.User.ID, wishID)
+		// Create copied wishes (savers) - User saver2 copies first, then saver1 to test ordering
+		copyName1 := "Copied wish by saver2"
+		err = ts.Storage.CreateWish(context.Background(), db.Wish{
+			ID:          "copy1_" + wishID,
+			UserID:      saver2Auth.User.ID,
+			Name:        &copyName1,
+			SourceID:    &wishID,
+			PublishedAt: &now,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}, []string{categoryID})
 		require.NoError(t, err)
 		time.Sleep(5 * time.Millisecond) // Ensure distinct created_at for ordering
-		err = ts.Storage.SaveWishToBookmarks(context.Background(), saver1Auth.User.ID, wishID)
+		copyName2 := "Copied wish by saver1"
+		err = ts.Storage.CreateWish(context.Background(), db.Wish{
+			ID:          "copy2_" + wishID,
+			UserID:      saver1Auth.User.ID,
+			Name:        &copyName2,
+			SourceID:    &wishID,
+			PublishedAt: &now,
+			CreatedAt:   now.Add(5 * time.Millisecond),
+			UpdatedAt:   now.Add(5 * time.Millisecond),
+		}, []string{categoryID})
 		require.NoError(t, err)
 
 		// Perform request
-		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, "/wishes/"+wishID+"/savers", "", "", http.StatusOK)
+		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, "/v1/wishes/"+wishID+"/savers", "", ownerAuth.Token, http.StatusOK)
 
 		resp := testutils.ParseResponse[contract.WishSaversResponse](t, req)
 
-		assert.Equal(t, 2, resp.Total)
-		require.Len(t, resp.Users, 2)
+		assert.Equal(t, 3, resp.Total) // Original creator + 2 copiers
+		require.Len(t, resp.Users, 3)
 
-		// Check order (assuming ORDER BY ub.created_at DESC, so latest saver is first)
-		assert.Equal(t, saver1Auth.User.Username, resp.Users[0].Username)
-		assert.Equal(t, saver1Auth.User.ID, resp.Users[0].ID)
-		assert.Equal(t, saver2Auth.User.Username, resp.Users[1].Username)
-		assert.Equal(t, saver2Auth.User.ID, resp.Users[1].ID)
+		// Check order: original creator first, then copiers by created_at DESC
+		assert.Equal(t, ownerAuth.User.Username, resp.Users[0].Username) // Original creator first
+		assert.Equal(t, ownerAuth.User.ID, resp.Users[0].ID)
+		assert.Equal(t, saver1Auth.User.Username, resp.Users[1].Username) // Latest copier second
+		assert.Equal(t, saver1Auth.User.ID, resp.Users[1].ID)
+		assert.Equal(t, saver2Auth.User.Username, resp.Users[2].Username) // First copier last
+		assert.Equal(t, saver2Auth.User.ID, resp.Users[2].ID)
 		assert.Equal(t, 0, resp.Users[0].Followers) // Follower count not seeded
 	})
 
@@ -92,29 +110,40 @@ func TestGetWishSaversHandler(t *testing.T) {
 			ID: wishID, UserID: ownerAuth.User.ID, Name: &wishName, PublishedAt: &now, CreatedAt: now, UpdatedAt: now,
 		}, []string{catID})
 
-		// Save bookmarks: s3 (latest), s2, s1 (oldest)
-		_ = ts.Storage.SaveWishToBookmarks(context.Background(), s1.User.ID, wishID)
+		// Create copied wishes: s1 (oldest), s2, s3 (latest)
+		copyName1 := "Copy by s1"
+		_ = ts.Storage.CreateWish(context.Background(), db.Wish{
+			ID: "copy_s1_" + wishID, UserID: s1.User.ID, Name: &copyName1, SourceID: &wishID,
+			PublishedAt: &now, CreatedAt: now, UpdatedAt: now,
+		}, []string{catID})
 		time.Sleep(2 * time.Millisecond)
-		_ = ts.Storage.SaveWishToBookmarks(context.Background(), s2.User.ID, wishID)
+		copyName2 := "Copy by s2"
+		_ = ts.Storage.CreateWish(context.Background(), db.Wish{
+			ID: "copy_s2_" + wishID, UserID: s2.User.ID, Name: &copyName2, SourceID: &wishID,
+			PublishedAt: &now, CreatedAt: now.Add(2 * time.Millisecond), UpdatedAt: now.Add(2 * time.Millisecond),
+		}, []string{catID})
 		time.Sleep(2 * time.Millisecond)
-		_ = ts.Storage.SaveWishToBookmarks(context.Background(), s3.User.ID, wishID)
+		copyName3 := "Copy by s3"
+		_ = ts.Storage.CreateWish(context.Background(), db.Wish{
+			ID: "copy_s3_" + wishID, UserID: s3.User.ID, Name: &copyName3, SourceID: &wishID,
+			PublishedAt: &now, CreatedAt: now.Add(4 * time.Millisecond), UpdatedAt: now.Add(4 * time.Millisecond),
+		}, []string{catID})
 
 		page := 2
 		limit := 1 // Request 1 user for page 2
-		reqPath := fmt.Sprintf("/wishes/%s/savers?page=%d&limit=%d", wishID, page, limit)
+		reqPath := fmt.Sprintf("/v1/wishes/%s/savers?page=%d&limit=%d", wishID, page, limit)
 		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, reqPath, "", "", http.StatusOK)
 		resp := testutils.ParseResponse[contract.WishSaversResponse](t, req)
 
-		assert.Equal(t, 3, resp.Total)                            // Total 3 savers
+		assert.Equal(t, 4, resp.Total)                            // Original creator + 3 copiers
 		require.Len(t, resp.Users, 1)                             // Limit 1 for this page
-		assert.Equal(t, s2.User.Username, resp.Users[0].Username) // s3 was latest, s2 is second latest
+		assert.Equal(t, s3.User.Username, resp.Users[0].Username) // Page 2 shows s3 (latest copier)
 	})
 
-	// Test case 3: Wish with no savers
-	t.Run("wish with no savers", func(t *testing.T) {
+	// Test case 3: Wish with no copiers (but has original creator)
+	t.Run("wish with no copiers", func(t *testing.T) {
 		ts := testutils.SetupTestEnvironment(t)
 		defer ts.Teardown()
-		apiHandler := ts.API
 
 		ownerAuth, _ := testutils.AuthHelper(t, ts.Echo, 3001, "owner_no_savers", "Owner")
 		catID := "cat_no_savers"
@@ -126,21 +155,13 @@ func TestGetWishSaversHandler(t *testing.T) {
 			ID: wishID, UserID: ownerAuth.User.ID, Name: &wishName, PublishedAt: &now, CreatedAt: now, UpdatedAt: now,
 		}, []string{catID})
 
-		req := httptest.NewRequest(http.MethodGet, "/wishes/"+wishID+"/savers", nil)
-		rec := httptest.NewRecorder()
-		c := ts.Echo.NewContext(req, rec)
-		c.SetPath("/wishes/:id/savers")
-		c.SetParamNames("id")
-		c.SetParamValues(wishID)
+		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, "/v1/wishes/"+wishID+"/savers", "", "", http.StatusOK)
+		resp := testutils.ParseResponse[contract.WishSaversResponse](t, req)
 
-		err := apiHandler.GetWishSaversHandler(c)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusOK, rec.Code)
-
-		var resp contract.WishSaversResponse
-		_ = json.Unmarshal(rec.Body.Bytes(), &resp)
-		assert.Equal(t, 0, resp.Total)
-		assert.Len(t, resp.Users, 0)
+		assert.Equal(t, 1, resp.Total) // Only the original creator
+		require.Len(t, resp.Users, 1)
+		assert.Equal(t, ownerAuth.User.Username, resp.Users[0].Username)
+		assert.Equal(t, ownerAuth.User.ID, resp.Users[0].ID)
 	})
 
 	t.Run("non-existent wish ID", func(t *testing.T) {
@@ -148,11 +169,35 @@ func TestGetWishSaversHandler(t *testing.T) {
 		defer ts.Teardown()
 
 		wishID := "wish_does_not_exist"
-		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, "/wishes/"+wishID+"/savers", "", "", http.StatusOK)
+		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, "/v1/wishes/"+wishID+"/savers", "", "", http.StatusOK)
 		resp := testutils.ParseResponse[contract.WishSaversResponse](t, req)
 
 		assert.Equal(t, 0, resp.Total)
 		assert.Len(t, resp.Users, 0)
+	})
+
+	// Test case 4: Verify original creator always appears first even when not copied
+	t.Run("original creator appears first even with no copies", func(t *testing.T) {
+		ts := testutils.SetupTestEnvironment(t)
+		defer ts.Teardown()
+
+		ownerAuth, _ := testutils.AuthHelper(t, ts.Echo, 4001, "owner_only", "Owner Only")
+		catID := "cat_owner_only"
+		_ = ts.Storage.CreateCategory(context.Background(), db.Category{ID: catID, Name: "Owner Only Cat", ImageURL: "url"})
+		wishID := "wish_owner_only"
+		wishName := "Owner Only Test Wish"
+		now := time.Now()
+		_ = ts.Storage.CreateWish(context.Background(), db.Wish{
+			ID: wishID, UserID: ownerAuth.User.ID, Name: &wishName, PublishedAt: &now, CreatedAt: now, UpdatedAt: now,
+		}, []string{catID})
+
+		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, "/v1/wishes/"+wishID+"/savers", "", "", http.StatusOK)
+		resp := testutils.ParseResponse[contract.WishSaversResponse](t, req)
+
+		assert.Equal(t, 1, resp.Total) // Only the original creator
+		require.Len(t, resp.Users, 1)
+		assert.Equal(t, ownerAuth.User.Username, resp.Users[0].Username)
+		assert.Equal(t, ownerAuth.User.ID, resp.Users[0].ID)
 	})
 
 	// Test case 5.1: Invalid pagination - page 0, defaults to 1
@@ -172,13 +217,17 @@ func TestGetWishSaversHandler(t *testing.T) {
 		}, []string{catID})
 		// Add one saver to ensure the query runs
 		saverAuth, _ := testutils.AuthHelper(t, ts.Echo, 5002, "saver_page0", "Saver")
-		_ = ts.Storage.SaveWishToBookmarks(context.Background(), saverAuth.User.ID, wishID)
+		copyName := "Copy by saver"
+		_ = ts.Storage.CreateWish(context.Background(), db.Wish{
+			ID: "copy_page0_" + wishID, UserID: saverAuth.User.ID, Name: &copyName, SourceID: &wishID,
+			PublishedAt: &now, CreatedAt: now, UpdatedAt: now,
+		}, []string{catID})
 
-		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, "/wishes/"+wishID+"/savers?page=0", "", "", http.StatusOK)
+		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, "/v1/wishes/"+wishID+"/savers?page=0", "", "", http.StatusOK)
 		resp := testutils.ParseResponse[contract.WishSaversResponse](t, req)
 
-		assert.Equal(t, 1, resp.Total) // One saver added
-		assert.Len(t, resp.Users, 1)
+		assert.Equal(t, 2, resp.Total) // Original creator + 1 copier
+		assert.Len(t, resp.Users, 2)
 	})
 
 	// Test case 6: Invalid pagination - limit too high, capped at 100
@@ -197,12 +246,16 @@ func TestGetWishSaversHandler(t *testing.T) {
 		}, []string{catID})
 		// Add one saver
 		saverAuth, _ := testutils.AuthHelper(t, ts.Echo, 6002, "saver_limit_high", "Saver")
-		_ = ts.Storage.SaveWishToBookmarks(context.Background(), saverAuth.User.ID, wishID)
+		copyName := "Copy by saver"
+		_ = ts.Storage.CreateWish(context.Background(), db.Wish{
+			ID: "copy_limit_high_" + wishID, UserID: saverAuth.User.ID, Name: &copyName, SourceID: &wishID,
+			PublishedAt: &now, CreatedAt: now, UpdatedAt: now,
+		}, []string{catID})
 
-		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, fmt.Sprintf("/wishes/%s/savers?limit=200", wishID), "", "", http.StatusOK)
+		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, fmt.Sprintf("/v1/wishes/%s/savers?limit=200", wishID), "", "", http.StatusOK)
 		resp := testutils.ParseResponse[contract.WishSaversResponse](t, req)
 
-		assert.Equal(t, 1, resp.Total)
-		assert.Len(t, resp.Users, 1)
+		assert.Equal(t, 2, resp.Total) // Original creator + 1 copier
+		assert.Len(t, resp.Users, 2)   // Both should be returned even with high limit
 	})
 }

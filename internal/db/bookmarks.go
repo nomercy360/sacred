@@ -36,7 +36,7 @@ func (s *Storage) ListBookmarkedWishes(ctx context.Context, uid string) ([]Wish,
 			GROUP BY w.id
 			ORDER BY w.created_at DESC
 			LIMIT 100`
-	return s.fetchWishes(ctx, query, uid)
+	return s.fetchWishes(ctx, query, uid, uid)
 }
 
 func (s *Storage) GetUsersWhoSavedWish(ctx context.Context, wishID string, limit int, offset int) ([]User, int, error) {

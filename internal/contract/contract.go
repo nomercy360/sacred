@@ -162,6 +162,7 @@ type FeedItem struct {
 	UpdatedAt  time.Time      `json:"updated_at"`
 	Categories []db.Category  `json:"categories"`
 	Images     []db.WishImage `json:"images"`
+	CopyID     *string        `json:"copy_id,omitempty"`
 }
 
 func ToFeedItem(w db.Wish) FeedItem {
@@ -176,5 +177,6 @@ func ToFeedItem(w db.Wish) FeedItem {
 		UpdatedAt:  w.UpdatedAt,
 		Categories: w.Categories,
 		Images:     w.Images,
+		CopyID:     w.CopyID,
 	}
 }

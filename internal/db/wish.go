@@ -28,7 +28,7 @@ type Wish struct {
 	Images       []WishImage `json:"images"`
 	Categories   []Category  `json:"categories"`
 	IsBookmarked bool        `db:"is_bookmarked" json:"is_bookmarked"`
-	CopiedWishID *string     `db:"copied_wish_id" json:"copied_wish_id,omitempty"`
+	CopyID       *string     `db:"copy_id" json:"copy_id,omitempty"`
 }
 
 func UnmarshalJSONToSlice[T any](src interface{}) ([]T, error) {
@@ -81,7 +81,7 @@ func (s *Storage) GetWishByID(ctx context.Context, viewerID, id string) (Wish, e
     		w.updated_at,
     		w.source_id,
 			EXISTS (SELECT 1 FROM user_bookmarks ub WHERE ub.user_id = ? AND ub.wish_id = w.id) AS is_bookmarked,
-			(SELECT id FROM wishes WHERE user_id = ? AND source_id = w.id LIMIT 1) AS copied_wish_id
+			(SELECT id FROM wishes WHERE user_id = ? AND source_id = w.id LIMIT 1) AS copy_id
 		FROM wishes w
 		WHERE w.id = ?`
 
@@ -104,7 +104,7 @@ func (s *Storage) GetWishByID(ctx context.Context, viewerID, id string) (Wish, e
 		&item.UpdatedAt,
 		&item.SourceID,
 		&item.IsBookmarked,
-		&item.CopiedWishID,
+		&item.CopyID,
 	); err != nil && IsNoRowsError(err) {
 		return Wish{}, ErrNotFound
 	} else if err != nil {
@@ -281,6 +281,8 @@ func (s *Storage) GetPublicWishesFeed(ctx context.Context, viewerID, searchQuery
 		args = append(args, strings.ToLower(searchQuery))
 	}
 
+	args = append(args, viewerID)
+
 	baseQuery += `
 			GROUP BY w.id
 			ORDER BY w.created_at DESC
@@ -317,7 +319,8 @@ func (s *Storage) baseWishesQuery() string {
 						   'id', wc.category_id,
 						   'name', c.name,
 						   'image_url', c.image_url
-				   )) filter (where wc.category_id is not null) as categories
+				   )) filter (where wc.category_id is not null) as categories,
+    			   (SELECT id FROM wishes WHERE user_id = ? AND source_id = w.id LIMIT 1) AS copy_id
 			FROM wishes w
          JOIN wish_images wi ON w.id = wi.wish_id
          JOIN wish_categories wc ON w.id = wc.wish_id
@@ -354,6 +357,7 @@ func (s *Storage) fetchWishes(ctx context.Context, query string, args ...interfa
 			&item.UpdatedAt,
 			&imagesData,
 			&categoriesData,
+			&item.CopyID,
 		); err != nil {
 			return nil, err
 		}
@@ -378,21 +382,13 @@ func (s *Storage) fetchWishes(ctx context.Context, query string, args ...interfa
 	return items, nil
 }
 
-func (s *Storage) ListWishes(ctx context.Context) ([]Wish, error) {
-	query := s.baseWishesQuery() + `
-			GROUP BY w.id
-			ORDER BY w.created_at DESC
-			LIMIT 100`
-	return s.fetchWishes(ctx, query)
-}
-
 func (s *Storage) GetWishesByUserID(ctx context.Context, userID string) ([]Wish, error) {
 	query := s.baseWishesQuery() + `
 			WHERE w.user_id = ?
         	GROUP BY w.id
 			ORDER BY w.created_at DESC
 			LIMIT 100`
-	return s.fetchWishes(ctx, query, userID)
+	return s.fetchWishes(ctx, query, userID, userID)
 }
 
 func (s *Storage) CreateWishImage(ctx context.Context, image WishImage) (WishImage, error) {

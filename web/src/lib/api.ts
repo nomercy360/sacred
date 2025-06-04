@@ -275,6 +275,7 @@ export type Wish = {
 		image_url: string
 	}>
 	copied_wish_id: string | null
+	copy_id?: string | null
 	is_bookmarked: boolean
 }
 

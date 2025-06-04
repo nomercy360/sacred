@@ -156,3 +156,20 @@ input[type="search"]::-webkit-search-cancel-button {
   appearance: none;
   display: none;
 }
+
+
+::-webkit-scrollbar {
+  width: 0;  /* Убираем ширину скроллбара */
+  height: 0; /* Убираем высоту скроллбара */
+  background: transparent; /* Делаем фон прозрачным */
+}
+
+/* Для Firefox */
+* {
+  scrollbar-width: none; /* Скрываем скроллбар */
+}
+
+/* Для IE/Edge */
+body {
+  -ms-overflow-style: none; /* Скрываем скроллбар */
+}

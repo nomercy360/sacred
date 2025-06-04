@@ -45,41 +45,57 @@ const ViewItem = () => {
 		mutationFn: () => copyWish(item.data!.wish.id),
 		retry: 0,
 		onSuccess: (data) => {
-			queryClient.setQueryData(['item', params.id], (old: Wish | undefined) => {
-				if (old) {
-					return { ...old, copied_wish_id: data.id }
-				}
-				return old
-			})
-			setStore('wishes', (old) => {
-				if (old) {
-					return [data, ...old]
-				}
-				return old
-			})
+		  // Обновляем данные виша
+		  queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
+			if (!old) return old;
+			return {
+			  ...old,
+			  wish: {
+				...old.wish,
+				copied_wish_id: data.id
+			  }
+			};
+		  });
+		  // Обновляем store
+		  setStore('wishes', (old) => {
+			if (old) {
+			  return [data, ...old];
+			}
+			return old;
+		  });
+		  // Инвалидируем кэш ленты
+		  queryClient.invalidateQueries({ queryKey: ['feed'] });
 		},
-	}))
+	  }));
+	  
+	  const removeFromBoard = useMutation(() => ({
+		mutationFn: () => deleteWish(item.data!.wish.copied_wish_id!),
+		retry: 0,
+		onSuccess: () => {
+		  // Обновляем данные виша
+		  queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
+			if (!old) return old;
+			return {
+			  ...old,
+			  wish: {
+				...old.wish,
+				copied_wish_id: null
+			  }
+			};
+		  });
+		  // Обновляем store
+		  setStore('wishes', (old) => {
+			if (old) {
+			  return old.filter((w) => w.id !== item.data!.wish.copied_wish_id);
+			}
+			return old;
+		  });
+		  // Инвалидируем кэш ленты
+		  queryClient.invalidateQueries({ queryKey: ['feed'] });
+		},
+	  }));
 
-	const removeFromBoard = useMutation(() => {
-		return ({
-			mutationFn: () => deleteWish(item.data!.wish.copied_wish_id!),
-			retry: 0,
-			onSuccess: () => {
-				queryClient.setQueryData(['item', params.id], (old: Wish | undefined) => {
-					if (old) {
-						return { ...old, copied_wish_id: null }
-					}
-					return old
-				})
-				setStore('wishes', (old) => {
-					if (old) {
-						return old.filter((w) => w.id !== item.data!.wish.copied_wish_id)
-					}
-					return old
-				})
-			},
-		})
-	})
+
 
 	const saveToBookmark = useMutation(() => ({
 		mutationFn: () => saveBookmark(item.data!.wish.id),
@@ -111,13 +127,41 @@ const ViewItem = () => {
 
 	async function handleCopy() {
 		if (item.data?.wish.copied_wish_id) {
-			removeFromBoard.mutate()
-			addToast('Removed from board')
+		  await removeFromBoard.mutateAsync(undefined, {
+			onSuccess: () => {
+			  // Обновляем данные виша
+			  queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
+				if (!old) return old;
+				return {
+				  ...old,
+				  wish: {
+					...old.wish,
+					copied_wish_id: null
+				  }
+				};
+			  });
+			  addToast('Removed from board');
+			}
+		  });
 		} else {
-			saveToBoard.mutate()
-			addToast('Added to board')
+		  await saveToBoard.mutateAsync(undefined, {
+			onSuccess: (data) => {
+			  // Обновляем данные виша
+			  queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
+				if (!old) return old;
+				return {
+				  ...old,
+				  wish: {
+					...old.wish,
+					copied_wish_id: data.id
+				  }
+				};
+			  });
+			  addToast('Added to board');
+			}
+		  });
 		}
-	}
+	  }
 
 	function shareWishURL() {
 		const url =
@@ -157,17 +201,21 @@ const ViewItem = () => {
 
 	createEffect(() => {
 		if (item.isSuccess && item.data?.wish.user_id !== store.user?.id) {
-			const isSaved = Boolean(item.data?.wish.copied_wish_id)
-
-			window.Telegram.WebApp.MainButton.setText(isSaved ? 'Remove from board' : 'Save to board')
-			mainButton.onClick(handleCopy)
-			mainButton.enable()
-			mainButton.setParams?.({
-				color: '#000000',
-				textColor: '#ffffff',
-			})
+		  const isSaved = Boolean(item.data?.wish.copied_wish_id);
+		  
+		  // Принудительное обновление текста кнопки
+		  window.Telegram.WebApp.MainButton.setText(isSaved ? 'Remove from board' : 'Save to board');
+		  
+		  // Обновление цвета текста
+		  mainButton.setParams?.({
+			color: '#000000',
+			textColor: isSaved ? '#ffffff' : '#ffffff',
+		  });
+		  
+		  mainButton.onClick(handleCopy);
+		  mainButton.enable();
 		}
-	})
+	  });
 
 	onCleanup(() => {
 		mainButton.hide()
@@ -199,16 +247,41 @@ const ViewItem = () => {
 
 						onClick={() => {
 							if (item.data?.wish.is_bookmarked) {
-								removeFromBookmark.mutate()
-								addToast('Removed from bookmarks')
+								removeFromBookmark.mutate(undefined, {
+									onSuccess: () => {
+										// Принудительно обновляем данные виша
+										queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
+											if (!old) return old;
+											return {
+												...old,
+												wish: {
+													...old.wish,
+													is_bookmarked: false
+												}
+											};
+										});
+									}
+								});
 							} else {
-								saveToBookmark.mutate()
-								addToast('Added to bookmarks')
+								saveToBookmark.mutate(undefined, {
+									onSuccess: () => {
+										queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
+											if (!old) return old;
+											return {
+												...old,
+												wish: {
+													...old.wish,
+													is_bookmarked: true
+												}
+											};
+										});
+									}
+								});
 							}
 						}}
 					>
 						<span class="material-symbols-rounded text-[20px]"
-									style={{ 'font-variation-settings': `'FILL' ${item.data?.wish.is_bookmarked ? 1 : 0}` }}
+							style={{ 'font-variation-settings': `'FILL' ${item.data?.wish.is_bookmarked ? 1 : 0}` }}
 						>
 							{item.data?.wish.is_bookmarked ? 'favorite' : 'favorite_border'}
 						</span>

@@ -1,6 +1,6 @@
 import { createMutation, useMutation, useQuery, useQueryClient } from '@tanstack/solid-query'
 import { copyWish, deleteWish, fetchBookmarks, Wish, WishResponse } from '~/lib/api'
-import { For, Show } from 'solid-js'
+import { createEffect, For, Show } from 'solid-js'
 import { Link } from '~/components/link'
 import { ImageWithPlaceholder } from '~/components/image-placeholder'
 import { cn, getFirstImage } from '~/lib/utils'
@@ -45,17 +45,21 @@ const BookmarksPage = () => {
 
 type WishesGridProps = {
 	wishes: {
-		isSuccess: boolean;
-		data: Wish[] | undefined;
-		isFetching?: boolean;
-		refetch?: () => void;
+	  isSuccess: boolean;
+	  data: (Wish & { copy_id: string | null })[] | undefined;
+	  isFetching?: boolean;
+	  refetch?: () => void;
 	};
 	source: string;
-};
+  };
 
 export function WishesGrid(props: WishesGridProps) {
 
 	const queryClient = useQueryClient()
+
+	createEffect(() => {
+		console.log(props.wishes.data)
+	})
 
 	const addToBoard = createMutation(() => ({
 		mutationFn: (wishId: string) => copyWish(wishId),
@@ -94,14 +98,14 @@ export function WishesGrid(props: WishesGridProps) {
 		mutationFn: (wishId: string) => {
 			const wish = queryClient.getQueryData<Wish[]>(['feed', store.search])
 				?.find((w: Wish) => w.id === wishId)
-			if (!wish?.copied_wish_id) throw new Error('No copied wish id')
-			return deleteWish(wish.copied_wish_id)
+			if (!wish?.copy_id) throw new Error('No copied wish id')
+			return deleteWish(wish.copy_id)
 		},
 		onSuccess: (_, wishId) => {
 			queryClient.setQueryData(['feed', store.search], (old: Wish[] | undefined) => {
 				if (!old) return old;
 				return old.map(w =>
-					w.id === wishId ? { ...w, copied_wish_id: null } : w
+					w.id === wishId ? { ...w, copy_id: null } : w
 				);
 			});
 			setStore('wishes', (oldWishes) => {
@@ -132,6 +136,18 @@ export function WishesGrid(props: WishesGridProps) {
 		}
 	}
 
+
+	createEffect(() => {
+		if (props.wishes.isSuccess && props.wishes.data) {
+		  // Обогащаем данные закладок информацией из store
+		  const updatedWishes = props.wishes.data.map(wish => ({
+			...wish,
+			copy_id: store.wishes?.find(w => w.source_id === wish.id)?.id || null
+		  }));
+		  queryClient.setQueryData(['bookmarks'], updatedWishes);
+		}
+	  });
+
 	return (
 		<>
 			<Show when={props.wishes.isSuccess && (!props.wishes.data || props.wishes.data.length === 0)}>
@@ -154,14 +170,14 @@ export function WishesGrid(props: WishesGridProps) {
 								return (
 									<div class="relative">
 										<Show when={props.source === '/feed'}>
-											<button class={cn("absolute top-3 right-3 bg-white rounded-full size-5 flex items-center justify-center shadow z-10", wish.copied_wish_id ? "bg-primary" : "bg-white")}
+											<button class={cn("absolute top-3 right-3 bg-white rounded-full size-5 flex items-center justify-center shadow z-10", wish.copy_id ? "bg-primary" : "bg-white")}
 												onClick={(e) => {
 													e.preventDefault()
 													e.stopPropagation()
 													handleAddRemove(wish)
 												}}
 												type="button">
-												<span class={cn("material-symbols-rounded text-sm", wish.copied_wish_id ? "text-white" : "text-primary")}>{wish.copied_wish_id ? "check" : "add"}</span>
+												<span class={cn("material-symbols-rounded text-sm", wish.copy_id ? "text-white" : "text-primary")}>{wish.copy_id ? "check" : "add"}</span>
 											</button>
 										</Show>
 										<Link

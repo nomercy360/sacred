@@ -1,4 +1,4 @@
-import type { Wish } from '../types/wish';
+import type {Wish, WishResponse} from '../types/wish';
 
 const API_BASE_URL = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
@@ -10,7 +10,7 @@ export async function fetchWishes(): Promise<Wish[]> {
   return response.json();
 }
 
-export async function fetchWish(id: string): Promise<Wish> {
+export async function fetchWish(id: string): Promise<WishResponse> {
   const response = await fetch(`${API_BASE_URL}/v1/wishes/${id}`);
   if (!response.ok) {
     throw new Error('Failed to fetch wish');

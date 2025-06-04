@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import {fetchWish, fetchWishes} from '../../api/wishes';
-import type {Wish} from '../../types/wish';
+import type {Wish, WishResponse} from '../../types/wish';
 import "../../styles/global.css";
 
 export async function getStaticPaths() {
@@ -22,7 +22,7 @@ if (!id) {
     return Astro.redirect('/404');
 }
 
-let wish: Wish | null = null;
+let wish: WishResponse | null = null;
 try {
     wish = await fetchWish(id);
 } catch (error) {
@@ -50,23 +50,23 @@ const formatDate = (dateString: string) => {
     });
 };
 
-const sortedImages = wish.images.sort((a, b) => a.position - b.position);
+const sortedImages = wish.wish.images.sort((a, b) => a.position - b.position);
 const ogImage = sortedImages.length > 0 ? getImageUrl(sortedImages[0].url, 1200) : undefined;
 ---
 
 <Layout
-        title={`${wish.name} - Tingzzz`}
-        description={`${wish.name} from ${extractDomain(wish.url)}`}
-        ogTitle={`${wish.name} - Tingzzz`}
-        ogDescription={`${wish.name} from ${extractDomain(wish.url)}`}
+        title={`${wish.wish.name} - Tingzzz`}
+        description={`${wish.wish.name} from ${extractDomain(wish.wish.url)}`}
+        ogTitle={`${wish.wish.name} - Tingzzz`}
+        ogDescription={`${wish.wish.name} from ${extractDomain(wish.wish.url)}`}
         ogType="product"
         ogUrl={`${import.meta.env.PUBLIC_APP_URL || 'https://tingzzz.com'}/wish/${id}`}
         ogImage={ogImage}
         ogImageWidth="1200"
         ogImageHeight="630"
         twitterCard="summary_large_image"
-        twitterTitle={`${wish.name} - Tingzzz`}
-        twitterDescription={`${wish.name} from ${extractDomain(wish.url)}`}
+        twitterTitle={`${wish.wish.name} - Tingzzz`}
+        twitterDescription={`${wish.wish.name} from ${extractDomain(wish.wish.url)}`}
         twitterImage={ogImage}
 >
     <div class="min-h-screen bg-white">
@@ -74,13 +74,13 @@ const ogImage = sortedImages.length > 0 ? getImageUrl(sortedImages[0].url, 1200)
             <!-- Header -->
             <div class="text-center mb-8">
                 <h1 class="text-2xl font-bold text-gray-900 mb-2">
-                    {wish.name}
+                    {wish.wish.name}
                 </h1>
                 <div class="text-gray-600">
-                    from {extractDomain(wish.url)}
+                    from {extractDomain(wish.wish.url)}
                 </div>
                 <div class="text-sm text-gray-400 mt-1">
-                    Added {formatDate(wish.created_at)}
+                    Added {formatDate(wish.wish.created_at)}
                 </div>
             </div>
 
@@ -90,7 +90,7 @@ const ogImage = sortedImages.length > 0 ? getImageUrl(sortedImages[0].url, 1200)
                         <div class="max-w-sm mx-auto">
                             <img
                                     src={getImageUrl(image.url)}
-                                    alt={wish.name}
+                                    alt={wish.wish.name}
                                     class="rounded-lg"
                                     loading="lazy"
                             />
@@ -99,11 +99,11 @@ const ogImage = sortedImages.length > 0 ? getImageUrl(sortedImages[0].url, 1200)
             </div>
 
             <!-- Categories -->
-            {wish.categories.length > 0 && (
+            {wish.wish.categories.length > 0 && (
                     <div class="mb-8">
                         <h3 class="text-lg font-semibold text-gray-900 mb-3">Categories</h3>
                         <div class="flex flex-wrap gap-2">
-                            {wish.categories.map((category) => (
+                            {wish.wish.categories.map((category) => (
                                     <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
                 {category.name}
               </span>
@@ -115,12 +115,12 @@ const ogImage = sortedImages.length > 0 ? getImageUrl(sortedImages[0].url, 1200)
             <!-- Visit Link -->
             <div class="mt-8">
                 <a
-                        href={wish.url}
+                        href={wish.wish.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         class="w-full bg-black text-white py-3 px-6 rounded-lg text-center block font-medium hover:bg-gray-900 transition-colors"
                 >
-                    Visit {extractDomain(wish.url)}
+                    Visit {extractDomain(wish.wish.url)}
                 </a>
             </div>
         </div>

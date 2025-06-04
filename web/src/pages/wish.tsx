@@ -224,10 +224,10 @@ const ViewItem = () => {
 							/>
 						)}
 					</For>
-					<Show when={item.data?.savers.total && item.data?.savers.total > 2}>
+					<Show when={item.data?.savers.total && item.data?.savers.total > item.data?.savers.users.length}>
 						<span
 							class="size-9 shrink-0 flex items-center justify-center bg-primary text-primary-foreground rounded-full border-2 border-background shadow-sm -ml-2 z-10">
-							+{item.data?.savers.total! - 2}
+							+{item.data?.savers.total! - item.data?.savers.users.length!}
 						</span>
 					</Show>
 				</div>

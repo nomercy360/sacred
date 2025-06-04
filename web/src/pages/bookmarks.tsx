@@ -1,6 +1,6 @@
 import { createMutation, useMutation, useQuery, useQueryClient } from '@tanstack/solid-query'
-import { copyWish, deleteWish, fetchBookmarks, Wish, WishResponse } from '~/lib/api'
-import { createEffect, For, Show } from 'solid-js'
+import { copyWish, deleteWish, fetchBookmarks, fetchFeed, Wish, WishResponse } from '~/lib/api'
+import { createEffect, For, onMount, Show } from 'solid-js'
 import { Link } from '~/components/link'
 import { ImageWithPlaceholder } from '~/components/image-placeholder'
 import { cn, getFirstImage } from '~/lib/utils'
@@ -56,6 +56,7 @@ type WishesGridProps = {
 export function WishesGrid(props: WishesGridProps) {
 
 	const queryClient = useQueryClient()
+	
 
 	createEffect(() => {
 		console.log(props.wishes.data)
@@ -81,6 +82,7 @@ export function WishesGrid(props: WishesGridProps) {
 				}
 			})
 			queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
+			queryClient.invalidateQueries({ queryKey: ['feed'] })
 			addToast('Added to board')
 			setStore('wishes', (old: Wish[]) => {
 				if (!old) return old
@@ -114,6 +116,7 @@ export function WishesGrid(props: WishesGridProps) {
 			});
 			queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
 			queryClient.invalidateQueries({ queryKey: ['item', wishId] })
+			queryClient.invalidateQueries({ queryKey: ['feed'] })
 
 			addToast('Removed from board')
 		},
@@ -144,7 +147,7 @@ export function WishesGrid(props: WishesGridProps) {
 			...wish,
 			copy_id: store.wishes?.find(w => w.source_id === wish.id)?.id || null
 		  }));
-		  queryClient.setQueryData(['bookmarks'], updatedWishes);
+		  queryClient.setQueryData(['feed'], updatedWishes);
 		}
 	  });
 
@@ -206,14 +209,14 @@ export function WishesGrid(props: WishesGridProps) {
 								return (
 									<div class="relative">
 										<Show when={props.source === '/feed'}>
-											<button class={cn("absolute top-3 right-3 bg-white rounded-full size-5 flex items-center justify-center shadow z-10", wish.copied_wish_id ? "bg-primary" : "bg-white")}
+											<button class={cn("absolute top-3 right-3 bg-white rounded-full size-5 flex items-center justify-center shadow z-10", wish.copy_id ? "bg-primary" : "bg-white")}
 												onClick={(e) => {
 													e.preventDefault()
 													e.stopPropagation()
 													handleAddRemove(wish)
 												}}
 												type="button">
-												<span class={cn("material-symbols-rounded text-sm", wish.copied_wish_id ? "text-white" : "text-primary")}>{wish.copied_wish_id ? "check" : "add"}</span>
+												<span class={cn("material-symbols-rounded text-sm", wish.copy_id ? "text-white" : "text-primary")}>{wish.copy_id ? "check" : "add"}</span>
 											</button>
 										</Show>
 										<Link

@@ -466,7 +466,7 @@ func (a *API) GetWishHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get wishlist item").WithInternal(err)
 	}
 
-	savers, count, err := a.storage.GetUsersWhoSavedWish(c.Request().Context(), item.ID, 3, 0)
+	savers, count, err := a.storage.GetUsersWhoSavedWish(c.Request().Context(), item.ID, 2, 0)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get wish savers").WithInternal(err)
 	}

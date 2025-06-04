@@ -4,6 +4,7 @@ import { setStore, store } from '~/store'
 import { cn, getFirstImage, splitIntoGroups } from '~/lib/utils'
 import { Wish } from '~/lib/api'
 import { ImageWithPlaceholder } from '~/components/image-placeholder'
+import { useQuery } from '@tanstack/solid-query'
 
 export default function UserBoardPage() {
 	async function closeOnboardingPopup() {

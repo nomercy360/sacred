@@ -1,9 +1,11 @@
-import { useQuery } from '@tanstack/solid-query'
-import { fetchBookmarks, Wish } from '~/lib/api'
+import { createMutation, useMutation, useQuery, useQueryClient } from '@tanstack/solid-query'
+import { copyWish, deleteWish, fetchBookmarks, Wish, WishResponse } from '~/lib/api'
 import { For, Show } from 'solid-js'
 import { Link } from '~/components/link'
 import { ImageWithPlaceholder } from '~/components/image-placeholder'
-import { getFirstImage } from '~/lib/utils'
+import { cn, getFirstImage } from '~/lib/utils'
+import { setStore, store } from '~/store'
+import { addToast } from '~/components/toast'
 
 const BookmarksPage = () => {
 	const wishes = useQuery<Wish[]>(() => ({
@@ -42,11 +44,92 @@ const BookmarksPage = () => {
 }
 
 type WishesGridProps = {
-	wishes: { isSuccess: boolean; data: Wish[] | undefined };
+	wishes: {
+		isSuccess: boolean;
+		data: Wish[] | undefined;
+		isFetching?: boolean;
+		refetch?: () => void;
+	};
 	source: string;
 };
 
 export function WishesGrid(props: WishesGridProps) {
+
+	const queryClient = useQueryClient()
+
+	const addToBoard = createMutation(() => ({
+		mutationFn: (wishId: string) => copyWish(wishId),
+		onSuccess: (data, wishId) => {
+			queryClient.setQueryData(['feed', store.search], (old: Wish[] | undefined) => {
+			  if (!old) return old
+			  return old.map(w => 
+				w.id === wishId ? { ...w, copied_wish_id: data.id } : w
+			  )
+			})
+			queryClient.setQueryData(['item', wishId], (old: WishResponse | undefined) => {
+				if (!old) return old
+				return {
+				  ...old,
+				  wish: {
+					...old.wish,
+					copied_wish_id: data.id
+				  }
+				}
+			  })
+			queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
+			addToast('Added to board')
+			setStore('wishes', (old: Wish[]) => {
+				if (!old) return old
+				return [data, ...old]
+			})
+		},
+
+		onError: () => {
+			addToast('Failed to add to board')
+		}
+	}))
+
+
+	const removeFromBoard = createMutation(() => ({
+		mutationFn: (wishId: string) => {
+		  const wish = queryClient.getQueryData(['feed', store.search])
+			?.find((w: Wish) => w.id === wishId)
+		  if (!wish?.copied_wish_id) throw new Error('No copied wish id')
+		  return deleteWish(wish.copied_wish_id)
+		},
+		onSuccess: (_, wishId) => {
+			queryClient.setQueryData(['item', wishId], (old: WishResponse | undefined) => {
+				if (!old) return old
+				return {
+				  ...old,
+				  wish: {
+					...old.wish,
+					copied_wish_id: null
+				  }
+				}
+			  })
+		  queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
+		  addToast('Removed from board')
+		},
+		onError: () => {
+		  addToast('Failed to remove from board')
+		}
+	  }))
+
+
+	
+const handleAddRemove = async (wish: Wish) => {
+	try {
+	  if (wish.copied_wish_id) {
+		await removeFromBoard.mutateAsync(wish.id)
+	  } else {
+		await addToBoard.mutateAsync(wish.id)
+	  }
+	} catch (error) {
+	  console.error('Error:', error)
+	}
+  }
+
 	return (
 		<>
 			<Show when={props.wishes.isSuccess && (!props.wishes.data || props.wishes.data.length === 0)}>
@@ -69,8 +152,14 @@ export function WishesGrid(props: WishesGridProps) {
 								return (
 									<div class="relative">
 										<Show when={props.source === '/feed'}>
-											<button class="absolute top-3 right-3 bg-white rounded-full size-5 flex items-center justify-center shadow z-10">
-												<span class="material-symbols-rounded text-sm text-primary">add</span>
+											<button class={cn("absolute top-3 right-3 bg-white rounded-full size-5 flex items-center justify-center shadow z-10", wish.copied_wish_id ? "bg-primary" : "bg-white")}
+												onClick={(e) => {
+													e.preventDefault()
+													e.stopPropagation()
+													handleAddRemove(wish)
+												}}
+												type="button">
+												<span class={cn("material-symbols-rounded text-sm", wish.copied_wish_id ? "text-white" : "text-primary")}>{wish.copied_wish_id ? "check" : "add"}</span>
 											</button>
 										</Show>
 										<Link
@@ -99,11 +188,14 @@ export function WishesGrid(props: WishesGridProps) {
 								return (
 									<div class="relative">
 										<Show when={props.source === '/feed'}>
-											<button
-												class="absolute top-3 right-3 bg-white rounded-full size-5 flex items-center justify-center shadow z-10"
-												type="button"
-											>
-												<span class="material-symbols-rounded text-sm text-primary">add</span>
+											<button class={cn("absolute top-3 right-3 bg-white rounded-full size-5 flex items-center justify-center shadow z-10", wish.copied_wish_id ? "bg-primary" : "bg-white")}
+												onClick={(e) => {
+													e.preventDefault()
+													e.stopPropagation()
+													handleAddRemove(wish)
+												}}
+												type="button">
+												<span class={cn("material-symbols-rounded text-sm", wish.copied_wish_id ? "text-white" : "text-primary")}>{wish.copied_wish_id ? "check" : "add"}</span>
 											</button>
 										</Show>
 										<Link

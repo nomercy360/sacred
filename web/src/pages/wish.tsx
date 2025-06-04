@@ -201,7 +201,7 @@ const ViewItem = () => {
 
 	createEffect(() => {
 		if (item.isSuccess && item.data?.wish.user_id !== store.user?.id) {
-		  const isSaved = Boolean(item.data?.wish.copied_wish_id);
+		  const isSaved = Boolean(item.data?.wish.copied_wish_id || item.data?.wish.copy_id);
 		  
 		  // Принудительное обновление текста кнопки
 		  window.Telegram.WebApp.MainButton.setText(isSaved ? 'Remove from board' : 'Save to board');

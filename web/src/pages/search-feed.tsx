@@ -1,7 +1,7 @@
 import { Show, createSignal, For } from "solid-js"
 import { cn } from "~/lib/utils"
 import CategoriesSelect from "~/components/categories-select"
-import { WishesGrid } from '~/pages/bookmarks'
+import { WishesGrid } from '~/components/wish-grid'
 import {useNavigate } from "@solidjs/router"
 import { useQuery } from "@tanstack/solid-query"
 import { Wish, fetchFeed } from "~/lib/api"

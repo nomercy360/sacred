@@ -1,12 +1,12 @@
-import { Match, Switch, For, createSignal, Show, createEffect, onCleanup } from 'solid-js'
+import { Match, Switch, For, createSignal, Show, createEffect, onCleanup, onMount } from 'solid-js'
 import { Link } from '~/components/link'
 import { setStore, store } from '~/store'
 import { cn, getFirstImage, splitIntoGroups } from '~/lib/utils'
 import { Wish } from '~/lib/api'
 import { ImageWithPlaceholder } from '~/components/image-placeholder'
-import { useQuery } from '@tanstack/solid-query'
 
 export default function UserBoardPage() {
+
 	async function closeOnboardingPopup() {
 		window.Telegram.WebApp.CloudStorage.setItem('onboarding', 'done')
 		setStore('onboarding', false)

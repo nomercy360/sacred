@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/solid-query'
 import { fetchFeed, Wish } from '~/lib/api'
 import { Link } from '~/components/link'
-import { WishesGrid } from '~/pages/bookmarks'
+import { WishesGrid } from '~/components/wish-grid'
 import { Show } from 'solid-js'
 import { cn } from '~/lib/utils'
 import { store } from '~/store'

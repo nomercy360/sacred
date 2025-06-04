@@ -297,17 +297,27 @@ export type UserProfile = {
 	is_following: boolean
 }
 
-export type Wishlist = {
-	id: string
-	user_id: string
-	name: string
-	description: string
-	is_public: boolean
-	created_at: string
+export type SaversResponse = {
+	users: UserProfile[]
+	total: number
 }
 
-export const fetchWish = async (id: string) => {
+export type WishResponse = {
+	wish: Wish
+	savers: SaversResponse
+}
+
+export const fetchWish = async (id: string): Promise<WishResponse> => {
 	const { data } = await apiRequest(`/wishes/${id}`, {
+		method: 'GET',
+	})
+
+	return data
+}
+
+// TODO: create extra page to show all people who saved the wish
+export const fetchWishSavers = async (id: string): Promise<SaversResponse> => {
+	const { data } = await apiRequest(`/wishes/${id}/savers`, {
 		method: 'GET',
 	})
 

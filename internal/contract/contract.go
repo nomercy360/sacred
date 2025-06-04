@@ -84,6 +84,11 @@ func ToShortUserProfile(u db.User) ShortUserProfile {
 	}
 }
 
+type WishResponse struct {
+	Wish       db.Wish            `json:"wish"`
+	SaversInfo WishSaversResponse `json:"savers"`
+}
+
 type WishSaversResponse struct {
 	Users []ShortUserProfile `json:"users"`
 	Total int                `json:"total"`

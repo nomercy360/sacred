@@ -466,7 +466,28 @@ func (a *API) GetWishHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get wishlist item").WithInternal(err)
 	}
 
-	return c.JSON(http.StatusOK, item)
+	savers, count, err := a.storage.GetUsersWhoSavedWish(c.Request().Context(), item.ID, 3, 0)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot get wish savers").WithInternal(err)
+	}
+
+	saverProfiles := make([]contract.ShortUserProfile, 0, len(savers))
+	for _, saver := range savers {
+		profile := contract.ToShortUserProfile(saver)
+		saverProfiles = append(saverProfiles, profile)
+	}
+
+	saverInfo := contract.WishSaversResponse{
+		Users: saverProfiles,
+		Total: count,
+	}
+
+	res := contract.WishResponse{
+		Wish:       item,
+		SaversInfo: saverInfo,
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 func (a *API) ListUserWishes(c echo.Context) error {

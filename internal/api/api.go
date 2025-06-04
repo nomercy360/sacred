@@ -127,6 +127,10 @@ func (a *API) SetupRoutes(e *echo.Echo) {
 	v1 := e.Group("/v1")
 	v1.Use(echojwt.WithConfig(middleware.GetUserAuthConfig(a.cfg.JWTSecret)))
 
+	// Publicly accessible route for wish savers, auth is optional and handled by GetUserID if needed by other flows.
+	// For this specific handler, user context is not strictly required by the handler itself.
+	e.GET("/wishes/:id/savers", a.GetWishSaversHandler)
+
 	v1.PUT("/wishes/:id", a.UpdateWishHandler)
 	v1.POST("/wishes", a.CreateWishHandler)
 	v1.GET("/wishes/:id", a.GetWishHandler)

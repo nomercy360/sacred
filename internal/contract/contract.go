@@ -65,6 +65,21 @@ type UserProfileResponse struct {
 	IsFollowing bool          `json:"is_following"`
 }
 
+// ShortUserProfile represents a subset of user information.
+type ShortUserProfile struct {
+	ID        string  `json:"id"`
+	Username  string  `json:"username"`
+	Name      *string `json:"name,omitempty"`
+	AvatarURL *string `json:"avatar_url,omitempty"`
+	Followers int     `json:"followers"`
+}
+
+// WishSaversResponse represents the response for users who saved a wish.
+type WishSaversResponse struct {
+	Users []ShortUserProfile `json:"users"`
+	Total int                `json:"total"`
+}
+
 type AuthResponse struct {
 	Token  string       `json:"token"`
 	User   UserResponse `json:"user"`

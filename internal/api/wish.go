@@ -570,6 +570,45 @@ func (a *API) DeleteWishHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"message": "OK"})
 }
 
+func (a *API) GetWishSaversHandler(c echo.Context) error {
+	wishID := c.Param("id")
+	if wishID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Wish ID is required")
+	}
+
+	pageStr := c.QueryParam("page")
+	limitStr := c.QueryParam("limit")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 20 // Default limit
+	}
+	// Cap limit to a max of 100
+	if limit > 100 {
+		limit = 100
+	}
+
+	offset := (page - 1) * limit
+
+	users, total, err := a.storage.GetUsersWhoBookmarkedWish(c.Request().Context(), wishID, limit, offset)
+	if err != nil {
+		log.Printf("Error fetching wish savers for wishID %s: %v", wishID, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to retrieve users who saved the wish").WithInternal(err)
+	}
+
+	response := contract.WishSaversResponse{
+		Users: users,
+		Total: total,
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
 func (a *API) SearchFeed(c echo.Context) error {
 	searchQuery := c.QueryParam("search")
 	if searchQuery == "" {

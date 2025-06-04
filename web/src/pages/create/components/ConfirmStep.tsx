@@ -1,5 +1,4 @@
 import { Component, For, Show } from 'solid-js'
-import { WishImage } from '~/lib/api'
 
 interface ConfirmStepProps {
 	name: string | null

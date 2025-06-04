@@ -1,4 +1,4 @@
-import { fetchUserProfile, UserProfile, Wish, WishImage } from '~/lib/api'
+import { fetchUserProfile, UserProfile, Wish } from '~/lib/api'
 import { createEffect, For, Match, Show, Switch, onCleanup } from 'solid-js' // Removed unused createSignal, onMount for this snippet
 import { createMutation, useQuery } from '@tanstack/solid-query'
 import { Link } from '~/components/link'

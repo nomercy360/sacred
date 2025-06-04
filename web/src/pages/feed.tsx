@@ -2,11 +2,8 @@ import { useQuery } from '@tanstack/solid-query'
 import { fetchFeed, Wish } from '~/lib/api'
 import { Link } from '~/components/link'
 import { WishesGrid } from '~/components/wish-grid'
-import { Show } from 'solid-js'
 import { cn } from '~/lib/utils'
 import { store } from '~/store'
-import { useLocation, useNavigate } from '@solidjs/router'
-import { useBackButton } from '~/lib/useBackButton'
 
 const FeedPage = () => {
 	const wishes = useQuery<Wish[]>(() => ({

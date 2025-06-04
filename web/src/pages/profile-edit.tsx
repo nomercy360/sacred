@@ -11,7 +11,6 @@ export default function ProfileEditPage() {
 	const [email, setEmail] = createSignal(store.user?.email || '')
 	const [avatar, setAvatar] = createSignal(store.user?.avatar_url || '')
 	const [avatarFile, setAvatarFile] = createSignal<File | null>(null)
-	const [isUploading, setIsUploading] = createSignal(false)
 
 	const navigate = useNavigate()
 	const mainButton = useMainButton()

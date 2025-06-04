@@ -1,4 +1,4 @@
-import { createEffect, For, Match, onCleanup, onMount, Show, Switch } from 'solid-js'
+import { createEffect, For, Match, onCleanup, Show, Switch } from 'solid-js'
 import { useMutation, useQuery } from '@tanstack/solid-query'
 import {
 	copyWish,

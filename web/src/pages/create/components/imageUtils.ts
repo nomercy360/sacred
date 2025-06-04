@@ -1,4 +1,3 @@
-import { WishImage } from '~/lib/api'
 import { addToast } from '~/components/toast'
 
 /**

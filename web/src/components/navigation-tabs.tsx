@@ -1,9 +1,7 @@
 import { cn } from '~/lib/utils'
 import { useLocation } from '@solidjs/router'
-import { Link } from '~/components/link'
 import { onMount } from 'solid-js'
 import { useNavigate } from '@solidjs/router'
-import { triggerHaptic } from '~/lib/triggerHaptic'
 
 
 

@@ -1,7 +1,7 @@
 import { For, Show } from 'solid-js'
 import { cn } from '~/lib/utils'
-import { createQuery, useQuery } from '@tanstack/solid-query'
-import { fetchCategories, fetchProfiles } from '~/lib/api'
+import { useQuery } from '@tanstack/solid-query'
+import { fetchCategories } from '~/lib/api'
 
 type SelectCategoriesProps = {
 	selectedCategories: string[]

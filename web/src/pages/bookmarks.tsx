@@ -68,23 +68,25 @@ export function WishesGrid(props: WishesGridProps) {
 								const image = getFirstImage(wish)
 								return (
 									<div class="relative">
-										<button class="absolute top-3 right-3 bg-white rounded-full size-5 flex items-center justify-center shadow z-10">
-											<span class="material-symbols-rounded text-sm text-primary">add</span>
-										</button>
+										<Show when={props.source === '/feed'}>
+											<button class="absolute top-3 right-3 bg-white rounded-full size-5 flex items-center justify-center shadow z-10">
+												<span class="material-symbols-rounded text-sm text-primary">add</span>
+											</button>
+										</Show>
 										<Link
-										href={`/wishes/${wish.id}`}
-										class="block border shadow-sm rounded-[25px] overflow-hidden"
-										state={{ from: props.source }}
-									>
-										<ImageWithPlaceholder
-											src={`https://assets.peatch.io/cdn-cgi/image/width=400/${image.url}`}
-											alt={wish.name}
-											width={image.width}
-											height={image.height}
-										/>
-									</Link>
+											href={`/wishes/${wish.id}`}
+											class="block border shadow-sm rounded-[25px] overflow-hidden"
+											state={{ from: props.source }}
+										>
+											<ImageWithPlaceholder
+												src={`https://assets.peatch.io/cdn-cgi/image/width=400/${image.url}`}
+												alt={wish.name}
+												width={image.width}
+												height={image.height}
+											/>
+										</Link>
 									</div>
-									
+
 								)
 							}}
 						</For>
@@ -96,12 +98,14 @@ export function WishesGrid(props: WishesGridProps) {
 								const image = getFirstImage(wish)
 								return (
 									<div class="relative">
-										<button
-											class="absolute top-3 right-3 bg-white rounded-full size-5 flex items-center justify-center shadow z-10"
-											type="button"
-										>
-											<span class="material-symbols-rounded text-sm text-primary">add</span>
-										</button>
+										<Show when={props.source === '/feed'}>
+											<button
+												class="absolute top-3 right-3 bg-white rounded-full size-5 flex items-center justify-center shadow z-10"
+												type="button"
+											>
+												<span class="material-symbols-rounded text-sm text-primary">add</span>
+											</button>
+										</Show>
 										<Link
 											href={`/wishes/${wish.id}`}
 											class="block border shadow-sm rounded-[25px] overflow-hidden"

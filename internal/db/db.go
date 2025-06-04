@@ -148,6 +148,7 @@ func (s *Storage) InitSchema() error {
 		(
 			user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
 			wish_id TEXT NOT NULL REFERENCES wishes (id) ON DELETE CASCADE,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (user_id, wish_id)
 		);`,
 	}

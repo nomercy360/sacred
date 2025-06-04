@@ -74,7 +74,16 @@ type ShortUserProfile struct {
 	Followers int     `json:"followers"`
 }
 
-// WishSaversResponse represents the response for users who saved a wish.
+func ToShortUserProfile(u db.User) ShortUserProfile {
+	return ShortUserProfile{
+		ID:        u.ID,
+		Username:  u.Username,
+		Name:      u.Name,
+		AvatarURL: u.AvatarURL,
+		Followers: u.Followers,
+	}
+}
+
 type WishSaversResponse struct {
 	Users []ShortUserProfile `json:"users"`
 	Total int                `json:"total"`

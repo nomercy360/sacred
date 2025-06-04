@@ -86,9 +86,10 @@ func SetupTestEnvironment(t *testing.T) *testSetup {
 	t.Helper()
 
 	hConfig := api.Config{
-		JWTSecret: "test-jwt-secret",
-		AssetsURL: "http://localhost/assets",
-		WebAppURL: "http://localhost/webapp",
+		JWTSecret:        "test-jwt-secret",
+		AssetsURL:        "http://localhost/assets",
+		WebAppURL:        "http://localhost/webapp",
+		TelegramBotToken: TestBotToken,
 	}
 
 	// Use a shared in-memory database for tests to avoid connection issues

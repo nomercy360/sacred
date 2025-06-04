@@ -41,6 +41,7 @@ type storager interface {
 	DeleteWish(ctx context.Context, uid, id string) error
 	GetPublicWishesFeed(ctx context.Context, uid string, search string) ([]db.Wish, error)
 	GetWishAutocomplete(ctx context.Context, prefix string, limit int) ([]db.AutocompleteSuggestion, error)
+	GetUsersWhoBookmarkedWish(ctx context.Context, wishID string, limit int, offset int) ([]db.User, int, error)
 }
 
 type API struct {

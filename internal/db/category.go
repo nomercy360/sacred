@@ -39,3 +39,17 @@ func (s *Storage) ListCategories(ctx context.Context) ([]Category, error) {
 
 	return categories, nil
 }
+
+func (s *Storage) CreateCategory(ctx context.Context, category Category) error {
+	query := `
+		INSERT INTO categories (id, name, image_url)
+		VALUES (?, ?, ?)
+	`
+
+	_, err := s.db.ExecContext(ctx, query, category.ID, category.Name, category.ImageURL)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

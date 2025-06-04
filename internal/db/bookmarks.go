@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"sacred/internal/contract"
 )
 
 func (s *Storage) SaveWishToBookmarks(ctx context.Context, uid, wishID string) error {
@@ -39,11 +38,10 @@ func (s *Storage) ListBookmarkedWishes(ctx context.Context, uid string) ([]Wish,
 	return s.fetchWishes(ctx, query, uid)
 }
 
-func (s *Storage) GetUsersWhoBookmarkedWish(ctx context.Context, wishID string, limit int, offset int) ([]contract.ShortUserProfile, int, error) {
-	var users []contract.ShortUserProfile
+func (s *Storage) GetUsersWhoBookmarkedWish(ctx context.Context, wishID string, limit int, offset int) ([]User, int, error) {
+	var users []User
 	var total int
 
-	// Query to get the paginated list of users
 	query := `
 		SELECT
 			u.id,
@@ -64,11 +62,14 @@ func (s *Storage) GetUsersWhoBookmarkedWish(ctx context.Context, wishID string, 
 	defer rows.Close()
 
 	for rows.Next() {
-		var user contract.ShortUserProfile
-		// Note: Ensure that u.name and u.avatar_url are nullable in your DB schema
-		// or handle potential nil values if contract.ShortUserProfile expects *string for them.
-		// The provided contract.ShortUserProfile uses *string for Name and AvatarURL, so this should align.
-		if err := rows.Scan(&user.ID, &user.Username, &user.Name, &user.AvatarURL, &user.Followers); err != nil {
+		var user User
+		if err := rows.Scan(
+			&user.ID,
+			&user.Username,
+			&user.Name,
+			&user.AvatarURL,
+			&user.Followers,
+		); err != nil {
 			return nil, 0, err
 		}
 		users = append(users, user)

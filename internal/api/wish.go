@@ -601,8 +601,14 @@ func (a *API) GetWishSaversHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to retrieve users who saved the wish").WithInternal(err)
 	}
 
+	userProfiles := make([]contract.ShortUserProfile, 0, len(users))
+	for _, user := range users {
+		profile := contract.ToShortUserProfile(user)
+		userProfiles = append(userProfiles, profile)
+	}
+
 	response := contract.WishSaversResponse{
-		Users: users,
+		Users: userProfiles,
 		Total: total,
 	}
 

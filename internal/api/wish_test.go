@@ -1,40 +1,25 @@
-package api
+package api_test
 
 import (
 	"context"
 	"encoding/json"
-	// "errors" // No longer needed for mock errors
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sacred/internal/contract"
 	"sacred/internal/db"
-	"sacred/internal/testutils" // Import testutils
-	"strconv"
+	"sacred/internal/testutils"
 	"testing"
 	"time"
 
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require" // For error checking during setup
+	"github.com/stretchr/testify/require"
 )
 
-// MockStorage struct and its methods are removed.
-
-// Helper function to convert string to *string
-func ptr(s string) *string {
-	return &s
-}
-
 func TestGetWishSaversHandler(t *testing.T) {
-	// Base Echo instance for creating contexts, but API calls go through ts.Echo
-	// e := echo.New() // Not strictly needed if ts.Echo is used for context creation directly
-
-	// Test case 1: Successful retrieval - first page
 	t.Run("successful retrieval first page", func(t *testing.T) {
 		ts := testutils.SetupTestEnvironment(t)
 		defer ts.Teardown()
-		apiHandler := ts.API // Use API from test setup
 
 		// Create users
 		ownerAuth, err := testutils.AuthHelper(t, ts.Echo, 1001, "owner", "Wish Owner")
@@ -47,7 +32,7 @@ func TestGetWishSaversHandler(t *testing.T) {
 		// Create category
 		categoryID := "cat_savers_1"
 		catName := "Savers Category 1"
-		err = ts.Storage.CreateCategory(context.Background(), db.Category{ID: categoryID, Name: catName, ImageURL: ptr("url")})
+		err = ts.Storage.CreateCategory(context.Background(), db.Category{ID: categoryID, Name: catName, ImageURL: "url"})
 		require.NoError(t, err)
 
 		// Create wish
@@ -72,21 +57,9 @@ func TestGetWishSaversHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		// Perform request
-		req := httptest.NewRequest(http.MethodGet, "/wishes/"+wishID+"/savers", nil)
-		rec := httptest.NewRecorder()
-		c := ts.Echo.NewContext(req, rec) // Use ts.Echo for context
-		c.SetPath("/wishes/:id/savers")
-		c.SetParamNames("id")
-		c.SetParamValues(wishID)
+		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, "/wishes/"+wishID+"/savers", "", "", http.StatusOK)
 
-		// Call the handler directly
-		handlerErr := apiHandler.GetWishSaversHandler(c)
-		assert.NoError(t, handlerErr)
-		assert.Equal(t, http.StatusOK, rec.Code)
-
-		var resp contract.WishSaversResponse
-		err = json.Unmarshal(rec.Body.Bytes(), &resp)
-		assert.NoError(t, err)
+		resp := testutils.ParseResponse[contract.WishSaversResponse](t, req)
 
 		assert.Equal(t, 2, resp.Total)
 		require.Len(t, resp.Users, 2)
@@ -103,7 +76,6 @@ func TestGetWishSaversHandler(t *testing.T) {
 	t.Run("successful retrieval with pagination", func(t *testing.T) {
 		ts := testutils.SetupTestEnvironment(t)
 		defer ts.Teardown()
-		apiHandler := ts.API
 
 		ownerAuth, _ := testutils.AuthHelper(t, ts.Echo, 2001, "owner2", "Owner")
 		s1, _ := testutils.AuthHelper(t, ts.Echo, 2002, "s1", "S1")
@@ -111,7 +83,7 @@ func TestGetWishSaversHandler(t *testing.T) {
 		s3, _ := testutils.AuthHelper(t, ts.Echo, 2004, "s3", "S3")
 
 		catID := "cat_pagination"
-		_ = ts.Storage.CreateCategory(context.Background(), db.Category{ID: catID, Name: "Pag Cat", ImageURL: ptr("url")})
+		_ = ts.Storage.CreateCategory(context.Background(), db.Category{ID: catID, Name: "Pag Cat", ImageURL: "url"})
 
 		wishID := "wish_pagination"
 		wishName := "Pagination Test Wish"
@@ -121,29 +93,20 @@ func TestGetWishSaversHandler(t *testing.T) {
 		}, []string{catID})
 
 		// Save bookmarks: s3 (latest), s2, s1 (oldest)
-		_ = ts.Storage.SaveWishToBookmarks(context.Background(), s1.User.ID, wishID); time.Sleep(2 * time.Millisecond)
-		_ = ts.Storage.SaveWishToBookmarks(context.Background(), s2.User.ID, wishID); time.Sleep(2 * time.Millisecond)
+		_ = ts.Storage.SaveWishToBookmarks(context.Background(), s1.User.ID, wishID)
+		time.Sleep(2 * time.Millisecond)
+		_ = ts.Storage.SaveWishToBookmarks(context.Background(), s2.User.ID, wishID)
+		time.Sleep(2 * time.Millisecond)
 		_ = ts.Storage.SaveWishToBookmarks(context.Background(), s3.User.ID, wishID)
 
 		page := 2
 		limit := 1 // Request 1 user for page 2
 		reqPath := fmt.Sprintf("/wishes/%s/savers?page=%d&limit=%d", wishID, page, limit)
-		req := httptest.NewRequest(http.MethodGet, reqPath, nil)
-		rec := httptest.NewRecorder()
-		c := ts.Echo.NewContext(req, rec)
-		c.SetPath("/wishes/:id/savers")
-		c.SetParamNames("id")
-		c.SetParamValues(wishID)
+		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, reqPath, "", "", http.StatusOK)
+		resp := testutils.ParseResponse[contract.WishSaversResponse](t, req)
 
-		err := apiHandler.GetWishSaversHandler(c)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusOK, rec.Code)
-
-		var resp contract.WishSaversResponse
-		_ = json.Unmarshal(rec.Body.Bytes(), &resp)
-
-		assert.Equal(t, 3, resp.Total) // Total 3 savers
-		require.Len(t, resp.Users, 1)  // Limit 1 for this page
+		assert.Equal(t, 3, resp.Total)                            // Total 3 savers
+		require.Len(t, resp.Users, 1)                             // Limit 1 for this page
 		assert.Equal(t, s2.User.Username, resp.Users[0].Username) // s3 was latest, s2 is second latest
 	})
 
@@ -155,7 +118,7 @@ func TestGetWishSaversHandler(t *testing.T) {
 
 		ownerAuth, _ := testutils.AuthHelper(t, ts.Echo, 3001, "owner_no_savers", "Owner")
 		catID := "cat_no_savers"
-		_ = ts.Storage.CreateCategory(context.Background(), db.Category{ID: catID, Name: "No Savers Cat", ImageURL: ptr("url")})
+		_ = ts.Storage.CreateCategory(context.Background(), db.Category{ID: catID, Name: "No Savers Cat", ImageURL: "url"})
 		wishID := "wish_no_savers"
 		wishName := "No Savers Wish"
 		now := time.Now()
@@ -180,45 +143,27 @@ func TestGetWishSaversHandler(t *testing.T) {
 		assert.Len(t, resp.Users, 0)
 	})
 
-	// Test case 4: Storage layer error - This is hard to test reliably with a real DB for this specific handler
-	// as the handler itself doesn't return specific DB errors like ErrNotFound for the wish itself.
-	// It would return empty list if wishID is not found or an internal server error if query fails.
-	// The GetUsersWhoBookmarkedWish returns (nil, 0, err) on db failure.
-	// We can test for non-existent wishID, which should result in 0 savers.
 	t.Run("non-existent wish ID", func(t *testing.T) {
 		ts := testutils.SetupTestEnvironment(t)
 		defer ts.Teardown()
-		apiHandler := ts.API
 
 		wishID := "wish_does_not_exist"
-		req := httptest.NewRequest(http.MethodGet, "/wishes/"+wishID+"/savers", nil)
-		rec := httptest.NewRecorder()
-		c := ts.Echo.NewContext(req, rec)
-		c.SetPath("/wishes/:id/savers")
-		c.SetParamNames("id")
-		c.SetParamValues(wishID)
+		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, "/wishes/"+wishID+"/savers", "", "", http.StatusOK)
+		resp := testutils.ParseResponse[contract.WishSaversResponse](t, req)
 
-		err := apiHandler.GetWishSaversHandler(c)
-		assert.NoError(t, err) // Handler should not error, DB function returns empty + 0 total
-		assert.Equal(t, http.StatusOK, rec.Code)
-
-		var resp contract.WishSaversResponse
-		_ = json.Unmarshal(rec.Body.Bytes(), &resp)
 		assert.Equal(t, 0, resp.Total)
 		assert.Len(t, resp.Users, 0)
 	})
-
 
 	// Test case 5.1: Invalid pagination - page 0, defaults to 1
 	t.Run("invalid pagination page 0", func(t *testing.T) {
 		ts := testutils.SetupTestEnvironment(t)
 		defer ts.Teardown()
-		apiHandler := ts.API
 
 		// Minimal data setup, as we are testing param handling not data retrieval accuracy here
 		ownerAuth, _ := testutils.AuthHelper(t, ts.Echo, 5001, "owner_page0", "Owner")
 		catID := "cat_page0"
-		_ = ts.Storage.CreateCategory(context.Background(), db.Category{ID: catID, Name: "Page0 Cat", ImageURL: ptr("url")})
+		_ = ts.Storage.CreateCategory(context.Background(), db.Category{ID: catID, Name: "Page0 Cat", ImageURL: "url"})
 		wishID := "wish_page0_param_test"
 		wishName := "Page0 Test Wish"
 		now := time.Now()
@@ -229,20 +174,9 @@ func TestGetWishSaversHandler(t *testing.T) {
 		saverAuth, _ := testutils.AuthHelper(t, ts.Echo, 5002, "saver_page0", "Saver")
 		_ = ts.Storage.SaveWishToBookmarks(context.Background(), saverAuth.User.ID, wishID)
 
+		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, "/wishes/"+wishID+"/savers?page=0", "", "", http.StatusOK)
+		resp := testutils.ParseResponse[contract.WishSaversResponse](t, req)
 
-		req := httptest.NewRequest(http.MethodGet, "/wishes/"+wishID+"/savers?page=0", nil)
-		rec := httptest.NewRecorder()
-		c := ts.Echo.NewContext(req, rec)
-		c.SetPath("/wishes/:id/savers")
-		c.SetParamNames("id")
-		c.SetParamValues(wishID)
-
-		err := apiHandler.GetWishSaversHandler(c)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusOK, rec.Code)
-		// Further assertions could check if it effectively returned page 1
-		var resp contract.WishSaversResponse
-		_ = json.Unmarshal(rec.Body.Bytes(), &resp)
 		assert.Equal(t, 1, resp.Total) // One saver added
 		assert.Len(t, resp.Users, 1)
 	})
@@ -251,11 +185,10 @@ func TestGetWishSaversHandler(t *testing.T) {
 	t.Run("invalid pagination limit too high", func(t *testing.T) {
 		ts := testutils.SetupTestEnvironment(t)
 		defer ts.Teardown()
-		apiHandler := ts.API
 
 		ownerAuth, _ := testutils.AuthHelper(t, ts.Echo, 6001, "owner_limit_high", "Owner")
 		catID := "cat_limit_high"
-		_ = ts.Storage.CreateCategory(context.Background(), db.Category{ID: catID, Name: "LimitHigh Cat", ImageURL: ptr("url")})
+		_ = ts.Storage.CreateCategory(context.Background(), db.Category{ID: catID, Name: "LimitHigh Cat", ImageURL: "url"})
 		wishID := "wish_limit_high_param_test"
 		wishName := "Limit High Test Wish"
 		now := time.Now()
@@ -266,22 +199,9 @@ func TestGetWishSaversHandler(t *testing.T) {
 		saverAuth, _ := testutils.AuthHelper(t, ts.Echo, 6002, "saver_limit_high", "Saver")
 		_ = ts.Storage.SaveWishToBookmarks(context.Background(), saverAuth.User.ID, wishID)
 
+		req := testutils.PerformRequest(t, ts.Echo, http.MethodGet, fmt.Sprintf("/wishes/%s/savers?limit=200", wishID), "", "", http.StatusOK)
+		resp := testutils.ParseResponse[contract.WishSaversResponse](t, req)
 
-		req := httptest.NewRequest(http.MethodGet, "/wishes/"+wishID+"/savers?limit=200", nil)
-		rec := httptest.NewRecorder()
-		c := ts.Echo.NewContext(req, rec)
-		c.SetPath("/wishes/:id/savers")
-		c.SetParamNames("id")
-		c.SetParamValues(wishID)
-
-		err := apiHandler.GetWishSaversHandler(c)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusOK, rec.Code)
-		// The actual limit used would be 100. Since we only have 1 saver, we get 1.
-		// This test mainly ensures the handler doesn't break with high limit.
-		// Verifying the exact SQL limit would require a mock or more complex DB introspection.
-		var resp contract.WishSaversResponse
-		_ = json.Unmarshal(rec.Body.Bytes(), &resp)
 		assert.Equal(t, 1, resp.Total)
 		assert.Len(t, resp.Users, 1)
 	})

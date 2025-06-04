@@ -61,21 +61,21 @@ export function WishesGrid(props: WishesGridProps) {
 		mutationFn: (wishId: string) => copyWish(wishId),
 		onSuccess: (data, wishId) => {
 			queryClient.setQueryData(['feed', store.search], (old: Wish[] | undefined) => {
-			  if (!old) return old
-			  return old.map(w => 
-				w.id === wishId ? { ...w, copied_wish_id: data.id } : w
-			  )
+				if (!old) return old
+				return old.map(w =>
+					w.id === wishId ? { ...w, copied_wish_id: data.id } : w
+				)
 			})
 			queryClient.setQueryData(['item', wishId], (old: WishResponse | undefined) => {
 				if (!old) return old
 				return {
-				  ...old,
-				  wish: {
-					...old.wish,
-					copied_wish_id: data.id
-				  }
+					...old,
+					wish: {
+						...old.wish,
+						copied_wish_id: data.id
+					}
 				}
-			  })
+			})
 			queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
 			addToast('Added to board')
 			setStore('wishes', (old: Wish[]) => {
@@ -92,43 +92,45 @@ export function WishesGrid(props: WishesGridProps) {
 
 	const removeFromBoard = createMutation(() => ({
 		mutationFn: (wishId: string) => {
-		  const wish = queryClient.getQueryData(['feed', store.search])
-			?.find((w: Wish) => w.id === wishId)
-		  if (!wish?.copied_wish_id) throw new Error('No copied wish id')
-		  return deleteWish(wish.copied_wish_id)
+			const wish = queryClient.getQueryData(['feed', store.search])
+				?.find((w: Wish) => w.id === wishId)
+			if (!wish?.copied_wish_id) throw new Error('No copied wish id')
+			return deleteWish(wish.copied_wish_id)
 		},
 		onSuccess: (_, wishId) => {
-			queryClient.setQueryData(['item', wishId], (old: WishResponse | undefined) => {
-				if (!old) return old
-				return {
-				  ...old,
-				  wish: {
-					...old.wish,
-					copied_wish_id: null
-				  }
-				}
-			  })
-		  queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
-		  addToast('Removed from board')
+			queryClient.setQueryData(['feed', store.search], (old: Wish[] | undefined) => {
+				if (!old) return old;
+				return old.map(w =>
+					w.id === wishId ? { ...w, copied_wish_id: null } : w
+				);
+			});
+			setStore('wishes', (oldWishes) => {
+				if (!oldWishes) return oldWishes;
+				return oldWishes.filter(w => w.id !== wishId);
+			});
+			queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
+			queryClient.invalidateQueries({ queryKey: ['item', wishId] })
+
+			addToast('Removed from board')
 		},
 		onError: () => {
-		  addToast('Failed to remove from board')
+			addToast('Failed to remove from board')
 		}
-	  }))
+	}))
 
 
-	
-const handleAddRemove = async (wish: Wish) => {
-	try {
-	  if (wish.copied_wish_id) {
-		await removeFromBoard.mutateAsync(wish.id)
-	  } else {
-		await addToBoard.mutateAsync(wish.id)
-	  }
-	} catch (error) {
-	  console.error('Error:', error)
+
+	const handleAddRemove = async (wish: Wish) => {
+		try {
+			if (wish.copied_wish_id) {
+				await removeFromBoard.mutateAsync(wish.id)
+			} else {
+				await addToBoard.mutateAsync(wish.id)
+			}
+		} catch (error) {
+			console.error('Error:', error)
+		}
 	}
-  }
 
 	return (
 		<>

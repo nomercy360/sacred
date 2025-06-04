@@ -518,10 +518,16 @@ func (a *API) CopyWishHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "cannot fetch source wish").WithInternal(err)
 	}
 
+	if sourceWish.CopyID != nil && *sourceWish.CopyID != "" {
+		return echo.NewHTTPError(http.StatusConflict, "Wish was already copied")
+	}
+
 	var categoryIDs []string
 	for _, cat := range sourceWish.Categories {
 		categoryIDs = append(categoryIDs, cat.ID)
 	}
+
+	now := time.Now().UTC()
 
 	newWish := db.Wish{
 		ID:          nanoid.Must(),
@@ -532,7 +538,9 @@ func (a *API) CopyWishHandler(c echo.Context) error {
 		Currency:    sourceWish.Currency,
 		Notes:       sourceWish.Notes,
 		SourceID:    &sourceWish.ID,
-		PublishedAt: sourceWish.PublishedAt,
+		PublishedAt: &now,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 		IsFulfilled: false,
 	}
 
@@ -551,7 +559,7 @@ func (a *API) CopyWishHandler(c echo.Context) error {
 			Width:     img.Width,
 			Height:    img.Height,
 			Position:  img.Position,
-			CreatedAt: time.Now().UTC(),
+			CreatedAt: now,
 		}
 
 		if _, err := a.storage.CreateWishImage(c.Request().Context(), newImage); err != nil {

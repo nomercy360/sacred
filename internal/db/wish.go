@@ -167,10 +167,10 @@ func (s *Storage) GetWishByID(ctx context.Context, viewerID, id string) (Wish, e
 }
 
 func (s *Storage) CreateWish(ctx context.Context, item Wish, categories []string) error {
-	query := `INSERT INTO wishes 
-    	(id, user_id, name, url, price, currency, notes, is_fulfilled, 
+	query := `INSERT INTO wishes (
+         id, user_id, name, url, price, currency, notes, is_fulfilled, 
     	 published_at, source_id, created_at, updated_at
-    	 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {

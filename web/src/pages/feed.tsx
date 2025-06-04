@@ -16,7 +16,7 @@ const FeedPage = () => {
 
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
-			<div class="fixed top-0 left-0 right-0 z-10 bg-gradient-to-t from-transparent to-white h-20">
+			<div class="fixed top-0 left-0 right-0 bg-gradient-to-t from-transparent to-white h-20 z-20">
 				<div class={cn('h-20 w-full flex justify-between items-center p-5')}>
 					<Link
 						href="/search-feed"

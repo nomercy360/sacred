@@ -220,13 +220,13 @@ const ViewItem = () => {
 							<img
 								src={saver.avatar_url || '/placeholder.jpg'}
 								alt={saver.name}
-								class="size-9 shrink-0 rounded-full border-2 border-background shadow-sm first-of-type:z-20 last-of-type:z-10 -ml-2"
+								class="size-7 shrink-0 rounded-full border-[1.5px] border-background shadow-sm first-of-type:z-10 last-of-type:z-20 -ml-2"
 							/>
 						)}
 					</For>
 					<Show when={item.data?.savers.total && item.data?.savers.total > item.data?.savers.users.length}>
 						<span
-							class="size-9 shrink-0 flex items-center justify-center bg-primary text-primary-foreground rounded-full border-2 border-background shadow-sm -ml-2 z-10">
+							class="size-7 shrink-0 flex items-center justify-center bg-primary text-primary-foreground rounded-full border-[1.5px] text-xs border-background shadow-sm -ml-2 z-20">
 							+{item.data?.savers.total! - item.data?.savers.users.length!}
 						</span>
 					</Show>

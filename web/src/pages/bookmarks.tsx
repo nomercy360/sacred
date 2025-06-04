@@ -92,7 +92,7 @@ export function WishesGrid(props: WishesGridProps) {
 
 	const removeFromBoard = createMutation(() => ({
 		mutationFn: (wishId: string) => {
-			const wish = queryClient.getQueryData(['feed', store.search])
+			const wish = queryClient.getQueryData<Wish[]>(['feed', store.search])
 				?.find((w: Wish) => w.id === wishId)
 			if (!wish?.copied_wish_id) throw new Error('No copied wish id')
 			return deleteWish(wish.copied_wish_id)

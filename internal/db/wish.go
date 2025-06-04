@@ -28,6 +28,7 @@ type Wish struct {
 	Images       []WishImage `json:"images"`
 	Categories   []Category  `json:"categories"`
 	IsBookmarked bool        `db:"is_bookmarked" json:"is_bookmarked"`
+	CopiedWishID *string     `db:"copied_wish_id" json:"copied_wish_id,omitempty"`
 }
 
 func UnmarshalJSONToSlice[T any](src interface{}) ([]T, error) {
@@ -79,13 +80,14 @@ func (s *Storage) GetWishByID(ctx context.Context, viewerID, id string) (Wish, e
     		w.created_at, 
     		w.updated_at,
     		w.source_id,
-			EXISTS (SELECT 1 FROM user_bookmarks ub WHERE ub.user_id = ? AND ub.wish_id = w.id) AS is_bookmarked
+			EXISTS (SELECT 1 FROM user_bookmarks ub WHERE ub.user_id = ? AND ub.wish_id = w.id) AS is_bookmarked,
+			(SELECT id FROM wishes WHERE user_id = ? AND source_id = w.id LIMIT 1) AS copied_wish_id
 		FROM wishes w
 		WHERE w.id = ?`
 
 	var item Wish
 
-	if err := s.db.QueryRowContext(ctx, query, viewerID, id).Scan(
+	if err := s.db.QueryRowContext(ctx, query, viewerID, viewerID, id).Scan(
 		&item.ID,
 		&item.UserID,
 		&item.Name,
@@ -102,6 +104,7 @@ func (s *Storage) GetWishByID(ctx context.Context, viewerID, id string) (Wish, e
 		&item.UpdatedAt,
 		&item.SourceID,
 		&item.IsBookmarked,
+		&item.CopiedWishID,
 	); err != nil && IsNoRowsError(err) {
 		return Wish{}, ErrNotFound
 	} else if err != nil {

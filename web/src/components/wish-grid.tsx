@@ -40,7 +40,7 @@ export function WishesGrid(props: WishesGridProps) {
 
       <Show when={props.wishes.isSuccess && props.wishes.data && props.wishes.data.length > 0}>
         <div
-          class={`grid grid-cols-2 gap-0.5 pb-[200px] h-full w-full overflow-y-scroll ${props.source === '/bookmarks' || props.source === '/feed' ? 'pt-20' : ''
+          class={`grid grid-cols-2 gap-0.5 pb-[100px] h-full w-full overflow-y-scroll ${props.source === '/bookmarks' || props.source === '/feed' ? 'pt-20' : ''
             }`}
         >
           <div class="flex flex-col gap-0.5">

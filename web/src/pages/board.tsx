@@ -58,10 +58,13 @@ export default function UserBoardPage() {
 			<div class="text-center w-full pt-20">
 				<Switch>
 					<Match when={wishesQuery.isLoading}>
-						<div class="grid grid-cols-2 gap-0.5 p-5 animate-pulse">
-							<For each={Array(4)}>
+						<div class="grid grid-cols-2 gap-0.5 px-1 pt-4">
+							
+							<For each={Array(6)} fallback={<div class="w-full text-center pt-6 text-gray-500 text-sm font-medium">
+								Loading...
+							</div>}>
 								{() => (
-									<div class="h-[180px] bg-gray-200 rounded-[25px]" />
+									<div class="aspect-[3/4] bg-gray-200 rounded-[25px] animate-pulse" />
 								)}
 							</For>
 						</div>
@@ -82,7 +85,7 @@ export default function UserBoardPage() {
 														state={{ from: '/' }}
 													>
 														<ImageWithPlaceholder
-															
+
 															src={`https://assets.peatch.io/cdn-cgi/image/width=400/${imageDetails.url}`}
 															alt={item.name}
 															width={imageDetails.width}

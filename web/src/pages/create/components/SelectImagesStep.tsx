@@ -39,7 +39,7 @@ const SelectImagesStep: Component<SelectImagesStepProps> = (props) => {
 												src={url}
 												alt=""
 												loading="lazy"
-												class="w-full h-auto max-h-[500px] object-contain rounded-2xl aspect-auto shrink-0 pointer-events-none select-none"
+												class="w-full h-auto max-h-[500px] object-contain border rounded-2xl aspect-auto shrink-0 pointer-events-none select-none"
 												onLoad={(e) => {
 													const img = e.target as HTMLImageElement
 													img.parentElement!.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`
@@ -78,21 +78,30 @@ interface ImageGridLoaderProps {
 
 function ImageGridLoader(props: ImageGridLoaderProps = { isLoading: true }) {
 	return (
-		<div class="w-full">
-			{props.isLoading && (
-				<div class="flex justify-center items-center py-4">
-					<span class="text-sm text-muted-foreground">Getting images...</span>
-				</div>
-			)}
-			<div class="w-full grid grid-cols-2 gap-0.5 overflow-y-scroll">
-				{[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-					<div
-						class="bg-secondary relative w-full bg-center bg-cover aspect-[3/4] rounded-2xl bright-pulse" />
-				))}
+	  <div class="w-full">
+		{props.isLoading && (
+		  <div class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm gap-3">
+			{/* Анимированный круг */}
+			<div class="relative h-8 w-8">
+			  <div class="absolute inset-0 border-2 border-white/20 rounded-full"></div>
+			  <div class="absolute inset-0 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
 			</div>
+			
+			{/* Текст */}
+			<p class="text-white font-medium text-sm">
+			  Getting images...
+			</p>
+		  </div>
+		)}
+		<div class="w-full grid grid-cols-2 gap-0.5 overflow-y-scroll">
+		  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+			<div
+			  class="bg-secondary relative w-full bg-center bg-cover aspect-[3/4] rounded-2xl animate-pulse" />
+		  ))}
 		</div>
+	  </div>
 	)
-}
+  }
 
 function NoImagesFound() {
 	return (

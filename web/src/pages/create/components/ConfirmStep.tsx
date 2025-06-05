@@ -71,7 +71,7 @@ const ConfirmStep: Component<ConfirmStepProps> = (props) => {
 								src={url}
 								alt=""
 								loading="lazy"
-								class="w-full object-contain rounded-[48px] aspect-auto shrink-0 pointer-events-none select-none"
+								class="w-full object-contain rounded-[48px] border shadow-sm rounded-[25px] aspect-auto shrink-0 pointer-events-none select-none"
 								onLoad={(e) => {
 									const img = e.target as HTMLImageElement
 									img.parentElement!.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`

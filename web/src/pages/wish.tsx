@@ -66,7 +66,7 @@ const ViewItem = () => {
 		  // Инвалидируем кэш ленты
 		  queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
 		  queryClient.invalidateQueries({ queryKey: ['feed', store.search] });
-		  addToast('Added to board');
+		  addToast('Added to board', false, '10px');
 		},
 	  }));
 	  
@@ -95,7 +95,7 @@ const ViewItem = () => {
 		  // Инвалидируем кэш ленты
 		  queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
 		  queryClient.invalidateQueries({ queryKey: ['feed', store.search] });
-		  addToast('Removed from board');
+		  addToast('Removed from board', false, '10px');
 		},
 	  }));
 
@@ -112,7 +112,7 @@ const ViewItem = () => {
 				return old
 			})
 			queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
-			addToast('Added to bookmarks');
+			addToast('Added to bookmarks', false, '10px');
 		},
 	}))
 
@@ -127,7 +127,7 @@ const ViewItem = () => {
 				return old
 			})
 			queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
-			addToast('Removed from bookmarks');
+			addToast('Removed from bookmarks', false, '10px');
 		},
 	}))
 
@@ -215,7 +215,6 @@ const ViewItem = () => {
 				color: '#000000',
 			})
 		}
-		queryClient.invalidateQueries({ queryKey: ['feed', store.search] });
 	})
 
 
@@ -229,7 +228,7 @@ const ViewItem = () => {
 		  // Обновление цвета текста
 		  mainButton.setParams?.({
 			color: '#000000',
-			textColor: isSaved ? '#ffffff' : '#000',
+			textColor: isSaved ? '#ffffff' : '#ffffff',
 		  });
 		  
 		  mainButton.onClick(handleCopy);

@@ -75,7 +75,7 @@ export default function WishEditPage() {
 		},
 		onError: (error) => {
 			console.error('Ошибка при сохранении:', error)
-			addToast('Failed to update wish')
+			addToast('Failed to update wish', false, '10px', '#f26868')
 		},
 	}))
 

@@ -18,10 +18,10 @@ const AddRemoveButton = (props: { wish: Wish; source: string }) => {
         onSuccess: (data) => {
             // Обновляем данные в кэше
             updateWishState(data.id);
-            addToast('Added to board');
+            addToast('Added to board', false, '90px');
         },
         onError: () => {
-            addToast('Failed to add to board');
+            addToast('Failed to add to board', false, '90px');
         }
     }));
 
@@ -35,10 +35,10 @@ const AddRemoveButton = (props: { wish: Wish; source: string }) => {
         onSuccess: () => {
             // Обновляем данные в кэше
             updateWishState(null);
-            addToast('Removed from board');
+            addToast('Removed from board', false, '90px');
         },
         onError: () => {
-            addToast('Failed to remove from board');
+            addToast('Failed to remove from board', false, '90px');
         }
     }));
 

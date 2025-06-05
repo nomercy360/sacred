@@ -1,12 +1,12 @@
 import { createSignal, createEffect } from 'solid-js'
 
 export const [toasts, setToasts] = createSignal<
-	{ id: number; message: string }[]
+	{ id: number; message: string, bottom?: string, color?: string }[]
 >([])
 
-export const addToast = (message: string,  persistent = false) => {
+export const addToast = (message: string,  persistent = false, bottom = '90px', color = 'white') => {
 	const id = Date.now()
-	setToasts([...toasts(), { id, message, persistent }])
+	setToasts([...toasts(), { id, message, persistent, bottom, color }])
 
 	// Remove the toast after 2 seconds
 	setTimeout(() => {
@@ -19,7 +19,7 @@ export const removeToast = (id: number) => {
 }
 
 
-const Toast = ({ children }: { children: string }) => {
+const Toast = ({ children, bottom = '90px' }: { children: string, bottom?: string, color?: string }) => {
 	createEffect(() => {
 		const currentToasts = toasts()
 		if (currentToasts.length > 5) {
@@ -29,18 +29,19 @@ const Toast = ({ children }: { children: string }) => {
 	})
 
 	return (
-		<div class="fixed inset-x-0 bottom-[90px] flex justify-center items-center text-center z-[999] pointer-events-none">
+		<div class={`fixed inset-x-0 flex justify-center items-center text-center z-[999] pointer-events-none`}>
 			<div class="pointer-events-auto space-y-2">
 				{toasts().map(toast => (
 					toast.message.length > 10 ? (
-						<div class="flex w-auto  items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-secondary">
+						<div class="flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium "
+						 style={{width: 'auto', position: 'fixed', bottom: toast.bottom || '90px',  left: '50%', transform: 'translateX(-50%)', color: toast.color || 'white'}}>
 							<span class="material-symbols-rounded mr-2 text-[20px] text-white">
 								info
 							</span>
 							{toast.message}
 						</div>
 					) : (
-						<div class="flex w-auto fixed bottom-[90px] left-[150px]  items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-secondary">
+						<div class={`flex w-auto items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium`} style={{ position: 'fixed', bottom: toast.bottom || '90px', left: '150px', color: toast.color || 'white' }}>
 							{toast.message}
 							<span class="material-symbols-rounded text-[20px] text-white">
 								check

@@ -11,24 +11,23 @@ import {
 	WishResponse,
 } from '~/lib/api'
 import { useNavigate, useParams } from '@solidjs/router'
-import { cn, currencySymbol, getDomainName } from '~/lib/utils'
+import { currencySymbol, getDomainName } from '~/lib/utils'
 import { queryClient } from '~/App'
-import { setStore, setWishes, store } from '~/store'
+import { setStore, store } from '~/store'
 import { useMainButton } from '~/lib/useMainButton'
 import { addToast } from '~/components/toast'
 
 const ViewItem = () => {
+
 	const params = useParams()
+	const navigate = useNavigate()
+	const mainButton = useMainButton()
+
 
 	const item = useQuery<WishResponse>(() => ({
 		queryKey: ['item', params.id],
 		queryFn: () => fetchWish(params.id),
 	}))
-
-	const navigate = useNavigate()
-
-	const mainButton = useMainButton()
-
 
 	const bookmarks = useQuery<WishResponse[]>(() => ({
 		queryKey: ['bookmarks'],
@@ -45,59 +44,53 @@ const ViewItem = () => {
 		mutationFn: () => copyWish(item.data!.wish.id),
 		retry: 0,
 		onSuccess: (data) => {
-		  // Обновляем данные виша
-		  queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
-			if (!old) return old;
-			return {
-			  ...old,
-			  wish: {
-				...old.wish,
-				copy_id: data.id
-			  }
-			};
-		  });
-		  // Обновляем store
-		  setStore('wishes', (old) => {
-			if (old) {
-			  return [data, ...old];
-			}
-			return old;
-		  });
-		  // Инвалидируем кэш ленты
-		  queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
-		  queryClient.invalidateQueries({ queryKey: ['feed', store.search] });
-		  addToast('Added to board', false, '10px', 'white', '165px');
+			queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
+				if (!old) return old;
+				return {
+					...old,
+					wish: {
+						...old.wish,
+						copy_id: data.id
+					}
+				};
+			});
+			setStore('wishes', (old) => {
+				if (old) {
+					return [data, ...old];
+				}
+				return old;
+			});
+			queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
+			queryClient.invalidateQueries({ queryKey: ['feed', store.search] });
+			addToast('Added to board', false, '10px', 'white', '165px');
 		},
-	  }));
-	  
-	  const removeFromBoard = useMutation(() => ({
+	}));
+
+	const removeFromBoard = useMutation(() => ({
 		mutationFn: () => deleteWish(item.data!.wish.copy_id!),
 		retry: 0,
 		onSuccess: () => {
-		  // Обновляем данные виша
-		  queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
-			if (!old) return old;
-			return {
-			  ...old,
-			  wish: {
-				...old.wish,
-				copy_id: null
-			  }
-			};
-		  });
-		  // Обновляем store
-		  setStore('wishes', (old) => {
-			if (old) {
-			  return old.filter((w) => w.id !== item.data!.wish.copy_id);
-			}
-			return old;
-		  });
-		  // Инвалидируем кэш ленты
-		  queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
-		  queryClient.invalidateQueries({ queryKey: ['feed', store.search] });
-		  addToast('Removed from board', false, '10px', 'white', '200px');
+			queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
+				if (!old) return old;
+				return {
+					...old,
+					wish: {
+						...old.wish,
+						copy_id: null
+					}
+				};
+			});
+			setStore('wishes', (old) => {
+				if (old) {
+					return old.filter((w) => w.id !== item.data!.wish.copy_id);
+				}
+				return old;
+			});
+			queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
+			queryClient.invalidateQueries({ queryKey: ['feed', store.search] });
+			addToast('Removed from board', false, '10px', 'white', '200px');
 		},
-	  }));
+	}));
 
 
 
@@ -112,7 +105,7 @@ const ViewItem = () => {
 				return old
 			})
 			queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
-			addToast('Added to bookmarks', false, '10px', 'white', '220px' );
+			addToast('Added to bookmarks', false, '10px', 'white', '220px');
 		},
 	}))
 
@@ -127,47 +120,46 @@ const ViewItem = () => {
 				return old
 			})
 			queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
-			addToast('Removed from bookmarks', false, '10px', 'white', '240px' );
+			addToast('Removed from bookmarks', false, '20px', 'white', '240px');
+			navigate('/bookmarks')
 		},
 	}))
 
 	async function handleCopy() {
 		if (item.data?.wish.copy_id) {
-		  await removeFromBoard.mutateAsync(undefined, {
-			onSuccess: () => {
-			  // Обновляем данные виша
-			  queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
-				if (!old) return old;
-				return {
-				  ...old,
-				  wish: {
-					...old.wish,
-					copy_id: null
-				  }
-				};
-			  });
-			 
-			}
-		  });
+			await removeFromBoard.mutateAsync(undefined, {
+				onSuccess: () => {
+					queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
+						if (!old) return old;
+						return {
+							...old,
+							wish: {
+								...old.wish,
+								copy_id: null
+							}
+						};
+					});
+
+				}
+			});
 		} else {
-		  await saveToBoard.mutateAsync(undefined, {
-			onSuccess: (data) => {
-			  // Обновляем данные виша
-			  queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
-				if (!old) return old;
-				return {
-				  ...old,
-				  wish: {
-					...old.wish,
-					copy_id: data.id
-				  }
-				};
-			  });
-		
-			}
-		  });
+			await saveToBoard.mutateAsync(undefined, {
+				onSuccess: (data) => {
+					queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
+						if (!old) return old;
+						return {
+							...old,
+							wish: {
+								...old.wish,
+								copy_id: data.id
+							}
+						};
+					});
+
+				}
+			});
 		}
-	  }
+	}
 
 	function shareWishURL() {
 		const url =
@@ -216,27 +208,25 @@ const ViewItem = () => {
 				color: '#000000',
 			})
 		}
-		
+
 	})
 
 
 	createEffect(() => {
 		if (item.isSuccess && item.data?.wish.user_id !== store.user?.id) {
-		  const isSaved = Boolean(item.data?.wish.copy_id || item.data?.wish.copy_id);
-		  
-		  // Принудительное обновление текста кнопки
-		  window.Telegram.WebApp.MainButton.setText(isSaved ? 'Remove from board' : 'Save to board');
-		  
-		  // Обновление цвета текста
-		  mainButton.setParams?.({
-			color: '#000000',
-			textColor: isSaved ? '#ffffff' : '#ffffff',
-		  });
-		  
-		  mainButton.onClick(handleCopy);
-		  mainButton.enable();
+			const isSaved = Boolean(item.data?.wish.copy_id || item.data?.wish.copy_id);
+
+			window.Telegram.WebApp.MainButton.setText(isSaved ? 'Remove from board' : 'Save to board');
+
+			mainButton.setParams?.({
+				color: '#000000',
+				textColor: isSaved ? '#ffffff' : '#ffffff',
+			});
+
+			mainButton.onClick(handleCopy);
+			mainButton.enable();
 		}
-	  });
+	});
 
 	onCleanup(() => {
 		mainButton.hide()
@@ -270,7 +260,6 @@ const ViewItem = () => {
 							if (item.data?.wish.is_bookmarked) {
 								removeFromBookmark.mutate(undefined, {
 									onSuccess: () => {
-										// Принудительно обновляем данные виша
 										queryClient.setQueryData(['item', params.id], (old: WishResponse | undefined) => {
 											if (!old) return old;
 											return {

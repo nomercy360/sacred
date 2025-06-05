@@ -33,7 +33,7 @@ export default function PeoplePage() {
 						People
 					</p>
 					<Link class="flex items-center justify-center bg-secondary rounded-full size-10"
-								href="/share">
+						href="/share">
 						<span class="material-symbols-rounded text-[20px]">link</span>
 					</Link>
 				</div>

@@ -11,7 +11,7 @@ export const addToast = (message: string,  persistent = false, bottom = '90px', 
 	// Remove the toast after 2 seconds
 	setTimeout(() => {
 		setToasts(toasts().filter(toast => toast.id !== id))
-	}, 2000)
+	}, 1000)
 }
 
 export const removeToast = (id: number) => {

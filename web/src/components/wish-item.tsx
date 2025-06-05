@@ -7,16 +7,28 @@ import { createMemo } from "solid-js";
 import { store } from "~/store";
 import { queryClient } from "~/App";
 
-
-
-
 const WishItem = (props: { wish: Wish & { copy_id: string | null }; source: string }) => {
 
-  const image = createMemo(() => getFirstImage(props.wish));
+  const image = createMemo(() => {
+    const img = getFirstImage(props.wish);
+    return {
+      url: `https://assets.peatch.io/cdn-cgi/image/width=400/${img.url}`,
+      width: img.width,
+      height: img.height
+    };
+  });
 
   const reactiveWish = createMemo(() => {
     const feed = queryClient.getQueryData<Wish[]>(['feed', store.search]);
-    return feed?.find(w => w.id === props.wish.id) ?? props.wish;
+    const foundWish = feed?.find(w => w.id === props.wish.id);
+    
+    return foundWish 
+      ? { ...props.wish, ...foundWish }
+      : props.wish;
+  }, undefined, { equals: (a, b) => 
+    a.id === b.id && 
+    a.copy_id === b.copy_id && 
+    a.name === b.name
   });
 
   return (
@@ -28,7 +40,7 @@ const WishItem = (props: { wish: Wish & { copy_id: string | null }; source: stri
         state={{ from: props.source }}
       >
         <ImageWithPlaceholder
-          src={`https://assets.peatch.io/cdn-cgi/image/width=400/${image().url}`}
+          src={image().url}
           alt={props.wish.name}
           width={image().width}
           height={image().height}
@@ -37,6 +49,5 @@ const WishItem = (props: { wish: Wish & { copy_id: string | null }; source: stri
     </div>
   );
 };
-
 
 export default WishItem;

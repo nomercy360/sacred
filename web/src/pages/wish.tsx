@@ -66,7 +66,7 @@ const ViewItem = () => {
 		  // Инвалидируем кэш ленты
 		  queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
 		  queryClient.invalidateQueries({ queryKey: ['feed', store.search] });
-		  addToast('Added to board', false, '10px');
+		  addToast('Added to board', false, '10px', 'white', '165px');
 		},
 	  }));
 	  
@@ -95,7 +95,7 @@ const ViewItem = () => {
 		  // Инвалидируем кэш ленты
 		  queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] })
 		  queryClient.invalidateQueries({ queryKey: ['feed', store.search] });
-		  addToast('Removed from board', false, '10px');
+		  addToast('Removed from board', false, '10px', 'white', '200px');
 		},
 	  }));
 
@@ -112,7 +112,7 @@ const ViewItem = () => {
 				return old
 			})
 			queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
-			addToast('Added to bookmarks', false, '10px');
+			addToast('Added to bookmarks', false, '10px', 'white', '220px' );
 		},
 	}))
 
@@ -127,7 +127,7 @@ const ViewItem = () => {
 				return old
 			})
 			queryClient.invalidateQueries({ queryKey: ['bookmarks'] })
-			addToast('Removed from bookmarks', false, '10px');
+			addToast('Removed from bookmarks', false, '10px', 'white', '240px' );
 		},
 	}))
 
@@ -205,6 +205,7 @@ const ViewItem = () => {
 			queryClient.invalidateQueries({ queryKey: ['item', item.data?.wish.source_id] })
 		}
 		navigate('/')
+		addToast('Delete from board', false, '95px', 'white', '200px' );
 	}
 
 	createEffect(() => {
@@ -215,6 +216,7 @@ const ViewItem = () => {
 				color: '#000000',
 			})
 		}
+		
 	})
 
 

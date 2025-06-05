@@ -75,7 +75,7 @@ export default function WishEditPage() {
 		},
 		onError: (error) => {
 			console.error('Ошибка при сохранении:', error)
-			addToast('Failed to update wish', false, '10px', '#f26868')
+			addToast('Failed to update wish', false, '10px', '#f26868', '200px')
 		},
 	}))
 
@@ -118,9 +118,9 @@ export default function WishEditPage() {
 
 			const result = await fetchUpdateWish(params.id, requestData)
 			if (result.error) {
-				addToast('Failed to delete image')
+				addToast('Failed to delete image', false, '10px', '#f26868', '250px')
 			} else {
-				addToast('Deleted success')
+				addToast('Deleted success', false, '10px', '#b0f268', '200px')
 
 				await queryClient.invalidateQueries({ queryKey: ['item', params.id] })
 				await queryClient.invalidateQueries({ queryKey: ['wishes'] })
@@ -140,7 +140,7 @@ export default function WishEditPage() {
 			}
 		} catch (error) {
 			console.error('Error deleting image:', error)
-			addToast('Failed to delete image')
+			addToast('Failed to delete image', false, '10px', '#f26868', '250px')
 		} finally {
 			setIsDeleting(false)
 		}

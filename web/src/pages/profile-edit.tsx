@@ -34,7 +34,7 @@ export default function ProfileEditPage() {
 
 	const handleSave = async () => {
 		if (!isEmailValid(email())) {
-			addToast('Please enter a valid email')
+			addToast('Please enter a valid email', false, '10px', '#f26868', '250px')
 			return
 		}
 
@@ -57,7 +57,7 @@ export default function ProfileEditPage() {
 			}
 		} catch (e) {
 			console.error(e)
-			addToast('Failed to update profile')
+			addToast('Failed to update profile', false, '10px', '#f26868', '250px')
 		}
 	}
 

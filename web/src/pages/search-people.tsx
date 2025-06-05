@@ -6,6 +6,7 @@ import { useNavigate } from "@solidjs/router";
 
 import { Link } from "~/components/link";
 import { useBackButton } from "~/lib/useBackButton";
+import { addToast } from "~/components/toast";
 
 export interface SearchingItemProps {
     profilePicture: string
@@ -59,6 +60,9 @@ export default function SearchPage() {
                     item.userId === userId ? { ...item, isFollowing: true, followers: item.followers + 1 } : item
                 )
             );
+            setTimeout(() => {
+                addToast(`Followed ${searchResults().find(item => item.userId === userId)?.name}`, false, '20px', 'white', '200px')
+            }, 600)
         } catch (e) {
             console.error("Failed to follow:", e);
         }
@@ -72,6 +76,9 @@ export default function SearchPage() {
                     item.userId === userId ? { ...item, isFollowing: false, followers: item.followers - 1 } : item
                 )
             );
+            setTimeout(() => {
+                addToast(`Unfollowed ${searchResults().find(item => item.userId === userId)?.name}`, false, '20px', 'white', '220px')
+            }, 600)
         } catch (e) {
             console.error("Failed to unfollow:", e);
         }

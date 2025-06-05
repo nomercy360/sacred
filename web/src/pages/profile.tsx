@@ -9,6 +9,7 @@ import { followUser, unfollowUser } from '~/lib/api'
 import { queryClient } from '~/App'
 import { ImageWithPlaceholder } from '~/components/image-placeholder'
 import { getFirstImage, splitIntoGroups } from '~/lib/utils'
+import { addToast } from '~/components/toast'
 
 export default function UserProfilePage() {
 	const params = useParams()
@@ -22,6 +23,9 @@ export default function UserProfilePage() {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['profile', params.id] })
+			setTimeout(() => {
+				addToast(`Followed ${user.data?.name}`, false, '10px', 'white', '200px')
+			}, 1000)
 		},
 		onSettled: () => {
 			mainButton.hideProgress()
@@ -35,7 +39,9 @@ export default function UserProfilePage() {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['profile', params.id] })
-
+			setTimeout(() => {
+				addToast(`Unfollowed ${user.data?.name}`, false, '10px', 'white', '220px')
+			}, 1000)
 		},
 		onSettled: () => {
 			mainButton.hideProgress()

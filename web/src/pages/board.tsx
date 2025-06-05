@@ -1,10 +1,11 @@
-import { Match, Switch, For, Show } from 'solid-js'
+import { Match, Switch, For, Show, onMount, createEffect } from 'solid-js'
 import { Link } from '~/components/link'
 import { setStore, store } from '~/store'
 import { getFirstImage, splitIntoGroups } from '~/lib/utils'
-import { Wish } from '~/lib/api'
+import { fetchUserWishes, Wish } from '~/lib/api'
 import { ImageWithPlaceholder } from '~/components/image-placeholder'
 import OnboardingPopup from '~/components/onboarding-popup'
+import { createQuery, useQueryClient } from '@tanstack/solid-query'
 
 export default function UserBoardPage() {
 
@@ -12,6 +13,19 @@ export default function UserBoardPage() {
 		window.Telegram.WebApp.CloudStorage.setItem('onboarding', 'done')
 		setStore('onboarding', false)
 	}
+
+	const wishesQuery = createQuery(() => ({
+		queryKey: ['user', 'wishes'],
+		queryFn: () => fetchUserWishes(),
+		refetchOnWindowFocus: true, // подгружает заново при фокусе
+	}))
+	
+	// потом присвоить в стор
+	createEffect(() => {
+		if (wishesQuery.data) {
+			setStore('wishes', wishesQuery.data)
+		}
+	})
 
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-y-auto pb-20">
@@ -42,44 +56,7 @@ export default function UserBoardPage() {
 
 			<div class="text-center flex-1 w-full pb-20 pt-20">
 				<Switch>
-					<Match when={!store.wishes.length}>
-						<div
-							class="absolute top-[15%] rotate-[-4deg] left-[10%] w-[240px] text-start pl-5 pt-4 pr-10 pb-8 flex flex-col items-start justify-start gap-2 rounded-[25px]  bg-[#FEF5F3]">
-							<span class="material-symbols-rounded text-[20px]">
-								note_stack
-							</span>
-							<p class="font-medium leading-tight text-[#563730]">
-								No content has been saved yet. Your saved items will appear here.
-							</p>
-						</div>
-						<div
-							class="absolute top-[30%] rotate-[8deg] -right-2 w-[220px] text-start pl-5 pt-4 pr-10 pb-8 flex flex-col items-start justify-start gap-2 rounded-[25px] bg-[#F7FCE5]">
-							<span class="material-symbols-rounded text-[20px]">
-								bookmark
-							</span>
-							<p class="font-medium leading-tight text-[#4C552E]">
-								You can bookmark ideas. They won't appear on your board, but you'll have access to them
-							</p>
-						</div>
-						<div
-							class="absolute top-[38%] rotate-[-3deg] -left-2 w-[230px] text-start pl-5 pt-4 pr-10 pb-8 flex flex-col items-start justify-start gap-2 rounded-[25px] bg-[#F8F3FF]">
-							<span class="material-symbols-rounded text-[20px]">
-								mood
-							</span>
-							<p class="font-medium leading-tight text-[#584179]">
-								Click your profile picture to access settings and change your visible name and profile link
-							</p>
-						</div>
-						<div
-							class="absolute top-[58%] rotate-[4deg] right-[10%] w-[230px] text-start pl-5 pt-4 pr-10 pb-8 flex flex-col items-start justify-start gap-2 rounded-[25px] bg-[#FFFCEE]">
-							<span class="material-symbols-rounded text-[20px]">
-								arrow_outward
-							</span>
-							<p class="font-medium leading-tight text-[#686140]">
-								Click the arrow to share ideas and profiles (including your own)
-							</p>
-						</div>
-					</Match>
+
 					<Match when={store.wishes.length}>
 						<div class="grid grid-cols-2 gap-0.5">
 							<For each={splitIntoGroups(store.wishes, 2)}>

@@ -117,13 +117,15 @@ export default function SetupProfilePage() {
 				</Match>
 				<Match when={step() === 2}>
 					<div class="px-10 text-center h-full flex flex-col items-center justify-between pb-5">
-						<FormInput
-							placeholder="email@website.com"
-							type="email"
-							value={email()}
-							onInput={(e) => setEmail(e.currentTarget.value)}
-							autofocus={true}
-						/>
+						<div class="flex-grow flex items-center justify-center">
+							<FormInput
+								placeholder="email@website.com"
+								type="email"
+								value={email()}
+								onInput={(e) => setEmail(e.currentTarget.value)}
+								autofocus={true}
+							/>
+						</div>
 						<p class="text-sm text-muted-foreground">
 							No one sees it, and we will not spam you. By the way, you agree with terms and privacy policy by
 							continuing.

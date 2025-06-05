@@ -2,11 +2,16 @@ import { createMutation, useQueryClient } from "@tanstack/solid-query";
 import { copyWish, deleteWish, Wish } from "~/lib/api";
 import { store, setStore } from "~/store";
 import { addToast } from "./toast";
-import { Show } from "solid-js";
+import { createMemo, Show } from "solid-js";
 import { cn } from "~/lib/utils";
 
-const AddRemoveButton = (props: { wish: Wish & { copy_id: string | null }; source: string }) => {
+const AddRemoveButton = (props: { wish: Wish; source: string }) => {
     const queryClient = useQueryClient();
+
+    const copyId = createMemo(() => {
+        const feed = queryClient.getQueryData<Wish[]>(['feed', store.search]);
+        return feed?.find(w => w.id === props.wish.id)?.copy_id ?? null;
+    });
 
     const addToBoard = createMutation(() => ({
         mutationFn: (wishId: string) => copyWish(wishId),
@@ -57,6 +62,7 @@ const AddRemoveButton = (props: { wish: Wish & { copy_id: string | null }; sourc
         // 3. Инвалидируем связанные запросы
         queryClient.invalidateQueries({ queryKey: ['user', 'wishes'] });
         queryClient.invalidateQueries({ queryKey: ['item', props.wish.id] });
+
     };
 
     const handleClick = async (e: MouseEvent) => {
@@ -64,7 +70,7 @@ const AddRemoveButton = (props: { wish: Wish & { copy_id: string | null }; sourc
         e.stopPropagation();
         
         try {
-            if (props.wish.copy_id) {
+            if (copyId()) {
                 await removeFromBoard.mutateAsync(props.wish.id);
             } else {
                 await addToBoard.mutateAsync(props.wish.id);
@@ -79,17 +85,17 @@ const AddRemoveButton = (props: { wish: Wish & { copy_id: string | null }; sourc
             <button
                 class={cn(
                     "absolute top-3 right-3 rounded-full size-5 flex items-center justify-center shadow z-10",
-                    props.wish.copy_id ? "bg-primary" : "bg-white"
+                    copyId() ? "bg-primary" : "bg-white"
                 )}
                 onClick={handleClick}
                 type="button"
-                aria-label={props.wish.copy_id ? "Remove from board" : "Add to board"}
+                aria-label={copyId() ? "Remove from board" : "Add to board"}
             >
                 <span class={cn(
                     "material-symbols-rounded text-sm",
-                    props.wish.copy_id ? "text-white" : "text-primary"
+                    copyId() ? "text-white" : "text-primary"
                 )}>
-                    {props.wish.copy_id ? "check" : "add"}
+                    {copyId() ? "check" : "add"}
                 </span>
             </button>
         </Show>

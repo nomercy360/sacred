@@ -205,7 +205,7 @@ const ViewItem = () => {
 			queryClient.invalidateQueries({ queryKey: ['item', item.data?.wish.source_id] })
 		}
 		navigate('/')
-		addToast('Delete from board', false, '95px', 'white', '200px' );
+		addToast('Delete');
 	}
 
 	createEffect(() => {

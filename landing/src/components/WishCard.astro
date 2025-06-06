@@ -11,7 +11,7 @@ const primaryImage = wish.images.sort((a, b) => a.position - b.position)[0];
 const imageUrl = primaryImage ? `https://assets.peatch.io/cdn-cgi/image/width=400/${primaryImage.url}` : null;
 ---
 
-<a href={`/wish/${wish.id}`} class="block overflow-hidden">
+<a href={`/wish/${wish.id}`} class="block rounded-[25px] overflow-hidden">
   {imageUrl ? (
     <img 
       src={imageUrl} 

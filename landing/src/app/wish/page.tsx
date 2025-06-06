@@ -3,6 +3,7 @@ import WishCard from '@/components/WishCard';
 import { fetchWishes } from '@/api/wishes';
 import type { Wish } from '@/types/wish';
 import '@/app/globals.css';
+import ShareButton from '@/components/ShareButton';
 
 
 const WishesList = async () => {
@@ -21,8 +22,11 @@ const WishesList = async () => {
     };
     return (
         <div className="min-h-screen bg-gray-50">
-        <div className="px-5 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Discover Wishes</h1>
+        <div className="px-4 py-8">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Discover Wishes</h1>
+            <ShareButton />
+          </div>
 
           {wishes && wishes.length > 0 ? (
             <div className="flex gap-4">

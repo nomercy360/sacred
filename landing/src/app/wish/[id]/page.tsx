@@ -2,6 +2,11 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Wish } from '@/types/wish';
+import CloseButton from '@/components/CloseButton';
+import ShareButton from '@/components/ShareButton';
+
+
+
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
@@ -63,12 +68,12 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       url: `${process.env.APP_URL || 'https://tingzzz.com'}/wish/${params.id}`,
       images: firstImage
         ? [
-            {
-              url: getImageUrl(firstImage.url, 1200),
-              width: 1200,
-              height: 630,
-            },
-          ]
+          {
+            url: getImageUrl(firstImage.url, 1200),
+            width: 1200,
+            height: 630,
+          },
+        ]
         : [],
     },
     twitter: {
@@ -81,6 +86,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function WishPage({ params }: { params: { id: string } }) {
+
   const wish = await getWishData(params.id);
 
   if (!wish) {
@@ -110,62 +116,71 @@ export default async function WishPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className=" mx-auto px-4 py-8">
+
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">{wish.name}</h1>
-          <div className="text-gray-600">from {extractDomain(wish.url)}</div>
-          <div className="text-sm text-gray-400 mt-1">Added {formatDate(wish.created_at)}</div>
+        <div className="text-center mb-8 flex justify-between">
+          <CloseButton />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{wish.name}</h1>
+            <div className="text-gray-600">from {extractDomain(wish.url)}</div>
+            <div className="text-sm text-gray-400 mt-1">Added {formatDate(wish.created_at)}</div>
+          </div>
+          <ShareButton />
         </div>
 
-        {/* Images */}
-        <div className="space-y-4 mb-8">
-          {(wish.images ?? [])
-            .sort((a, b) => a.position - b.position)
-            .map((image) => (
-              <div key={image.url} className="max-w-sm mx-auto">
-                <Image
-                  src={getImageUrl(image.url)}
-                  alt={wish.name}
-                  className="rounded-lg"
-                  width={800}
-                  height={800}
-                  priority={false}
-                />
-              </div>
-            ))}
-        </div>
+        <div className="max-w-2xl mx-auto">
 
-        {/* Categories */}
-        {(wish.categories ?? []).length > 0 && (
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Categories</h3>
-            <div className="flex flex-wrap gap-2">
-              {(wish.categories ?? []).map((category) => (
-                <span
-                  key={category.id}
-                  className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
-                >
-                  {category.name}
-                </span>
+
+          {/* Images */}
+          <div className="space-y-4 mb-8">
+            {(wish.images ?? [])
+              .sort((a, b) => a.position - b.position)
+              .map((image) => (
+                <div key={image.url} className="max-w-sm mx-auto">
+                  <Image
+                    src={getImageUrl(image.url)}
+                    alt={wish.name}
+                    className="rounded-lg"
+                    width={800}
+                    height={800}
+                    priority={false}
+                  />
+                </div>
               ))}
-            </div>
           </div>
-        )}
 
-        {/* Visit Link */}
-        {(
-          <div className="mt-8">
-            <a
-              href={wish.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full bg-black text-white py-3 px-6 rounded-lg text-center block font-medium hover:bg-gray-900 transition-colors"
-            >
-              Visit {extractDomain(wish.url)}
-            </a>
-          </div>
-        )}
+          {/* Categories */}
+          {(wish.categories ?? []).length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Categories</h3>
+              <div className="flex flex-wrap gap-2">
+                {(wish.categories ?? []).map((category) => (
+                  <span
+                    key={category.id}
+                    className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
+                  >
+                    {category.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Visit Link */}
+          {(
+            <div className="mt-8">
+              <a
+                href={wish.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-black text-white py-3 px-6 rounded-lg text-center block font-medium hover:bg-gray-900 transition-colors"
+              >
+                Visit {extractDomain(wish.url)}
+              </a>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

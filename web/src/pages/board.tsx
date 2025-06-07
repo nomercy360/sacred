@@ -62,7 +62,7 @@ export default function UserBoardPage() {
 			<div class="text-center w-full pt-20">
 				<Switch>
 					<Match when={wishesResource.loading}>
-						<div class="grid grid-cols-2 gap-0.5 px-1 pt-4">
+						<div class="grid grid-cols-2 gap-0.5 px-[1.5px]">
 							<For each={Array(6)}>
 								{() => (
 									<div class="aspect-[3/4] bg-gray-200 rounded-[25px] animate-pulse" />

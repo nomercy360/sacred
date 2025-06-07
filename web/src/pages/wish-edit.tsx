@@ -216,7 +216,7 @@ export default function WishEditPage() {
 						>
 							<For each={item.data?.wish.images}>
 								{(image: WishImage) => (
-									<div class="relative w-full">
+									<div class="relative w-full border border-[#00000010] rounded-[25px]">
 										<img
 											src={`https://assets.peatch.io/${image.url}`}
 											alt={item.data?.wish.name}

@@ -5,8 +5,7 @@ import { Wish } from '@/types/wish';
 import CloseButton from '@/components/CloseButton';
 import ShareButton from '@/components/ShareButton';
 
-
-
+export const runtime = "edge";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 

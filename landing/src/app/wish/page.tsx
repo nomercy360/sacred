@@ -5,18 +5,19 @@ import type { Wish } from '@/types/wish';
 import '@/app/globals.css';
 import ShareButton from '@/components/ShareButton';
 
+export const runtime = "edge";
 
 const WishesList = async () => {
 
     let wishes: Wish[] = [];
-  
+
     try {
       wishes = await fetchWishes();
     } catch (error) {
       console.error('Failed to fetch wishes:', error);
       wishes = [];
     }
-  
+
     const getColumnWishes = (columnIndex: number) => {
       return wishes.filter((_, index) => index % 4 === columnIndex);
     };

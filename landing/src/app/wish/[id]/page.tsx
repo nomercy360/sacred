@@ -32,8 +32,9 @@ async function getWishData(id: string): Promise<Wish | null> {
   }
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const wish = await getWishData(params.id);
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const wish = await getWishData(id);
 
   if (!wish) {
     return {
@@ -64,7 +65,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       title: `${wish.name} - Tingzzz`,
       description: `${wish.name} from ${extractDomain(wish.url)}`,
       type: 'website',
-      url: `${process.env.APP_URL || 'https://tingzzz.com'}/wish/${params.id}`,
+      url: `${process.env.APP_URL || 'https://tingzzz.com'}/wish/${id}`,
       images: firstImage
         ? [
           {
@@ -84,9 +85,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-export default async function WishPage({ params }: { params: { id: string } }) {
-
-  const wish = await getWishData(params.id);
+export default async function WishPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const wish = await getWishData(id);
 
   if (!wish) {
     notFound();

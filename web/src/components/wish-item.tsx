@@ -36,7 +36,7 @@ const WishItem = (props: { wish: Wish & { copy_id: string | null }; source: stri
       <AddRemoveButton wish={reactiveWish()} source={props.source} />
       <Link
         href={`/wishes/${props.wish.id}`}
-        class="block border shadow-sm rounded-[25px] overflow-hidden"
+        class="block border border-[#00000010] rounded-[25px] overflow-hidden"
         state={{ from: props.source }}
       >
         <ImageWithPlaceholder

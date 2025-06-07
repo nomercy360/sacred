@@ -7,6 +7,7 @@ import { useMainButton } from '~/lib/useMainButton'
 import { queryClient } from '~/App'
 import { addToast } from '~/components/toast'
 import { setStore } from '~/store'
+import { cn } from '~/lib/utils'
 
 
 const ImageLoader = () => (
@@ -173,8 +174,8 @@ export default function WishEditPage() {
 					<div class="bg-black text-white rounded-xl shadow-md px-4 py-3 flex items-center gap-3">
 						<div class="h-4 w-4 rounded-full animate-spin"></div>
 						<span class="text-sm">
-              Uploading...
-            </span>
+							Uploading...
+						</span>
 					</div>
 				</div>
 			}>
@@ -206,26 +207,37 @@ export default function WishEditPage() {
           </div> */}
 
 					<Show when={item.data?.wish.images} fallback={<ImageLoader />}>
-						<For each={item.data?.wish.images}>
-							{(image: WishImage) => (
-								<div class="relative">
-									<img
-										src={`https://assets.peatch.io/${image.url}`}
-										alt={item.data?.wish.name}
-										class="w-full rounded-[25px] "
-										style={{ 'aspect-ratio': `${image.width}/${image.height}` }}
-									/>
-									<button
-										onClick={() => deleteImage(image.id)}
-										disabled={isDeleting() || isSaving()}
-										class="absolute top-3 right-3 bg-black rounded-full size-6 flex items-center justify-center"
-										title="Delete image"
-									>
-										<span class="material-symbols-rounded text-white text-[16px]">close</span>
-									</button>
-								</div>
+						<div
+							class={cn(
+								item.data?.wish.images?.length && item.data?.wish.images.length > 1
+									? "grid grid-cols-2 gap-4"
+									: "grid grid-cols-1"
 							)}
-						</For>
+						>
+							<For each={item.data?.wish.images}>
+								{(image: WishImage) => (
+									<div class="relative w-full">
+										<img
+											src={`https://assets.peatch.io/${image.url}`}
+											alt={item.data?.wish.name}
+											class={cn(
+												"rounded-[25px] w-full",
+												item.data?.wish.images.length === 1 ? "max-w-full" : "w-[200px]"
+											)}
+											style={{ 'aspect-ratio': `${image.width}/${image.height}` }}
+										/>
+										<button
+											onClick={() => deleteImage(image.id)}
+											disabled={isDeleting() || isSaving()}
+											class="absolute top-3 right-3 bg-black rounded-full size-5 flex items-center justify-center"
+											title="Delete image"
+										>
+											<span class="material-symbols-rounded text-white text-[16px]">close</span>
+										</button>
+									</div>
+								)}
+							</For>
+						</div>
 					</Show>
 				</div>
 			</Show>

@@ -117,7 +117,7 @@ export default function UserProfilePage() {
 					</Match>
 
 					<Match when={user.isSuccess && user.data && user.data.wishlist_items.length > 0}>
-						<div class="grid grid-cols-2 gap-0.5 p-0.5">
+						<div class="grid grid-cols-2 gap-0.5 px-[1.5px]">
 							<For each={splitIntoGroups(user.data?.wishlist_items, 2)}>
 								{(group) => (
 									<div class="flex flex-col gap-0.5">
@@ -126,7 +126,7 @@ export default function UserProfilePage() {
 												const imageDetails = getFirstImage(item)
 												return (
 													<Link
-														class="block border shadow-sm rounded-[25px] overflow-hidden"
+														class="block border border-[#00000010] rounded-[25px] overflow-hidden"
 														href={`/wishes/${item.id}`}
 														state={{ from: location.pathname }}
 													>

@@ -30,7 +30,7 @@ export default function CategoriesSelect(props: SelectCategoriesProps) {
 
 
 	return (
-		<div class="pb-0.5 grid grid-cols-3 gap-[2px] w-full">
+		<div class="pb-0.5 grid grid-cols-3 gap-[2px] w-full px-[1.5px]">
 			<Show when={categories.data}>
 				<For each={categories.data}>
 					{(category) => (

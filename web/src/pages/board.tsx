@@ -72,7 +72,7 @@ export default function UserBoardPage() {
 					</Match>
 
 					<Match when={store.wishes.length > 0}>
-						<div class="grid grid-cols-2 gap-0.5 px-1">
+						<div class="grid grid-cols-2 gap-0.5 px-[1.5px]">
 							<For each={groupedWishes()}>
 								{(group) => (
 									<div class="flex flex-col gap-0.5">
@@ -81,7 +81,7 @@ export default function UserBoardPage() {
 												const imageDetails = getFirstImage(item)
 												return (
 													<Link
-														class="block border shadow-sm rounded-[25px] overflow-hidden"
+														class="block border border-[#00000010] rounded-[25px] overflow-hidden"
 														href={`/wishes/${item.id}`}
 														state={{ from: '/' }}
 													>

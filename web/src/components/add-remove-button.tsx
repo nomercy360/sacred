@@ -84,15 +84,20 @@ const AddRemoveButton = (props: { wish: Wish; source: string }) => {
     };
 
     const buttonClasses = createMemo(() => cn(
-        "absolute top-3 right-3 rounded-full size-5 flex items-center justify-center shadow z-10",
-        copyId() ? "bg-primary" : "bg-white"
+        "absolute top-0 right-0 w-12 h-12 flex items-center justify-center z-10", 
+        "group" 
     ));
-
+    
+    const visualButtonClasses = createMemo(() => cn(
+        "rounded-full size-5 flex items-center justify-center shadow-sm",
+        copyId() ? "bg-primary" : "bg-secondary"
+    ));
+    
     const iconClasses = createMemo(() => cn(
-        "material-symbols-rounded text-sm",
-        copyId() ? "text-white" : "text-primary"
+        "material-symbols-rounded text-sm flex items-center justify-center",
+        copyId() ? "text-white" : "text-black"
     ));
-
+    
     return (
         <Show when={props.source === '/feed'}>
             <button
@@ -101,8 +106,10 @@ const AddRemoveButton = (props: { wish: Wish; source: string }) => {
                 type="button"
                 aria-label={copyId() ? "Remove from board" : "Add to board"}
             >
-                <span class={iconClasses()}>
-                    {copyId() ? "check" : "add"}
+                <span class={visualButtonClasses()}>
+                    <span class={iconClasses()}>
+                        {copyId() ? "check" : "add"}
+                    </span>
                 </span>
             </button>
         </Show>

@@ -341,14 +341,14 @@ const ViewItem = () => {
 				</Switch>
 			</div>
 
-			<div class="mt-7 flex flex-col items-center justify-start space-y-0.5 ">
+			<div class="mt-7 flex flex-col items-center justify-start space-y-0.5 px-[1.5px]">
 				<Show when={item.data?.wish.images} fallback={<ImageLoader />}>
 					<For each={item.data?.wish.images}>
 						{(image) => (
 							<img
 								src={`https://assets.peatch.io/${image.url}`}
 								alt={item.data?.wish.name}
-								class="w-full rounded-[25px] border shadow-sm"
+								class="w-full rounded-[25px] border border-[#00000010]"
 								style={{ 'aspect-ratio': `${image.width}/${image.height}` }}
 							/>
 

@@ -4,13 +4,21 @@ import { Link } from '~/components/link'
 import { WishesGrid } from '~/components/wish-grid'
 import { cn } from '~/lib/utils'
 import { store } from '~/store'
+import { createEffect, createMemo } from 'solid-js'
 
 const FeedPage = () => {
-	const wishes = useQuery<Wish[]>(() => ({
-		queryKey: ['feed', store.search],
-		queryFn: () => fetchFeed(store.search),
-	}))
+	
+	const searchKey = createMemo(() => store.search)
 
+const wishes = useQuery<Wish[]>(() => ({
+  queryKey: ['feed', searchKey()],
+  queryFn: () => fetchFeed(searchKey()),
+}))
+
+createEffect(() => {
+	console.log('SEARCH KEY', searchKey())
+	console.log('WISHES', wishes.data)
+})
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden px-[1.5px]">
 			<div class="fixed top-0 left-0 right-0 bg-gradient-to-t from-transparent to-white h-20 z-20">

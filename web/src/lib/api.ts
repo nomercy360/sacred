@@ -74,9 +74,13 @@ export const fetchUserWishes = async () => {
 }
 
 export const fetchFeed = async (search: string) => {
+	console.log('🔎 FETCH FEED WITH SEARCH:', search)
+
 	const { data } = await apiRequest('/feed' + (search ? `?search=${search}` : ''), {
 		method: 'GET',
 	})
+
+	console.log('📥 FEED RESPONSE:', data)
 
 	return data
 }
@@ -87,6 +91,8 @@ type AutocompleteSearchResponse = {
 }
 
 export const autocompleteSearch = async (query: string): Promise<AutocompleteSearchResponse[]> => {
+	if (!query.trim()) return []
+
 	const { data } = await apiRequest(`/feed/autocomplete?search=${encodeURIComponent(query)}`, {
 		method: 'GET',
 	})

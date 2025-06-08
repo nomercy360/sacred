@@ -27,6 +27,8 @@ export function WishesGrid(props: WishesGridProps) {
         copy_id: store.wishes?.find(w => w.source_id === wish.id)?.id || null
       }));
       queryClient.setQueryData(['feed'], updatedWishes);
+
+      console.log('UPDATED WISHES', updatedWishes)
     }
   });
 

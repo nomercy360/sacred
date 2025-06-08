@@ -1,12 +1,12 @@
-import { Show, createSignal, For } from "solid-js"
+import { Show, createSignal, For, createResource } from "solid-js"
 import { cn } from "~/lib/utils"
 import CategoriesSelect from "~/components/categories-select"
 import { WishesGrid } from '~/components/wish-grid'
 import {useNavigate } from "@solidjs/router"
 import { useQuery } from "@tanstack/solid-query"
-import { Wish, fetchFeed } from "~/lib/api"
+import { Wish, autocompleteSearch, fetchFeed } from "~/lib/api"
 import { useBackButton } from "~/lib/useBackButton"
-import { store, setSearch } from "~/store"
+import { store, setSearch, setStore } from "~/store"
 import { Link } from "~/components/link"
 
 const mockNames = [
@@ -21,15 +21,22 @@ const mockSuggestions = [
 ]
 
 export const SearchFeed = () => {
+
+	const search = () => store.search.trim()
+
+
 	const [searchMode, setSearchMode] = createSignal(true)
 	const [searchInput, setSearchInput] = createSignal<HTMLInputElement | null>(null)
+
+	const [searchTerm, setSearchTerm] = createSignal('')
+const [suggestions] = createResource(searchTerm, autocompleteSearch)
 
 	const navigate = useNavigate()
 	const backButton = useBackButton()
 
 	const wishes = useQuery<Wish[]>(() => ({
-		queryKey: ['feed', store.search],
-		queryFn: () => fetchFeed(store.search),
+		queryKey: ['feed', search()],
+		queryFn: () => fetchFeed(search()),
 	}))
 
 	backButton.onClick(() => {
@@ -44,7 +51,9 @@ export const SearchFeed = () => {
 	}
 
 	const handleInput = (e: any) => {
-		setSearch(e.target.value)
+		const value = e.target.value
+		setSearch(value)
+		setSearchTerm(value)
 	}
 
 	const filteredSuggestions = () =>
@@ -61,7 +70,9 @@ export const SearchFeed = () => {
 					<form
 						onSubmit={e => {
 							e.preventDefault()
-							handleSuggestionClick(store.search)
+							if (store.search.trim().length > 0) {
+								handleSuggestionClick(store.search)
+							}
 						}}
 						class="flex w-full rounded-2xl bg-secondary items-center pl-3"
 					>
@@ -109,17 +120,17 @@ export const SearchFeed = () => {
 					</div>
 				}>
 					<div class="flex flex-col w-full overflow-y-auto pt-2">
-						<For each={filteredSuggestions()}>
+						<For each={suggestions()}>
 							{suggestion => (
 								<button
 									class="w-full text-left px-5 py-2 hover:bg-gray-100"
-									onClick={() => handleSuggestionClick(suggestion)}
+										onClick={() => handleSuggestionClick(suggestion.text)}
 								>
-									{suggestion}
+									{suggestion.text}
 								</button>
 							)}
 						</For>
-						<Show when={filteredSuggestions().length === 0}>
+						<Show when={suggestions()?.length === 0}>
 							<div class="text-center text-gray-400 py-4">No suggestions</div>
 						</Show>
 					</div>

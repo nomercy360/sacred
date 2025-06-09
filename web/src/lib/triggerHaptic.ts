@@ -1,4 +1,6 @@
-export function triggerHaptic(type: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' = 'light') {
+export function triggerHaptic(
+    type: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' = 'light',
+) {
     try {
         const haptic = window.Telegram?.WebApp?.HapticFeedback
         if (haptic?.impactOccurred) {

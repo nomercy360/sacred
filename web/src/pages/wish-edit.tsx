@@ -9,238 +9,275 @@ import { addToast } from '~/components/toast'
 import { setStore } from '~/store'
 import { cn } from '~/lib/utils'
 
-
 const ImageLoader = () => (
-	<div class="flex items-center justify-center h-40">
-		<div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-	</div>
+    <div class="flex h-40 items-center justify-center">
+        <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary" />
+    </div>
 )
 
 export default function WishEditPage() {
-	const [wishName, setWishName] = createSignal('')
-	const [wishLink, setWishLink] = createSignal('')
-	const [isDeleting, setIsDeleting] = createSignal(false)
-	const [isSaving, setIsSaving] = createSignal(false)
+    const [wishName, setWishName] = createSignal('')
+    const [wishLink, setWishLink] = createSignal('')
+    const [isDeleting, setIsDeleting] = createSignal(false)
+    const [isSaving, setIsSaving] = createSignal(false)
 
-	const params = useParams()
-	const navigate = useNavigate()
-	const mainButton = useMainButton()
+    const params = useParams()
+    const navigate = useNavigate()
+    const mainButton = useMainButton()
 
-	const item = useQuery<WishResponse>(() => ({
-		queryKey: ['item', params.id],
-		queryFn: () => fetchWish(params.id),
-	}))
+    const item = useQuery<WishResponse>(() => ({
+        queryKey: ['item', params.id],
+        queryFn: () => fetchWish(params.id),
+    }))
 
-	const updateWishMutation = useMutation(() => ({
-		mutationFn: async () => {
-			setIsSaving(true)
-			const requestData = {
-				name: wishName(),
-				url: wishLink(),
-				notes: null,
-				price: null,
-				currency: null,
-				category_ids: item.data?.wish.categories?.map(category => category.id) || [],
-			}
+    const updateWishMutation = useMutation(() => ({
+        mutationFn: async () => {
+            setIsSaving(true)
+            const requestData = {
+                name: wishName(),
+                url: wishLink(),
+                notes: null,
+                price: null,
+                currency: null,
+                category_ids:
+                    item.data?.wish.categories?.map(category => category.id) ||
+                    [],
+            }
 
-			return fetchUpdateWish(params.id, requestData)
-				.then(result => {
-					console.log('Полный ответ сервера:', result)
-					if (result.error) throw new Error(result.error)
-					return result.data
-				})
-				.finally(() => {
-					setIsSaving(false)
-				})
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['item', params.id] })
-			queryClient.invalidateQueries({ queryKey: ['wishes'] })
-			queryClient.invalidateQueries({ queryKey: ['feed'] })
+            return fetchUpdateWish(params.id, requestData)
+                .then(result => {
+                    console.log('Полный ответ сервера:', result)
+                    if (result.error) throw new Error(result.error)
+                    return result.data
+                })
+                .finally(() => {
+                    setIsSaving(false)
+                })
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['item', params.id] })
+            queryClient.invalidateQueries({ queryKey: ['wishes'] })
+            queryClient.invalidateQueries({ queryKey: ['feed'] })
 
-			setStore('wishes', (old: Wish[]) => {
-				return old.map((wish: Wish) => {
-					if (wish.id === params.id) {
-						return {
-							...wish,
-							name: wishName(),
-							url: wishLink(),
-						}
-					}
-					return wish
-				})
-			})
+            setStore('wishes', (old: Wish[]) => {
+                return old.map((wish: Wish) => {
+                    if (wish.id === params.id) {
+                        return {
+                            ...wish,
+                            name: wishName(),
+                            url: wishLink(),
+                        }
+                    }
+                    return wish
+                })
+            })
 
-			addToast('Saved')
-			navigate('/')
-		},
-		onError: (error) => {
-			console.error('Ошибка при сохранении:', error)
-			addToast('Failed to update wish', false, '10px', '#f26868', '200px')
-		},
-	}))
+            addToast('Saved')
+            navigate('/')
+        },
+        onError: error => {
+            console.error('Ошибка при сохранении:', error)
+            addToast('Failed to update wish', true, '10px', '#f26868', '200px')
+        },
+    }))
 
+    createEffect(() => {
+        if (item.data) {
+            setWishName(item.data.wish.name || '')
+            setWishLink(item.data.wish.url || '')
+        }
+    })
 
-	createEffect(() => {
-		if (item.data) {
-			setWishName(item.data.wish.name || '')
-			setWishLink(item.data.wish.url || '')
-		}
-	})
+    const saveWish = async () => {
+        mainButton.showProgress(true)
+        try {
+            const result = await updateWishMutation.mutateAsync()
+        } catch (error) {
+        } finally {
+            mainButton.hideProgress()
+        }
+    }
 
+    const deleteImage = async (imageId: string) => {
+        if (isDeleting()) return
 
-	const saveWish = async () => {
-		mainButton.showProgress(true)
-		try {
-			const result = await updateWishMutation.mutateAsync()
+        setIsDeleting(true)
+        try {
+            // Update wish with delete_image_ids
+            const requestData = {
+                name: wishName() || item.data?.wish.name || null,
+                url: wishLink() || item.data?.wish.url || null,
+                notes: item.data?.wish.notes || null,
+                price: item.data?.wish.price || null,
+                currency: item.data?.wish.currency || null,
+                category_ids:
+                    item.data?.wish.categories?.map(category => category.id) ||
+                    [],
+                delete_image_ids: [imageId],
+            }
 
-		} catch (error) {
+            const result = await fetchUpdateWish(params.id, requestData)
+            if (result.error) {
+                addToast(
+                    'Failed to delete image',
+                    false,
+                    '10px',
+                    '#f26868',
+                    '250px',
+                )
+            } else {
+                addToast('Deleted success', false, '10px', '#b0f268', '200px')
 
-		} finally {
-			mainButton.hideProgress()
-		}
-	}
+                await queryClient.invalidateQueries({
+                    queryKey: ['item', params.id],
+                })
+                await queryClient.invalidateQueries({ queryKey: ['wishes'] })
+                await queryClient.invalidateQueries({ queryKey: ['feed'] })
 
-	const deleteImage = async (imageId: string) => {
-		if (isDeleting()) return
+                setStore('wishes', (old: Wish[]) => {
+                    return old.map((wish: Wish) => {
+                        if (wish.id === params.id) {
+                            return {
+                                ...wish,
+                                images: wish.images.filter(
+                                    (img: WishImage) => img.id !== imageId,
+                                ),
+                            }
+                        }
+                        return wish
+                    })
+                })
+            }
+        } catch (error) {
+            console.error('Error deleting image:', error)
+            addToast(
+                'Failed to delete image',
+                false,
+                '10px',
+                '#f26868',
+                '250px',
+            )
+        } finally {
+            setIsDeleting(false)
+        }
+    }
 
-		setIsDeleting(true)
-		try {
-			// Update wish with delete_image_ids
-			const requestData = {
-				name: wishName() || item.data?.wish.name || null,
-				url: wishLink() || item.data?.wish.url || null,
-				notes: item.data?.wish.notes || null,
-				price: item.data?.wish.price || null,
-				currency: item.data?.wish.currency || null,
-				category_ids: item.data?.wish.categories?.map(category => category.id) || [],
-				delete_image_ids: [imageId],
-			}
+    createEffect(() => {
+        mainButton.offClick(saveWish)
 
-			const result = await fetchUpdateWish(params.id, requestData)
-			if (result.error) {
-				addToast('Failed to delete image', false, '10px', '#f26868', '250px')
-			} else {
-				addToast('Deleted success', false, '10px', '#b0f268', '200px')
+        if (item.isSuccess) {
+            mainButton.onClick(saveWish)
+            if (isSaving()) {
+                mainButton.disable('Saving...')
+            } else {
+                mainButton.enable('Save')
+            }
+        } else {
+            mainButton.disable('Save')
+        }
+    })
 
-				await queryClient.invalidateQueries({ queryKey: ['item', params.id] })
-				await queryClient.invalidateQueries({ queryKey: ['wishes'] })
-				await queryClient.invalidateQueries({ queryKey: ['feed'] })
+    onCleanup(() => {
+        mainButton.hide()
+        mainButton.offClick(saveWish)
+    })
 
-				setStore('wishes', (old: Wish[]) => {
-					return old.map((wish: Wish) => {
-						if (wish.id === params.id) {
-							return {
-								...wish,
-								images: wish.images.filter((img: WishImage) => img.id !== imageId),
-							}
-						}
-						return wish
-					})
-				})
-			}
-		} catch (error) {
-			console.error('Error deleting image:', error)
-			addToast('Failed to delete image', false, '10px', '#f26868', '250px')
-		} finally {
-			setIsDeleting(false)
-		}
-	}
+    return (
+        <div class="flex min-h-screen flex-col items-center p-4">
+            <Show
+                when={item.isSuccess}
+                fallback={
+                    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+                        <div class="flex items-center gap-3 rounded-xl bg-black px-4 py-3 text-white shadow-md">
+                            <div class="h-4 w-4 animate-spin rounded-full" />
+                            <span class="text-sm">Uploading...</span>
+                        </div>
+                    </div>
+                }
+            >
+                <div class="h-screen w-full space-y-4 overflow-y-auto pb-6">
+                    <div class="flex w-full flex-col space-y-1.5">
+                        <label class="mb-1 text-xs font-medium text-secondary-foreground">
+                            Visible wish name
+                        </label>
+                        <input
+                            value={wishName()}
+                            onInput={e => setWishName(e.currentTarget.value)}
+                            class="h-12 rounded-xl bg-secondary px-3 py-2 text-sm font-semibold focus:outline-none"
+                        />
+                    </div>
 
-	createEffect(() => {
-		mainButton.offClick(saveWish)
+                    <div class="flex w-full flex-col space-y-1.5">
+                        <label class="text-xs font-medium text-secondary-foreground">
+                            Wish link
+                        </label>
+                        <div class="flex h-12 items-center rounded-xl bg-secondary px-3 py-2 text-sm font-semibold">
+                            <span class="text-muted-foreground" />
+                            <input
+                                value={wishLink()}
+                                onInput={e =>
+                                    setWishLink(e.currentTarget.value)
+                                }
+                                class="flex-1 bg-transparent text-foreground focus:outline-none"
+                            />
+                        </div>
+                    </div>
 
-		if (item.isSuccess) {
-			mainButton.onClick(saveWish)
-			if (isSaving()) {
-				mainButton.disable('Saving...')
-			} else {
-				mainButton.enable('Save')
-			}
-		} else {
-			mainButton.disable('Save')
-		}
-	})
-
-	onCleanup(() => {
-		mainButton.hide()
-		mainButton.offClick(saveWish)
-	})
-
-	return (
-		<div class="flex flex-col items-center p-4 min-h-screen">
-			<Show when={item.isSuccess} fallback={
-				<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-					<div class="bg-black text-white rounded-xl shadow-md px-4 py-3 flex items-center gap-3">
-						<div class="h-4 w-4 rounded-full animate-spin"></div>
-						<span class="text-sm">
-							Uploading...
-						</span>
-					</div>
-				</div>
-			}>
-				<div class="w-full space-y-4 overflow-y-auto h-screen pb-6">
-					<div class="flex flex-col w-full space-y-1.5">
-						<label class="text-xs font-medium text-secondary-foreground mb-1">Visible wish name</label>
-						<input
-							value={wishName()}
-							onInput={(e) => setWishName(e.currentTarget.value)}
-							class="focus:outline-none text-sm font-semibold h-12 px-3 py-2 bg-secondary rounded-xl"
-						/>
-					</div>
-
-					<div class="flex flex-col w-full space-y-1.5">
-						<label class="font-medium text-xs text-secondary-foreground">Wish link</label>
-						<div class="font-semibold text-sm bg-secondary flex items-center rounded-xl h-12 px-3 py-2">
-							<span class="text-muted-foreground"></span>
-							<input
-								value={wishLink()}
-								onInput={(e) => setWishLink(e.currentTarget.value)}
-								class="text-foreground bg-transparent focus:outline-none flex-1"
-							/>
-						</div>
-					</div>
-
-					{/* <div class="flex flex-col space-y-1.5">
+                    {/* <div class="flex flex-col space-y-1.5">
             <label class="text-xs font-medium text-secondary-foreground mb-1">Upload wish photo</label>
             <button class="text-sm font-semibold h-12 px-3 py-2 bg-primary text-white rounded-xl">add photo</button>
           </div> */}
 
-					<Show when={item.data?.wish.images} fallback={<ImageLoader />}>
-						<div
-							class={cn(
-								item.data?.wish.images?.length && item.data?.wish.images.length > 1
-									? "grid grid-cols-2 gap-4"
-									: "grid grid-cols-1"
-							)}
-						>
-							<For each={item.data?.wish.images}>
-								{(image: WishImage) => (
-									<div class="relative w-full border border-[#00000010] rounded-[25px]">
-										<img
-											src={`https://assets.peatch.io/${image.url}`}
-											alt={item.data?.wish.name}
-											class={cn(
-												"rounded-[25px] w-full",
-												item.data?.wish.images.length === 1 ? "max-w-full" : "w-[200px]"
-											)}
-											style={{ 'aspect-ratio': `${image.width}/${image.height}` }}
-										/>
-										<button
-											onClick={() => deleteImage(image.id)}
-											disabled={isDeleting() || isSaving()}
-											class="absolute top-3 right-3 bg-black rounded-full size-5 flex items-center justify-center"
-											title="Delete image"
-										>
-											<span class="material-symbols-rounded text-white text-[16px]">close</span>
-										</button>
-									</div>
-								)}
-							</For>
-						</div>
-					</Show>
-				</div>
-			</Show>
-		</div>
-	)
+                    <Show
+                        when={item.data?.wish.images}
+                        fallback={<ImageLoader />}
+                    >
+                        <div
+                            class={cn(
+                                item.data?.wish.images?.length &&
+                                    item.data?.wish.images.length > 1
+                                    ? 'grid grid-cols-2 gap-4'
+                                    : 'grid grid-cols-1',
+                            )}
+                        >
+                            <For each={item.data?.wish.images}>
+                                {(image: WishImage) => (
+                                    <div class="relative w-full rounded-[25px] border border-[#00000010]">
+                                        <img
+                                            src={`https://assets.peatch.io/${image.url}`}
+                                            alt={item.data?.wish.name}
+                                            class={cn(
+                                                'w-full rounded-[25px]',
+                                                item.data?.wish.images
+                                                    .length === 1
+                                                    ? 'max-w-full'
+                                                    : 'w-[200px]',
+                                            )}
+                                            style={{
+                                                'aspect-ratio': `${image.width}/${image.height}`,
+                                            }}
+                                        />
+                                        <button
+                                            onClick={() =>
+                                                deleteImage(image.id)
+                                            }
+                                            disabled={
+                                                isDeleting() || isSaving()
+                                            }
+                                            class="absolute right-3 top-3 flex size-5 items-center justify-center rounded-full bg-black"
+                                            title="Delete image"
+                                        >
+                                            <span class="material-symbols-rounded text-[16px] text-white">
+                                                close
+                                            </span>
+                                        </button>
+                                    </div>
+                                )}
+                            </For>
+                        </div>
+                    </Show>
+                </div>
+            </Show>
+        </div>
+    )
 }

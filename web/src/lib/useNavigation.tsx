@@ -1,112 +1,116 @@
 import {
-	createContext,
-	createEffect,
-	JSX,
-	onCleanup,
-	useContext,
+    createContext,
+    createEffect,
+    JSX,
+    onCleanup,
+    useContext,
 } from 'solid-js'
 import { useBackButton } from './useBackButton'
 import { useLocation, useNavigate } from '@solidjs/router'
 
 interface NavigationContext {
-	navigateBack: () => void
+    navigateBack: () => void
 }
 
 const Navigation = createContext<NavigationContext>({} as NavigationContext)
 
 export function NavigationProvider(props: { children: JSX.Element }) {
-	const backButton = useBackButton()
+    const backButton = useBackButton()
 
-	const navigate = useNavigate()
-	const location = useLocation()
+    const navigate = useNavigate()
+    const location = useLocation()
 
-	const navigateBack = () => {
-		const state = location.state
+    const navigateBack = () => {
+        const state = location.state
 
+        if (location.pathname.includes('/profiles/')) {
+            navigate('/people')
+            return
+        }
 
-		if (location.pathname.includes('/profiles/')) {
+        if (location.pathname.includes('/wishes/')) {
+            const pathParts = location.pathname.split('/')
 
-			navigate('/people')
-			return
-		}
+            if (state && typeof state === 'object') {
+                try {
+                    const stateObj = state as any
+                    if (stateObj.from && typeof stateObj.from === 'string') {
+                        navigate(stateObj.from)
+                        return
+                    }
+                } catch (e) {
+                    console.error('Failed to parse state:', e)
+                }
+            }
 
-		if (location.pathname.includes('/wishes/')) {
+            navigate('/')
+            return
+        }
 
-			const pathParts = location.pathname.split('/')
+        const deserialize = (state: Readonly<Partial<unknown>> | null) => {
+            try {
+                return JSON.parse(state as string)
+            } catch (e) {
+                return state
+            }
+        }
 
-			if (state && typeof state === 'object') {
-				try {
-					const stateObj = state as any
-					if (stateObj.from && typeof stateObj.from === 'string') {
-						navigate(stateObj.from)
-						return
-					}
-				} catch (e) {
-					console.error('Failed to parse state:', e)
-				}
-			}
+        const stateData = deserialize(state)
 
-			navigate('/')
-			return
-		}
+        const isObject = (value: unknown) => {
+            return (
+                value &&
+                typeof value === 'object' &&
+                value.constructor === Object
+            )
+        }
 
-		const deserialize = (state: Readonly<Partial<unknown>> | null) => {
-			try {
-				return JSON.parse(state as string)
-			} catch (e) {
-				return state
-			}
-		}
+        if (isObject(stateData) && stateData.from) {
+            navigate(stateData.from)
+        } else if (isObject(stateData) && stateData.back) {
+            navigate(-1)
+        } else {
+            navigate('/')
+        }
 
-		const stateData = deserialize(state)
+        if (isObject(stateData) && stateData.scroll) {
+            setTimeout(() => {
+                window.scrollTo(0, stateData.scroll)
+            }, 0)
+        }
+    }
 
-		const isObject = (value: unknown) => {
-			return value && typeof value === 'object' && value.constructor === Object
-		}
+    createEffect(() => {
+        if (
+            location.pathname.includes('/profiles/') ||
+            (location.pathname !== '/' &&
+                location.pathname !== '/setup' &&
+                location.pathname !== '/create/from-link')
+        ) {
+            backButton.setVisible()
+            backButton.onClick(navigateBack)
+        } else {
+            backButton.hide()
+            backButton.offClick(navigateBack)
+        }
+    })
 
-		if (isObject(stateData) && stateData.from) {
-			navigate(stateData.from)
-		} else if (isObject(stateData) && stateData.back) {
-			navigate(-1)
-		} else {
-			navigate('/')
-		}
+    onCleanup(() => {
+        backButton.hide()
+        backButton.offClick(navigateBack)
+    })
 
-		if (isObject(stateData) && stateData.scroll) {
-			setTimeout(() => {
-				window.scrollTo(0, stateData.scroll)
-			}, 0)
-		}
-	}
+    const value: NavigationContext = {
+        navigateBack,
+    }
 
-	createEffect(() => {
-		if (location.pathname.includes('/profiles/') ||
-			(location.pathname !== '/'
-				&& location.pathname !== '/setup'
-				&& location.pathname !== '/create/from-link')
-		) {
-			backButton.setVisible()
-			backButton.onClick(navigateBack)
-		} else {
-			backButton.hide()
-			backButton.offClick(navigateBack)
-		}
-	})
-
-	onCleanup(() => {
-		backButton.hide()
-		backButton.offClick(navigateBack)
-	})
-
-	const value: NavigationContext = {
-		navigateBack,
-	}
-
-	return (
-		<Navigation.Provider value={value}>{props.children}</Navigation.Provider>
-	)
+    return (
+        <Navigation.Provider value={value}>
+            {props.children}
+        </Navigation.Provider>
+    )
 }
 
 export function useNavigation() {
-	return useContext(Navigation)
+    return useContext(Navigation)
 }

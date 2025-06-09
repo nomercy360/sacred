@@ -7,45 +7,52 @@ import { setSearch, store } from '~/store'
 import { createEffect, createMemo } from 'solid-js'
 
 const FeedPage = () => {
-	
-	const searchKey = createMemo(() => store.search)
+    const searchKey = createMemo(() => store.search)
 
-const wishes = useQuery<Wish[]>(() => ({
-  queryKey: ['feed', searchKey()],
-  queryFn: () => fetchFeed(searchKey()),
-}))
+    const wishes = useQuery<Wish[]>(() => ({
+        queryKey: ['feed', searchKey()],
+        queryFn: () => fetchFeed(searchKey()),
+    }))
 
-// createEffect(() => {
-// 	console.log('SEARCH KEY', searchKey())
-// 	console.log('WISHES', wishes.data)
-// })
-	return (
-		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden px-[1.5px]">
-			<div class="fixed top-0 left-0 right-0 bg-gradient-to-t from-transparent to-white h-20 z-20">
-				<div class={cn('h-20 w-full flex justify-between items-center p-5')}>
-					<Link
-						href="/search-feed"
-						state={{ from: '/feed' }}
-						class="flex items-center justify-center bg-secondary rounded-full size-10"
-						onClick={() => {
-							setSearch('')
-						}}
-					>
-						<span class="material-symbols-rounded text-[20px]">search</span>
-					</Link>
-					<p class="text-black text-xl font-extrabold">Discover</p>
-					<Link
-						href="/categories-edit"
-						state={{ from: '/feed' }}
-						class="flex items-center justify-center bg-secondary rounded-full size-10"
-					>
-						<span class="material-symbols-rounded text-[20px]">page_info</span>
-					</Link>
-				</div>
-			</div>
-			<WishesGrid wishes={wishes as any} source="/feed" />
-		</div>
-	)
+    // createEffect(() => {
+    // 	console.log('SEARCH KEY', searchKey())
+    // 	console.log('WISHES', wishes.data)
+    // })
+    return (
+        <div class="relative flex h-screen w-full flex-col items-center overflow-hidden px-[1.5px]">
+            <div class="fixed left-0 right-0 top-0 z-20 h-20 bg-gradient-to-t from-transparent to-white">
+                <div
+                    class={cn(
+                        'flex h-20 w-full items-center justify-between p-5',
+                    )}
+                >
+                    <Link
+                        href="/search-feed"
+                        state={{ from: '/feed' }}
+                        class="flex size-10 items-center justify-center rounded-full bg-secondary"
+                        onClick={() => {
+                            setSearch('')
+                        }}
+                    >
+                        <span class="material-symbols-rounded text-[20px]">
+                            search
+                        </span>
+                    </Link>
+                    <p class="text-xl font-extrabold text-black">Discover</p>
+                    <Link
+                        href="/categories-edit"
+                        state={{ from: '/feed' }}
+                        class="flex size-10 items-center justify-center rounded-full bg-secondary"
+                    >
+                        <span class="material-symbols-rounded text-[20px]">
+                            page_info
+                        </span>
+                    </Link>
+                </div>
+            </div>
+            <WishesGrid wishes={wishes as any} source="/feed" />
+        </div>
+    )
 }
 
 export default FeedPage

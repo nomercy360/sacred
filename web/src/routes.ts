@@ -16,70 +16,70 @@ import SearchPage from './pages/search-people'
 import { SearchFeed } from './pages/search-feed'
 
 export const routes: RouteDefinition[] = [
-	{
-		path: '/',
-		component: NavigationTabs,
-		children: [
-			{
-				'path': '/',
-				'component': UserBoardPage,
-			},
-			{
-				'path': '/people',
-				'component': PeoplePage,
-			},
-			{
-				'path': '/feed',
-				'component': FeedPage,
-			},
-		],
-	},
-	{
-		path: '/setup',
-		component: SetupProfilePage,
-	},
-	{
-		path: '/bookmarks',
-		component: BookmarksPage,
-	},
-	{
-		path: '/categories-edit',
-		component: CategoriesEdit,
-	},
-	{
-		path: '/profiles/:id',
-		component: lazy(() => import('./pages/profile')),
-	},
-	{
-		path: '/create/from-link',
-		component: CreateFromLinkPage,
-	},
-	{
-		path: '/share',
-		component: ShareProfile,
-	},
-	{
-		path: '/profile/edit',
-		component: ProfileEditPage,
-	},
-	{
-		path: '/search',
-		component: SearchPage,
-	},
-	{
-		path: '/search-feed',
-		component: SearchFeed,
-	},
-	{
-		path: '/wishes/:id/edit',
-		component: WishEditPage,
-	},
-	{
-		'path': '/wishes/:id',
-		'component': lazy(() => import('./pages/wish')),
-	},
-	{
-		path: '**',
-		component: lazy(() => import('./pages/404')),
-	},
+    {
+        path: '/',
+        component: NavigationTabs,
+        children: [
+            {
+                path: '/',
+                component: UserBoardPage,
+            },
+            {
+                path: '/people',
+                component: PeoplePage,
+            },
+            {
+                path: '/feed',
+                component: FeedPage,
+            },
+        ],
+    },
+    {
+        path: '/setup',
+        component: SetupProfilePage,
+    },
+    {
+        path: '/bookmarks',
+        component: BookmarksPage,
+    },
+    {
+        path: '/categories-edit',
+        component: CategoriesEdit,
+    },
+    {
+        path: '/profiles/:id',
+        component: lazy(() => import('./pages/profile')),
+    },
+    {
+        path: '/create/from-link',
+        component: CreateFromLinkPage,
+    },
+    {
+        path: '/share',
+        component: ShareProfile,
+    },
+    {
+        path: '/profile/edit',
+        component: ProfileEditPage,
+    },
+    {
+        path: '/search',
+        component: SearchPage,
+    },
+    {
+        path: '/search-feed',
+        component: SearchFeed,
+    },
+    {
+        path: '/wishes/:id/edit',
+        component: WishEditPage,
+    },
+    {
+        path: '/wishes/:id',
+        component: lazy(() => import('./pages/wish')),
+    },
+    {
+        path: '**',
+        component: lazy(() => import('./pages/404')),
+    },
 ]

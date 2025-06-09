@@ -1,6 +1,6 @@
-import type {AnchorProps} from '@solidjs/router'
-import {A} from '@solidjs/router'
-import type {Component} from 'solid-js'
+import type { AnchorProps } from '@solidjs/router'
+import { A } from '@solidjs/router'
+import type { Component } from 'solid-js'
 
 export const Link: Component<AnchorProps> = props => {
     const onClick = (e: MouseEvent) => {
@@ -22,7 +22,6 @@ export const Link: Component<AnchorProps> = props => {
             e.preventDefault()
             return window.Telegram.WebApp.openLink(targetUrl.toString())
         }
-
     }
 
     return (

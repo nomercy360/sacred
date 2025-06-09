@@ -1,62 +1,66 @@
 import { cn } from '~/lib/utils'
 import { useLocation } from '@solidjs/router'
-import { onMount } from 'solid-js'
+import { onMount, For } from 'solid-js'
 import { useNavigate } from '@solidjs/router'
 
-
-
 export default function NavigationTabs(props: any) {
-	
-	const location = useLocation()
+    const location = useLocation()
 
-	const navigate = useNavigate()
+    const navigate = useNavigate()
 
-	const tabs = [
-		{
-			href: '/feed',
-			icon: 'search',
-		},
-		{
-			href: '/',
-			icon: 'note_stack',
-		},
-		{
-			href: '/people',
-			icon: 'people',
-		},
-		{
-			href: '/create/from-link',
-			icon: 'add_circle',
-		},
-	]
+    const tabs = [
+        {
+            href: '/feed',
+            icon: 'search',
+        },
+        {
+            href: '/',
+            icon: 'note_stack',
+        },
+        {
+            href: '/people',
+            icon: 'people',
+        },
+        {
+            href: '/create/from-link',
+            icon: 'add_circle',
+        },
+    ]
 
-	onMount(() => {
-		window.Telegram.WebApp.ready()
-	})
+    onMount(() => {
+        window.Telegram.WebApp.ready()
+    })
 
-	return (
-		<>
-			<div
-				class="flex flex-col items-center h-[85px] fixed bottom-0 w-full z-50"
-			>
-				<div class="flex justify-center  flex-row rounded-full p-1 space-x-5 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.3)] bg-white px-2">
-					{tabs.map(({ href, icon }) => (
-						<button
-							type="button"
-							class={cn('size-10 flex items-center justify-center flex-col text-sm text-gray-400 rounded-full', {
-								'text-black': location.pathname === href,
-							})}
-							onClick={() => {
-								navigate(href, { state: { from: location.pathname } })
-							}}
-						>
-							<span class="material-symbols-rounded text-[22px]">{icon}</span>
-						</button>
-					))}
-				</div>
-			</div>
-			{props.children}
-		</>
-
-	)
+    return (
+        <>
+            <div class="fixed bottom-0 z-50 flex h-[85px] w-full flex-col items-center">
+                <div class="flex flex-row justify-center space-x-5 rounded-full bg-white p-1 px-2 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.3)]">
+                    <For each={tabs}>
+                        {props => (
+                            <button
+                                type="button"
+                                class={cn(
+                                    'flex size-10 flex-col items-center justify-center rounded-full text-sm text-gray-400',
+                                    {
+                                        'text-black':
+                                            location.pathname === props.href,
+                                    },
+                                )}
+                                onClick={() => {
+                                    navigate(props.href, {
+                                        state: { from: location.pathname },
+                                    })
+                                }}
+                            >
+                                <span class="material-symbols-rounded text-[22px]">
+                                    {props.icon}
+                                </span>
+                            </button>
+                        )}
+                    </For>
+                </div>
+            </div>
+            {props.children}
+        </>
+    )
 }

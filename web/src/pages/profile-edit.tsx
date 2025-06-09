@@ -1,9 +1,9 @@
+import { useNavigate } from '@solidjs/router'
 import { createSignal, onCleanup, onMount } from 'solid-js'
 import { saveUserPreferences } from '~/lib/api'
-import { useNavigate } from '@solidjs/router'
-import { setUser, store } from '~/store'
-import { addToast } from '~/components/toast'
 import { useMainButton } from '~/lib/useMainButton'
+import { addToast } from '~/components/toast'
+import { setUser, store } from '~/store'
 
 export default function ProfileEditPage() {
     const [name, setName] = createSignal(store.user?.name)

@@ -1,3 +1,4 @@
+import { useLocation, useNavigate } from '@solidjs/router'
 import {
     createContext,
     createEffect,
@@ -6,7 +7,6 @@ import {
     useContext,
 } from 'solid-js'
 import { useBackButton } from './useBackButton'
-import { useLocation, useNavigate } from '@solidjs/router'
 
 interface NavigationContext {
     navigateBack: () => void

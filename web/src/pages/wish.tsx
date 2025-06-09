@@ -1,21 +1,12 @@
-import { createEffect, For, Match, onCleanup, Show, Switch } from 'solid-js'
-import { useMutation, useQuery } from '@tanstack/solid-query'
-import {
-    copyWish,
-    deleteWish,
-    fetchWish,
-    removeBookmark,
-    fetchBookmarks,
-    saveBookmark,
-    Wish,
-    WishResponse,
-} from '~/lib/api'
 import { useNavigate, useParams } from '@solidjs/router'
-import { currencySymbol, getDomainName } from '~/lib/utils'
-import { queryClient } from '~/App'
-import { setStore, store } from '~/store'
+import { useMutation, useQuery } from '@tanstack/solid-query'
+import { createEffect, For, Match, onCleanup, Show, Switch } from 'solid-js'
+import { copyWish, deleteWish, fetchWish, removeBookmark, saveBookmark, Wish, WishResponse } from '~/lib/api'
 import { useMainButton } from '~/lib/useMainButton'
+import { currencySymbol, getDomainName } from '~/lib/utils'
 import { addToast } from '~/components/toast'
+import { setStore, store } from '~/store'
+import { queryClient } from '~/App'
 
 const ViewItem = () => {
     const params = useParams()
@@ -27,16 +18,6 @@ const ViewItem = () => {
         queryFn: () => fetchWish(params.id),
     }))
 
-    const bookmarks = useQuery<WishResponse[]>(() => ({
-        queryKey: ['bookmarks'],
-        queryFn: () => fetchBookmarks(),
-    }))
-
-    // createEffect(() => {
-    // 	if (bookmarks.isSuccess) {
-    // 		console.log('BOOKMARKS', JSON.parse(JSON.stringify(bookmarks.data)))
-    // 	}
-    // })
 
     const saveToBoard = useMutation(() => ({
         mutationFn: () => copyWish(item.data!.wish.id),

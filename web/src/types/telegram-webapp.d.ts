@@ -7,7 +7,6 @@ interface TelegramWebAppCloudStorage {
 
 interface TelegramWebApp {
     CloudStorage: TelegramWebAppCloudStorage
-    // Add other WebApp properties as needed
 }
 
 declare global {

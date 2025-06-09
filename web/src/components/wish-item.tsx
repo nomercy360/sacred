@@ -1,11 +1,11 @@
-import { getFirstImage } from '~/lib/utils'
-import { ImageWithPlaceholder } from './image-placeholder'
-import { Link } from './link'
-import { Wish } from '~/lib/api'
-import AddRemoveButton from './add-remove-button'
 import { createMemo } from 'solid-js'
+import { Wish } from '~/lib/api'
+import { getFirstImage } from '~/lib/utils'
 import { store } from '~/store'
 import { queryClient } from '~/App'
+import AddRemoveButton from './add-remove-button'
+import { ImageWithPlaceholder } from './image-placeholder'
+import { Link } from './link'
 
 const WishItem = (props: {
     wish: Wish & { copy_id: string | null }

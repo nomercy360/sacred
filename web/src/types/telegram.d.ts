@@ -1,4 +1,3 @@
-// Updated CloudStorage Interface
 interface CloudStorage {
     setItem(
         key: string,

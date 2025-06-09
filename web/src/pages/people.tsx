@@ -1,15 +1,13 @@
-import { fetchProfiles, UserProfile, Wish } from '~/lib/api'
-import { Match, Switch, For, Component } from 'solid-js'
-import { ImageButton } from '~/components/image-button'
 import { useQuery } from '@tanstack/solid-query'
+import { Match, Switch, For, Component } from 'solid-js'
+import { fetchProfiles, UserProfile, Wish } from '~/lib/api'
+import { ImageButton } from '~/components/image-button'
 import { Link } from '~/components/link'
 
 export default function PeoplePage() {
     const users = useQuery<UserProfile[]>(() => ({
-        // createQuery is fine, useQuery also works
         queryKey: ['users'],
         queryFn: () => fetchProfiles(),
-        // enabled: false, // if you only want to fetch onMount or specific trigger
     }))
 
     const skeletonItems = Array.from({ length: 5 })

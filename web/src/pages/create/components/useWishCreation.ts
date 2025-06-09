@@ -1,13 +1,13 @@
-import { createEffect, createSignal, onCleanup } from 'solid-js'
 import { createStore } from 'solid-js/store'
 import { useNavigate } from '@solidjs/router'
-import { addToast } from '~/components/toast'
-import { useMainButton } from '~/lib/useMainButton'
-import { useBackButton } from '~/lib/useBackButton'
+import { createEffect, createSignal, onCleanup } from 'solid-js'
 import { createWish, CreateWishData, UpdateWishRequest } from '~/lib/api'
+import { useBackButton } from '~/lib/useBackButton'
+import { useMainButton } from '~/lib/useMainButton'
+import { addToast } from '~/components/toast'
 import { setStore } from '~/store'
-import { FlowName, FlowNames, StepName, StepNames } from './types'
 import { fetchMetadata, validateFiles } from './imageUtils'
+import { FlowName, FlowNames, StepName, StepNames } from './types'
 
 export function useWishCreation() {
     const [updateWish, setUpdateWish] = createStore<UpdateWishRequest>({

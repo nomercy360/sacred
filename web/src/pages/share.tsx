@@ -1,6 +1,6 @@
-import { store } from '~/store'
-import { Link } from '~/components/link'
 import { createSignal } from 'solid-js'
+import { Link } from '~/components/link'
+import { store } from '~/store'
 
 const ShareProfile = () => {
     const [isCopied, setIsCopied] = createSignal(false)

@@ -1,10 +1,10 @@
 import { Match, Switch, For, Show, createMemo, createResource } from 'solid-js'
-import { Link } from '~/components/link'
-import { setStore, store } from '~/store'
-import { getFirstImage, splitIntoGroups } from '~/lib/utils'
 import { fetchUserWishes, Wish } from '~/lib/api'
+import { getFirstImage, splitIntoGroups } from '~/lib/utils'
 import { ImageWithPlaceholder } from '~/components/image-placeholder'
+import { Link } from '~/components/link'
 import OnboardingPopup from '~/components/onboarding-popup'
+import { setStore, store } from '~/store'
 
 export default function UserBoardPage() {
     const [wishesResource] = createResource(fetchUserWishes)

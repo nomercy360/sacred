@@ -1,13 +1,12 @@
 import { useNavigate, useParams } from '@solidjs/router'
 import { useMutation, useQuery } from '@tanstack/solid-query'
 import { createEffect, createSignal, For, onCleanup, Show } from 'solid-js'
-import { fetchUpdateWish, fetchWish, WishResponse } from '~/lib/api'
-import { Wish, WishImage } from '~/lib/api'
+import { fetchUpdateWish, fetchWish, Wish, WishImage, WishResponse } from '~/lib/api'
 import { useMainButton } from '~/lib/useMainButton'
-import { queryClient } from '~/App'
+import { cn } from '~/lib/utils'
 import { addToast } from '~/components/toast'
 import { setStore } from '~/store'
-import { cn } from '~/lib/utils'
+import { queryClient } from '~/App'
 
 const ImageLoader = () => (
     <div class="flex h-40 items-center justify-center">

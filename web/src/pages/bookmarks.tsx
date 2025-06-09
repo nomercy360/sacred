@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/solid-query'
+import { For, Show } from 'solid-js'
 import { fetchBookmarks, type Wish } from '~/lib/api'
 import { Link } from '~/components/link'
 import { WishesGrid } from '~/components/wish-grid'
-import { For, Show } from 'solid-js'
 
 const BookmarksPage = () => {
     const wishes = useQuery(() => ({

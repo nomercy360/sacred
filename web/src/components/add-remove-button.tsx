@@ -1,9 +1,9 @@
 import { createMutation, useQueryClient } from '@tanstack/solid-query'
-import { copyWish, deleteWish, Wish } from '~/lib/api'
-import { store, setStore } from '~/store'
-import { addToast } from '~/components/toast'
 import { createMemo, Show } from 'solid-js'
+import { copyWish, deleteWish, Wish } from '~/lib/api'
 import { cn } from '~/lib/utils'
+import { addToast } from '~/components/toast'
+import { store, setStore } from '~/store'
 
 const AddRemoveButton = (props: { wish: Wish; source: string }) => {
     const queryClient = useQueryClient()

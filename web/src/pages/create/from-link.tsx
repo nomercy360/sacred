@@ -1,14 +1,14 @@
 import { Match, onMount, Show, Switch } from 'solid-js'
 import FormLayout from '~/components/form-layout'
+import AddLinkStep from '~/pages/create/components/AddLinkStep'
+import AddNameStep from './components/AddNameStep'
+import CategoriesStep from './components/CategoriesStep'
+import ConfirmStep from './components/ConfirmStep'
+import EditName from './components/EditName'
+import SelectImagesStep from './components/SelectImagesStep'
+import StartStep from './components/StartStep'
 import { StepNames } from './components/types'
 import { useWishCreation } from './components/useWishCreation'
-import StartStep from './components/StartStep'
-import CategoriesStep from './components/CategoriesStep'
-import SelectImagesStep from './components/SelectImagesStep'
-import AddNameStep from './components/AddNameStep'
-import EditName from './components/EditName'
-import ConfirmStep from './components/ConfirmStep'
-import AddLinkStep from '~/pages/create/components/AddLinkStep'
 
 export default function CreateFromLinkPage() {
     const {

@@ -1,7 +1,6 @@
-// Reusable ImageButton Component
+import { useLocation } from '@solidjs/router'
 import { Component, createMemo } from 'solid-js'
 import { Link } from '~/components/link'
-import { useLocation } from '@solidjs/router'
 
 type ImageButtonProps = {
     children: any

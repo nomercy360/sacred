@@ -1,6 +1,4 @@
-import { createEffect, onCleanup } from 'solid-js'
-
-import { createSignal } from 'solid-js'
+import { createEffect, onCleanup, createSignal } from 'solid-js'
 import { cn } from '~/lib/utils'
 
 function OnboardingPopup(props: { onClose: () => void }) {

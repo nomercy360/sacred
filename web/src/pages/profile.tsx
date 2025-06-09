@@ -1,15 +1,14 @@
-import { fetchUserProfile, UserProfile, Wish } from '~/lib/api'
-import { createEffect, For, Match, Show, Switch, onCleanup } from 'solid-js' // Removed unused createSignal, onMount for this snippet
-import { createMutation, useQuery } from '@tanstack/solid-query'
-import { Link } from '~/components/link'
 import { useParams, useLocation } from '@solidjs/router'
+import { createMutation, useQuery } from '@tanstack/solid-query'
+import { createEffect, For, Match, Show, Switch, onCleanup } from 'solid-js'
+import { fetchUserProfile, UserProfile, Wish, followUser, unfollowUser } from '~/lib/api'
 import { useMainButton } from '~/lib/useMainButton'
-import { store } from '~/store'
-import { followUser, unfollowUser } from '~/lib/api'
-import { queryClient } from '~/App'
-import { ImageWithPlaceholder } from '~/components/image-placeholder'
 import { getFirstImage, splitIntoGroups } from '~/lib/utils'
+import { ImageWithPlaceholder } from '~/components/image-placeholder'
+import { Link } from '~/components/link'
 import { addToast } from '~/components/toast'
+import { store } from '~/store'
+import { queryClient } from '~/App'
 
 export default function UserProfilePage() {
     const params = useParams()

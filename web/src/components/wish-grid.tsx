@@ -1,8 +1,8 @@
 import { useQueryClient } from '@tanstack/solid-query'
 import { createEffect, For, Show } from 'solid-js'
+import { Wish } from '~/lib/api'
 import { store } from '~/store'
 import WishItem from './wish-item'
-import { Wish } from '~/lib/api'
 
 type WishesGridProps = {
     wishes: {

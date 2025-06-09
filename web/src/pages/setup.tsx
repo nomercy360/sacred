@@ -1,20 +1,13 @@
-import {
-    createEffect,
-    createSignal,
-    Match,
-    onCleanup,
-    onMount,
-    Switch,
-} from 'solid-js'
-import { saveUserPreferences } from '~/lib/api'
 import { useNavigate } from '@solidjs/router'
-import { setUser } from '~/store'
-import { useMainButton } from '~/lib/useMainButton'
+import { createEffect, createSignal, Match, onCleanup, onMount, Switch } from 'solid-js'
+import { saveUserPreferences } from '~/lib/api'
 import { useBackButton } from '~/lib/useBackButton'
-import FormLayout from '~/components/form-layout'
-import FormInput from '~/components/form-input'
+import { useMainButton } from '~/lib/useMainButton'
 import CategoriesSelect from '~/components/categories-select'
+import FormInput from '~/components/form-input'
+import FormLayout from '~/components/form-layout'
 import { addToast } from '~/components/toast'
+import { setUser } from '~/store'
 
 export default function SetupProfilePage() {
     const [selectedCategories, setSelectedCategories] = createSignal<string[]>(

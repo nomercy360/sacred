@@ -1,17 +1,10 @@
-import { createEffect, createSignal, Match, Switch } from 'solid-js'
-import { NavigationProvider } from './lib/useNavigation'
 import { useNavigate } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import Toast from '~/components/toast'
+import { createEffect, createSignal, Match, Switch } from 'solid-js'
 import { API_BASE_URL } from '~/lib/api'
-import {
-    setOnboarding,
-    setToken,
-    setUser,
-    setWishes,
-    store,
-    loadSavedSearches,
-} from '~/store'
+import { NavigationProvider } from '~/lib/useNavigation'
+import Toast from '~/components/toast'
+import { setOnboarding, setToken, setUser, setWishes, store, loadSavedSearches } from '~/store'
 
 export const queryClient = new QueryClient({
     defaultOptions: {
@@ -36,6 +29,7 @@ export default function App(props: any) {
 
     const navigate = useNavigate()
 
+    // eslint-disable-next-line solid/reactivity
     createEffect(async () => {
         const initData = window.Telegram.WebApp.initData
 

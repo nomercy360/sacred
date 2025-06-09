@@ -1,9 +1,9 @@
+import { useNavigate } from '@solidjs/router'
 import { createEffect, createSignal, onCleanup, onMount } from 'solid-js'
 import { saveUserInterests } from '~/lib/api'
-import { useNavigate } from '@solidjs/router'
-import { setUser, store } from '~/store'
 import { useMainButton } from '~/lib/useMainButton'
 import CategoriesSelect from '~/components/categories-select'
+import { setUser, store } from '~/store'
 
 export default function CategoriesEdit() {
     const [selectedCategories, setSelectedCategories] = createSignal<string[]>(

@@ -1,11 +1,10 @@
-import { cn } from '~/lib/utils'
+import { useNavigate } from '@solidjs/router'
+import { createQuery } from '@tanstack/solid-query'
 import { createEffect, createSignal, onCleanup, onMount } from 'solid-js'
 import { fetchProfiles, followUser, unfollowUser, UserProfile } from '~/lib/api'
-import { createQuery } from '@tanstack/solid-query'
-import { useNavigate } from '@solidjs/router'
-
-import { Link } from '~/components/link'
 import { useBackButton } from '~/lib/useBackButton'
+import { cn } from '~/lib/utils'
+import { Link } from '~/components/link'
 import { addToast } from '~/components/toast'
 
 export interface SearchingItemProps {

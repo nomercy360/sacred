@@ -1,26 +1,13 @@
-import {
-    Show,
-    createSignal,
-    For,
-    createResource,
-    createEffect,
-    onMount,
-} from 'solid-js'
-import { cn } from '~/lib/utils'
-import CategoriesSelect from '~/components/categories-select'
-import { WishesGrid } from '~/components/wish-grid'
 import { useNavigate } from '@solidjs/router'
 import { useQuery } from '@tanstack/solid-query'
+import { Show, createSignal, For, createResource, onMount } from 'solid-js'
 import { Wish, autocompleteSearch, fetchFeed } from '~/lib/api'
 import { useBackButton } from '~/lib/useBackButton'
-import {
-    store,
-    setSearch,
-    setStore,
-    setLastSearches,
-    loadSavedSearches,
-} from '~/store'
+import { cn } from '~/lib/utils'
+import CategoriesSelect from '~/components/categories-select'
 import { Link } from '~/components/link'
+import { WishesGrid } from '~/components/wish-grid'
+import { store, setSearch, setLastSearches, loadSavedSearches } from '~/store'
 
 export const SearchFeed = () => {
     const { lastSearches } = store
@@ -62,9 +49,8 @@ export const SearchFeed = () => {
 
         const updatedSearches = [
             trimmedSuggestion,
-            ...lastSearches.filter(s => s !== trimmedSuggestion)
+            ...lastSearches.filter(s => s !== trimmedSuggestion),
         ].slice(0, 8)
-        
         await setLastSearches(updatedSearches)
         setSearch(trimmedSuggestion)
         setSearchMode(false)
@@ -81,9 +67,8 @@ export const SearchFeed = () => {
 
         const updatedSearches = [
             trimmedValue,
-            ...lastSearches.filter(s => s !== trimmedValue)
+            ...lastSearches.filter(s => s !== trimmedValue),
         ].slice(0, 8)
-        
         await setLastSearches(updatedSearches)
     }
 

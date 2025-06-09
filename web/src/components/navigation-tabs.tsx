@@ -1,7 +1,6 @@
-import { cn } from '~/lib/utils'
-import { useLocation } from '@solidjs/router'
+import { useLocation, useNavigate } from '@solidjs/router'
 import { onMount, For } from 'solid-js'
-import { useNavigate } from '@solidjs/router'
+import { cn } from '~/lib/utils'
 
 export default function NavigationTabs(props: any) {
     const location = useLocation()

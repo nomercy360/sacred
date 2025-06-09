@@ -1,19 +1,18 @@
-import { lazy } from 'solid-js'
 import type { RouteDefinition } from '@solidjs/router'
-
-import SetupProfilePage from '~/pages/setup'
+import { lazy } from 'solid-js'
 import NavigationTabs from '~/components/navigation-tabs'
 import UserBoardPage from '~/pages/board'
-import PeoplePage from '~/pages/people'
-import FeedPage from '~/pages/feed'
-import ShareProfile from '~/pages/share'
-import CreateFromLinkPage from '~/pages/create/from-link'
-import CategoriesEdit from '~/pages/categories-edit'
 import BookmarksPage from '~/pages/bookmarks'
+import CategoriesEdit from '~/pages/categories-edit'
+import CreateFromLinkPage from '~/pages/create/from-link'
+import FeedPage from '~/pages/feed'
+import PeoplePage from '~/pages/people'
 import ProfileEditPage from '~/pages/profile-edit'
+import SetupProfilePage from '~/pages/setup'
+import ShareProfile from '~/pages/share'
 import WishEditPage from '~/pages/wish-edit'
-import SearchPage from './pages/search-people'
-import { SearchFeed } from './pages/search-feed'
+import { SearchFeed } from '~/pages/search-feed'
+import SearchPage from '~/pages/search-people'
 
 export const routes: RouteDefinition[] = [
     {

@@ -277,8 +277,8 @@ func (s *Storage) GetPublicWishesFeed(ctx context.Context, viewerID, searchQuery
 	}
 
 	if searchQuery != "" {
-		baseQuery += ` AND LOWER(w.name) = ?`
-		args = append(args, strings.ToLower(searchQuery))
+		baseQuery += ` AND LOWER(w.name) LIKE ?`
+		args = append(args, strings.ToLower(searchQuery)+"%")
 	}
 
 	args = append(args, viewerID)

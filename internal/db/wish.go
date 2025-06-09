@@ -265,23 +265,28 @@ func (s *Storage) UpdateWish(ctx context.Context, item Wish, categories []string
 	return err
 }
 
-func (s *Storage) GetPublicWishesFeed(ctx context.Context, viewerID, searchQuery string) ([]Wish, error) {
-	// Original query without search
-	baseQuery := s.baseWishesQuery() + ` WHERE w.published_at IS NOT NULL AND w.source_id IS NULL AND w.deleted_at IS NULL`
-
+func (s *Storage) GetPublicWishesFeed(ctx context.Context, viewerID *string, searchQuery string) ([]Wish, error) {
+	var baseQuery string
 	var args []interface{}
 
-	if viewerID != "" {
+	args = append(args, viewerID)
+
+	if searchQuery != "" {
+		baseQuery = s.baseWishesQuery() + ` 
+			JOIN wishes_fts fts ON fts.wish_id = w.id
+			WHERE wishes_fts MATCH ? 
+			AND w.published_at IS NOT NULL 
+			AND w.source_id IS NULL 
+			AND w.deleted_at IS NULL`
+		args = append(args, searchQuery+"*")
+	} else {
+		baseQuery = s.baseWishesQuery() + ` WHERE w.published_at IS NOT NULL AND w.source_id IS NULL AND w.deleted_at IS NULL`
+	}
+
+	if viewerID != nil {
 		baseQuery += ` AND w.user_id != ?`
 		args = append(args, viewerID)
 	}
-
-	if searchQuery != "" {
-		baseQuery += ` AND LOWER(w.name) LIKE ?`
-		args = append(args, strings.ToLower(searchQuery)+"%")
-	}
-
-	args = append(args, viewerID)
 
 	baseQuery += `
 			GROUP BY w.id

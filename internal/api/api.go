@@ -39,7 +39,7 @@ type storager interface {
 	RemoveWishFromBookmarks(ctx context.Context, uid, wishID string) error
 	ListBookmarkedWishes(ctx context.Context, uid string) ([]db.Wish, error)
 	DeleteWish(ctx context.Context, uid, id string) error
-	GetPublicWishesFeed(ctx context.Context, uid string, search string) ([]db.Wish, error)
+	GetPublicWishesFeed(ctx context.Context, uid *string, search string) ([]db.Wish, error)
 	GetWishAutocomplete(ctx context.Context, prefix string, limit int) ([]db.AutocompleteSuggestion, error)
 	GetUsersWhoSavedWish(ctx context.Context, wishID string, limit int, offset int) ([]db.User, int, error)
 }

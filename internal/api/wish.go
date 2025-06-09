@@ -659,7 +659,10 @@ func (a *API) SearchFeed(c echo.Context) error {
 }
 
 func (a *API) GetWishesFeed(c echo.Context) error {
-	uid, _ := getUserID(c)
+	var uid *string
+	if userID, err := getUserID(c); err == nil {
+		uid = &userID
+	}
 
 	searchQuery := c.QueryParam("search")
 

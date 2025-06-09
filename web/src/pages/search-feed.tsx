@@ -1,67 +1,57 @@
-import { Show, createSignal, For, createResource } from "solid-js"
+import { Show, createSignal, For, createResource, createEffect, onMount } from "solid-js"
 import { cn } from "~/lib/utils"
 import CategoriesSelect from "~/components/categories-select"
 import { WishesGrid } from '~/components/wish-grid'
-import {useNavigate } from "@solidjs/router"
+import { useNavigate } from "@solidjs/router"
 import { useQuery } from "@tanstack/solid-query"
 import { Wish, autocompleteSearch, fetchFeed } from "~/lib/api"
 import { useBackButton } from "~/lib/useBackButton"
-import { store, setSearch, setStore } from "~/store"
+import { store, setSearch, setStore, setLastSearches } from "~/store"
 import { Link } from "~/components/link"
 
-const mockNames = [
-	"Arc'teryx", 'Beaded Breakast', 'Gel', 'Razor Keyboard',
-	'Airpods', 'Louis Vuitton', 'Barbour', 'Handmade'
-]
 
-const mockSuggestions = [
-	'Louis Vuitton', 'Louis Partridge', 'Louis Tomlinson', 'Louis Vuitton Bag',
-	'Louis Garrel', 'Louis Vuitton Aesthetic', 'Louis Vuitton Wallpaper',
-	'Louis Vuitton Shoes', 'Louis Hofmann', 'Louis Wain', 'Corona'
-]
+
 
 export const SearchFeed = () => {
 
-	const search = () => store.search.trim()
 
+	const { lastSearches } = store
+
+	const search = () => store.search.trim()
 
 	const [searchMode, setSearchMode] = createSignal(true)
 	const [searchInput, setSearchInput] = createSignal<HTMLInputElement | null>(null)
 
 	const [searchTerm, setSearchTerm] = createSignal('')
-const [suggestions] = createResource(searchTerm, autocompleteSearch)
-
-	const navigate = useNavigate()
-	const backButton = useBackButton()
+	const [suggestions] = createResource(searchTerm, autocompleteSearch)
 
 	const wishes = useQuery<Wish[]>(() => ({
 		queryKey: ['feed', search()],
 		queryFn: () => fetchFeed(search()),
 	}))
 
+	const navigate = useNavigate()
+	const backButton = useBackButton()
+
 	backButton.onClick(() => {
 		setSearch('')
 		navigate('/feed')
 	})
 
-	const handleSuggestionClick = (suggestion: string) => {
+	const handleSuggestionClick = async (suggestion: string) => {
 		setSearch(suggestion)
 		setSearchMode(false)
 		navigate('/feed', { state: { from: '/search-feed' } })
+		setLastSearches([suggestion, ...lastSearches].slice(0, 8))
 	}
 
-	const handleInput = (e: any) => {
+	const handleInput = async (e: any) => {
 		const value = e.target.value
 		setSearch(value)
 		setSearchTerm(value)
+		setLastSearches([value, ...lastSearches].slice(0, 8))
 	}
 
-	const filteredSuggestions = () =>
-		store.search.length > 0
-			? mockSuggestions.filter(s =>
-				s.toLowerCase().includes(store.search.toLowerCase())
-			)
-			: []
 
 	return (
 		<div class="relative flex flex-col items-center w-full h-screen overflow-hidden">
@@ -102,7 +92,7 @@ const [suggestions] = createResource(searchTerm, autocompleteSearch)
 					<div class="flex flex-col items-center w-full overflow-y-auto pt-2">
 						<p class="text-[#A6A6A6] text-[12px] pb-3">Recent queries</p>
 						<div class="flex flex-wrap gap-2 mt-2 justify-center w-[300px]">
-							<For each={mockNames}>
+							<For each={lastSearches}>
 								{item => (
 									<button
 										class="px-3 py-1 rounded-full bg-[#F3F3F3] text-[12px] font-medium hover:bg-[#e4e4e7]"
@@ -124,7 +114,7 @@ const [suggestions] = createResource(searchTerm, autocompleteSearch)
 							{suggestion => (
 								<button
 									class="w-full text-left px-5 py-2 hover:bg-gray-100"
-										onClick={() => handleSuggestionClick(suggestion.text)}
+									onClick={() => handleSuggestionClick(suggestion.text)}
 								>
 									{suggestion.text}
 								</button>

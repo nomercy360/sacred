@@ -24,13 +24,18 @@ export const [store, setStore] = createStore<{
 	following: number[]
 	wishes: Wish[]
 	search: string
+	lastSearches: string[]
 }>({
 	onboarding: false,
 	user: null,
 	token: '',
 	following: [],
 	wishes: [],
-	search: ''
+	search: '',
+	lastSearches: [
+		"Arc'teryx", 'Beaded Breakast', 'Asics', 'Razor Keyboard',
+		'Airpods', 'Louis Vuitton', 'Barbour', 'Handmade'
+	]
 })
 
 export const setUser = (user: User) => setStore('user', user)
@@ -38,3 +43,4 @@ export const setToken = (token: string) => setStore('token', token)
 export const setWishes = (wishes: Wish[]) => setStore('wishes', wishes)
 export const setOnboarding = (onboarding: boolean) => setStore('onboarding', onboarding)
 export const setSearch = (value: string) => setStore('search', value)
+export const setLastSearches = (value: string[]) => setStore('lastSearches', value)

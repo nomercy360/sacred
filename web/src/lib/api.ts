@@ -74,13 +74,9 @@ export const fetchUserWishes = async () => {
 }
 
 export const fetchFeed = async (search: string) => {
-	console.log('🔎 FETCH FEED WITH SEARCH:', search)
-
 	const { data } = await apiRequest('/feed' + (search ? `?search=${search}` : ''), {
 		method: 'GET',
 	})
-
-	console.log('📥 FEED RESPONSE:', data)
 
 	return data
 }

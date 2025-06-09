@@ -34,11 +34,11 @@ const ViewItem = () => {
 		queryFn: () => fetchBookmarks(),
 	}))
 
-	createEffect(() => {
-		if (bookmarks.isSuccess) {
-			console.log('BOOKMARKS', JSON.parse(JSON.stringify(bookmarks.data)))
-		}
-	})
+	// createEffect(() => {
+	// 	if (bookmarks.isSuccess) {
+	// 		console.log('BOOKMARKS', JSON.parse(JSON.stringify(bookmarks.data)))
+	// 	}
+	// })
 
 	const saveToBoard = useMutation(() => ({
 		mutationFn: () => copyWish(item.data!.wish.id),

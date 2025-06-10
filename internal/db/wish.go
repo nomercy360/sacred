@@ -265,6 +265,24 @@ func (s *Storage) UpdateWish(ctx context.Context, item Wish, categories []string
 	return err
 }
 
+// escapeFTS5Query escapes special characters in FTS5 queries
+func escapeFTS5Query(query string) string {
+	// FTS5 special characters that need to be escaped with double quotes
+	// In FTS5, to include a special character literally, wrap it in double quotes
+	// To include a double quote, use two double quotes
+
+	// First, escape existing double quotes by doubling them
+	escaped := strings.ReplaceAll(query, `"`, `""`)
+
+	// Then wrap other special characters in double quotes
+	specialChars := []string{"(", ")", "*", ":", ".", "^", "<", ">", "+", "-", "?", "!"}
+	for _, char := range specialChars {
+		escaped = strings.ReplaceAll(escaped, char, `"`+char+`"`)
+	}
+
+	return escaped
+}
+
 func (s *Storage) GetPublicWishesFeed(ctx context.Context, viewerID *string, searchQuery string) ([]Wish, error) {
 	var baseQuery string
 	var args []interface{}
@@ -272,13 +290,15 @@ func (s *Storage) GetPublicWishesFeed(ctx context.Context, viewerID *string, sea
 	args = append(args, viewerID)
 
 	if searchQuery != "" {
+		// Escape special characters in the search query
+		escapedQuery := escapeFTS5Query(searchQuery)
 		baseQuery = s.baseWishesQuery() + ` 
 			JOIN wishes_fts fts ON fts.wish_id = w.id
 			WHERE wishes_fts MATCH ? 
 			AND w.published_at IS NOT NULL 
 			AND w.source_id IS NULL 
 			AND w.deleted_at IS NULL`
-		args = append(args, searchQuery+"*")
+		args = append(args, escapedQuery+"*")
 	} else {
 		baseQuery = s.baseWishesQuery() + ` WHERE w.published_at IS NOT NULL AND w.source_id IS NULL AND w.deleted_at IS NULL`
 	}
@@ -493,6 +513,9 @@ func (s *Storage) GetWishAutocomplete(ctx context.Context, prefix string, limit 
 		return []AutocompleteSuggestion{}, nil
 	}
 
+	// Escape special characters in the prefix
+	escapedPrefix := escapeFTS5Query(prefix)
+
 	// Use FTS5 to get matching wishes and extract unique terms
 	query := `
 		SELECT suggestion,
@@ -511,7 +534,7 @@ func (s *Storage) GetWishAutocomplete(ctx context.Context, prefix string, limit 
 				 suggestion
 		LIMIT 10;`
 
-	rows, err := s.db.QueryContext(ctx, query, prefix+"*", limit)
+	rows, err := s.db.QueryContext(ctx, query, escapedPrefix+"*", limit)
 	if err != nil {
 		return nil, err
 	}
